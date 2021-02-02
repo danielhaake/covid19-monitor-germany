@@ -22,7 +22,7 @@ nevertheless displayed for the sake of completeness.
 The plots are divided into the three groups "daily overview", "corona cases" and "intensive care". The three groups can 
 be selected via the tabs with the same names.
 
-####Daily Overview
+#### Daily Overview
 * reported cases of last day 
 * reported deaths of last day
 * R0 of last day
@@ -31,7 +31,7 @@ be selected via the tabs with the same names.
 * delay in reporting between public health departments and the RKI
 
 
-####Corona Cases
+#### Corona Cases
 * cases reported by RKI
 * total reported cases by reference date (start of illness, alternativeliy reporting date)
 * deaths reported by RKI
