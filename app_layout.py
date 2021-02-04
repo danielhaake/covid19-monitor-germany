@@ -27,7 +27,7 @@ config = configparser.ConfigParser(interpolation=None)
 config.read('graph_definitions.ini')
 
 
-def get_layout(app):
+def layout(app) -> html.Div:
     return html.Div(
         children=[
             html.Div(
@@ -50,14 +50,14 @@ def get_layout(app):
                     dcc.Tabs(id='tabs-global-overview',
                              value='daily-overview',
                              parent_className='tabs',
-                             children=get_tabs_with_graphs())
+                             children=tabs_with_graphs())
                 ]
             )
         ]
     )
 
 
-def get_tabs_with_graphs() -> List[dcc.Tab]:
+def tabs_with_graphs() -> List[dcc.Tab]:
     # ----------------------------- LOAD DATA AS DATAFRAMES ----------------------#
 
     corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv()
@@ -75,11 +75,11 @@ def get_tabs_with_graphs() -> List[dcc.Tab]:
 
     # ----------------------------- CREATE PLOT OBJECTS ----------------------#
 
-    plots = create_plot_objects(corona_cases_and_deaths_with_nowcast,
-                                number_pcr_tests,
-                                intensive_register,
-                                clinical_aspects,
-                                age_distribution)
+    plots = plot_objects(corona_cases_and_deaths_with_nowcast,
+                         number_pcr_tests,
+                         intensive_register,
+                         clinical_aspects,
+                         age_distribution)
 
     # TAB STYLING
     # https://dash.plotly.com/dash-core-components/tabs
@@ -89,7 +89,7 @@ def get_tabs_with_graphs() -> List[dcc.Tab]:
                     className='tab',
                     selected_className='tab-selected',
                     id='tab-daily-overview',
-                    children=get_tab_daily_overview(plots=plots, daily_figures=daily_figures)
+                    children=tab_daily_overview(plots=plots, daily_figures=daily_figures)
                     ),
 
             dcc.Tab(label='Corona cases',
@@ -97,7 +97,7 @@ def get_tabs_with_graphs() -> List[dcc.Tab]:
                     className='tab',
                     selected_className='tab-selected',
                     id='tab-corona-cases',
-                    children=get_tab_corona_cases(plots)
+                    children=tab_corona_cases(plots)
                     ),
 
             dcc.Tab(label='Intensive care',
@@ -105,33 +105,33 @@ def get_tabs_with_graphs() -> List[dcc.Tab]:
                     className='tab',
                     selected_className='tab-selected',
                     id='tab-intensive-care',
-                    children=get_tab_corona_intensive_care(plots)
+                    children=tab_corona_intensive_care(plots)
                     ),
             ]
 
 
-def get_tab_daily_overview(plots: dict, daily_figures: dict) -> List[html.Div]:
+def tab_daily_overview(plots: dict, daily_figures: dict) -> List[html.Div]:
     return [html.Div(className="daily-overview-figures",
                      children=[
                          html.Div(
                              className='daily-overview-single-figure',
                              id='daily-overview-cases',
-                             children=get_daily_overview_cases(daily_figures)
+                             children=block_daily_overview_cases(daily_figures)
                          ),
                          html.Div(
                              className='daily-overview-single-figure',
                              id='daily-overview-deaths',
-                             children=get_daily_overview_deaths(daily_figures)
+                             children=block_daily_overview_deaths(daily_figures)
                          ),
                          html.Div(
                              className='daily-overview-single-figure',
                              id='daily-overview-r0',
-                             children=get_daily_overview_r0(daily_figures)
+                             children=block_daily_overview_r0(daily_figures)
                          ),
                          html.Div(
                              className='daily-overview-single-figure',
                              id='daily-overview-last-7-days',
-                             children=get_daily_overview_last_7_days(daily_figures)
+                             children=block_daily_overview_last_7_days(daily_figures)
                          )
                      ]
                      ),
@@ -148,7 +148,7 @@ def get_tab_daily_overview(plots: dict, daily_figures: dict) -> List[html.Div]:
             ]
 
 
-def get_tab_corona_cases(plots: dict) -> List[dcc.Graph]:
+def tab_corona_cases(plots: dict) -> List[dcc.Graph]:
     return [
         dcc.Graph(
             id='graph-cases-mean-3',
@@ -183,7 +183,7 @@ def get_tab_corona_cases(plots: dict) -> List[dcc.Graph]:
     ]
 
 
-def get_tab_corona_intensive_care(plots: dict) -> List[dcc.Graph]:
+def tab_corona_intensive_care(plots: dict) -> List[dcc.Graph]:
     return [
         dcc.Graph(
             id='graph-fig-intensive-reporting-areas',
@@ -206,7 +206,7 @@ def get_tab_corona_intensive_care(plots: dict) -> List[dcc.Graph]:
     ]
 
 
-def get_daily_overview_cases(daily_figures: dict) -> List[THtml]:
+def block_daily_overview_cases(daily_figures: dict) -> List[THtml]:
     prefix_mean_cases_change = ""
     if daily_figures["last mean cases, change since day before"] > 0:
         prefix_mean_cases_change = "+"
@@ -236,7 +236,7 @@ def get_daily_overview_cases(daily_figures: dict) -> List[THtml]:
             ]
 
 
-def get_daily_overview_deaths(daily_figures: dict) -> List[THtml]:
+def block_daily_overview_deaths(daily_figures: dict) -> List[THtml]:
     prefix_mean_deaths_change = ""
     if daily_figures["last mean deaths, change since day before"] > 0:
         prefix_mean_deaths_change = "+"
@@ -265,7 +265,7 @@ def get_daily_overview_deaths(daily_figures: dict) -> List[THtml]:
             ]
 
 
-def get_daily_overview_r0(daily_figures: dict) -> List[THtml]:
+def block_daily_overview_r0(daily_figures: dict) -> List[THtml]:
     prefix_r0_change = ""
     if daily_figures["last R0, change since day before"] > 0:
         prefix_r0_change = "+"
@@ -309,7 +309,7 @@ def get_daily_overview_r0(daily_figures: dict) -> List[THtml]:
             ]
 
 
-def get_daily_overview_last_7_days(daily_figures: dict) -> List[THtml]:
+def block_daily_overview_last_7_days(daily_figures: dict) -> List[THtml]:
     prefix_cases_7_days_change = ""
     if daily_figures["cases last 7 days, change since day before"] > 0:
         prefix_cases_7_days_change = "+"
@@ -436,7 +436,7 @@ def get_daily_figures(corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
             "last R0 by new admissions to intensive care, change since day before": r0_intensive_register_change}
 
 
-def create_fig_cases_mean_3(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_cases_mean_3(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_CASES_MEAN_3"]["x"]
     y = json.loads(config["FIG_CASES_MEAN_3"]["y"])
@@ -471,7 +471,7 @@ def create_fig_cases_mean_3(corona_cases_and_deaths_with_nowcast: pd.DataFrame) 
     return fig_cases_mean_3
 
 
-def create_fig_deaths_mean_3(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_deaths_mean_3(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_DEATHS_MEAN_3"]["x"]
     y = json.loads(config["FIG_DEATHS_MEAN_3"]["y"])
@@ -505,7 +505,7 @@ def create_fig_deaths_mean_3(corona_cases_and_deaths_with_nowcast: pd.DataFrame)
     return fig_deaths_mean_3
 
 
-def create_fig_r0(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_r0(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_R0"]["x"]
     y = json.loads(config["FIG_R0"]["y"])
@@ -547,7 +547,7 @@ def create_fig_r0(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     return fig_r0
 
 
-def create_fig_7d_incidences(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_7d_incidences(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_7D_INCIDENCES"]["x"]
     y = json.loads(config["FIG_7D_INCIDENCES"]["y"])
@@ -580,7 +580,7 @@ def create_fig_7d_incidences(corona_cases_and_deaths_with_nowcast: pd.DataFrame)
     return fig_7d_incidences
 
 
-def create_fig_pcr_tests(number_pcr_tests: NumberPCRTestsDataFrame) -> Figure:
+def figure_pcr_tests(number_pcr_tests: NumberPCRTestsDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_PCR_TESTS"]["x"]
     y = json.loads(config["FIG_PCR_TESTS"]["y"])
@@ -625,7 +625,7 @@ def create_fig_pcr_tests(number_pcr_tests: NumberPCRTestsDataFrame) -> Figure:
     return subfig
 
 
-def create_fig_distribution_of_inhabitants_and_deaths(age_distribution: AgeDistributionDataFrame) -> Figure:
+def figure_distribution_of_inhabitants_and_deaths(age_distribution: AgeDistributionDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_DISTRIBUTION_OF_INHABITANTS"]["x"]
     y = json.loads(config["FIG_DISTRIBUTION_OF_INHABITANTS"]["y"])
@@ -674,7 +674,7 @@ def create_fig_distribution_of_inhabitants_and_deaths(age_distribution: AgeDistr
     return subfig
 
 
-def create_fig_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution: AgeDistributionDataFrame) -> Figure:
+def figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution: AgeDistributionDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_DISTRIBUTION_OF_CASES_PER_N_INHABITANTS"]["x"]
     y = json.loads(config["FIG_DISTRIBUTION_OF_CASES_PER_N_INHABITANTS"]["y"])
@@ -724,7 +724,7 @@ def create_fig_distribution_of_cases_and_deaths_per_n_inhabitants(age_distributi
     return subfig
 
 
-def create_fig_intensive_new(intensive_register: IntensiveRegisterDataFrame) -> Figure:
+def figure_intensive_new(intensive_register: IntensiveRegisterDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_INTENSIVE_NEW"]["x"]
     y = json.loads(config["FIG_INTENSIVE_NEW"]["y"])
@@ -757,7 +757,7 @@ def create_fig_intensive_new(intensive_register: IntensiveRegisterDataFrame) -> 
     return fig_intensive_new
 
 
-def create_fig_intensive_daily_change(intensive_register: IntensiveRegisterDataFrame) -> Figure:
+def figure_intensive_daily_change(intensive_register: IntensiveRegisterDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_INTENSIVE_DAILY_CHANGE"]["x"]
     y = json.loads(config["FIG_INTENSIVE_DAILY_CHANGE"]["y"])
@@ -790,7 +790,7 @@ def create_fig_intensive_daily_change(intensive_register: IntensiveRegisterDataF
     return fig_intensive_daily_change
 
 
-def create_fig_intensive_reporting_areas(intensive_register: IntensiveRegisterDataFrame) -> Figure:
+def figure_intensive_reporting_areas(intensive_register: IntensiveRegisterDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_INTENSIVE_REPORTING_AREAS"]["x"]
     y = json.loads(config["FIG_INTENSIVE_REPORTING_AREAS"]["y"])
@@ -824,7 +824,7 @@ def create_fig_intensive_reporting_areas(intensive_register: IntensiveRegisterDa
     return fig_intensive_reporting_areas
 
 
-def create_fig_intensive_care_ventilated(intensive_register: IntensiveRegisterDataFrame) -> Figure:
+def figure_intensive_care_ventilated(intensive_register: IntensiveRegisterDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_INTENSIVE_CARE_VENTILATED"]["x"]
     y = json.loads(config["FIG_INTENSIVE_CARE_VENTILATED"]["y"])
@@ -877,7 +877,7 @@ def create_fig_intensive_care_ventilated(intensive_register: IntensiveRegisterDa
     return subfig
 
 
-def create_fig_intensive_beds(intensive_register: IntensiveRegisterDataFrame) -> Figure:
+def figure_intensive_beds(intensive_register: IntensiveRegisterDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_INTENSIVE_BEDS"]["x"]
     y = json.loads(config["FIG_INTENSIVE_BEDS"]["y"])
@@ -927,7 +927,7 @@ def create_fig_intensive_beds(intensive_register: IntensiveRegisterDataFrame) ->
     return subfig
 
 
-def create_fig_intensive_beds_prop(intensive_register: IntensiveRegisterDataFrame) -> Figure:
+def figure_intensive_beds_prop(intensive_register: IntensiveRegisterDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_INTENSIVE_BEDS_PROP"]["x"]
     y = json.loads(config["FIG_INTENSIVE_BEDS_PROP"]["y"])
@@ -963,7 +963,7 @@ def create_fig_intensive_beds_prop(intensive_register: IntensiveRegisterDataFram
     return fig_intensive_beds_prop
 
 
-def create_fig_proportions_cases_hospitalizations_deaths(clinical_aspects: ClinicalAspectsDataFrame) -> Figure:
+def figure_proportions_cases_hospitalizations_deaths(clinical_aspects: ClinicalAspectsDataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_PROPORTIONS_CASES_HOSPITALIZATIONS_DEATHS"]["x"]
     y = json.loads(config["FIG_PROPORTIONS_CASES_HOSPITALIZATIONS_DEATHS"]["y"])
@@ -999,7 +999,7 @@ def create_fig_proportions_cases_hospitalizations_deaths(clinical_aspects: Clini
     return proportions_cases_hospitalizations_deaths
 
 
-def create_fig_new_deaths_by_refdate(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_new_deaths_by_refdate(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_NEW_DEATHS_PER_REFDATE"]["x"]
     y = json.loads(config["FIG_NEW_DEATHS_PER_REFDATE"]["y"])
@@ -1034,7 +1034,7 @@ def create_fig_new_deaths_by_refdate(corona_cases_and_deaths_with_nowcast: pd.Da
     return fig_new_deaths_per_refdate
 
 
-def create_fig_total_cases_by_refdate(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_total_cases_by_refdate(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_TOTAL_CASES_PER_REFDATE"]["x"]
     y = json.loads(config["FIG_TOTAL_CASES_PER_REFDATE"]["y"])
@@ -1068,7 +1068,7 @@ def create_fig_total_cases_by_refdate(corona_cases_and_deaths_with_nowcast: pd.D
     return fig_total_cases_per_refdate
 
 
-def create_fig_new_cases_by_reporting_date(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_new_cases_by_reporting_date(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     render_mode = config["ALL_FIGS"]["render_mode"]
     x = config["FIG_NEW_CASES_BY_REPORTING_DATE"]["x"]
     y = json.loads(config["FIG_NEW_CASES_BY_REPORTING_DATE"]["y"])
@@ -1103,7 +1103,7 @@ def create_fig_new_cases_by_reporting_date(corona_cases_and_deaths_with_nowcast:
     return fig_new_deaths_per_refdate
 
 
-def create_fig_total_deaths_by_refdate(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
+def figure_total_deaths_by_refdate(corona_cases_and_deaths_with_nowcast: pd.DataFrame) -> Figure:
     x = config["FIG_TOTAL_DEATHS_PER_REFDATE"]["x"]
     y = json.loads(config["FIG_TOTAL_DEATHS_PER_REFDATE"]["y"])
     color_discrete_map = json.loads(config["FIG_TOTAL_DEATHS_PER_REFDATE"]["color_discrete_map"])
@@ -1136,35 +1136,35 @@ def create_fig_total_deaths_by_refdate(corona_cases_and_deaths_with_nowcast: pd.
     return fig_total_deaths_per_refdate
 
 
-def create_plot_objects(corona_cases_and_deaths_with_nowcast: pd.DataFrame,
-                        number_pcr_tests: NumberPCRTestsDataFrame,
-                        intensive_register: IntensiveRegisterDataFrame,
-                        clinical_aspects: ClinicalAspectsDataFrame,
-                        age_distribution: AgeDistributionDataFrame) -> dict:
+def plot_objects(corona_cases_and_deaths_with_nowcast: pd.DataFrame,
+                 number_pcr_tests: NumberPCRTestsDataFrame,
+                 intensive_register: IntensiveRegisterDataFrame,
+                 clinical_aspects: ClinicalAspectsDataFrame,
+                 age_distribution: AgeDistributionDataFrame) -> dict:
     """
     Function that creates all relevant plot objects (visualizations).
     """
 
     # BRING ALL PLOTS INTO ONE DICTIONAIRY OBJECT
-    return {"fig_cases_mean_3": create_fig_cases_mean_3(corona_cases_and_deaths_with_nowcast),
-            "fig_deaths_mean_3": create_fig_deaths_mean_3(corona_cases_and_deaths_with_nowcast),
-            "fig_r0": create_fig_r0(corona_cases_and_deaths_with_nowcast),
-            "fig_7d_incidences": create_fig_7d_incidences(corona_cases_and_deaths_with_nowcast),
-            "fig_pcr_tests": create_fig_pcr_tests(number_pcr_tests),
-            "fig_distribution_of_inhabitants_and_deaths": create_fig_distribution_of_inhabitants_and_deaths(
+    return {"fig_cases_mean_3": figure_cases_mean_3(corona_cases_and_deaths_with_nowcast),
+            "fig_deaths_mean_3": figure_deaths_mean_3(corona_cases_and_deaths_with_nowcast),
+            "fig_r0": figure_r0(corona_cases_and_deaths_with_nowcast),
+            "fig_7d_incidences": figure_7d_incidences(corona_cases_and_deaths_with_nowcast),
+            "fig_pcr_tests": figure_pcr_tests(number_pcr_tests),
+            "fig_distribution_of_inhabitants_and_deaths": figure_distribution_of_inhabitants_and_deaths(
                 age_distribution),
             "fig_distribution_of_cases_and_deaths_per_n_inhabitants":
-                create_fig_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution),
-            "fig_intensive_new": create_fig_intensive_new(intensive_register),
-            "fig_intensive_daily_change": create_fig_intensive_daily_change(intensive_register),
-            "fig_intensive_reporting_areas": create_fig_intensive_reporting_areas(intensive_register),
-            "fig_intensive_care_ventilated": create_fig_intensive_care_ventilated(intensive_register),
-            "fig_intensive_beds": create_fig_intensive_beds(intensive_register),
-            "fig_intensive_beds_prop": create_fig_intensive_beds_prop(intensive_register),
-            "fig_proportions_cases_hospitalizations_deaths": create_fig_proportions_cases_hospitalizations_deaths(
+                figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution),
+            "fig_intensive_new": figure_intensive_new(intensive_register),
+            "fig_intensive_daily_change": figure_intensive_daily_change(intensive_register),
+            "fig_intensive_reporting_areas": figure_intensive_reporting_areas(intensive_register),
+            "fig_intensive_care_ventilated": figure_intensive_care_ventilated(intensive_register),
+            "fig_intensive_beds": figure_intensive_beds(intensive_register),
+            "fig_intensive_beds_prop": figure_intensive_beds_prop(intensive_register),
+            "fig_proportions_cases_hospitalizations_deaths": figure_proportions_cases_hospitalizations_deaths(
                 clinical_aspects),
-            "fig_new_deaths_per_refdate": create_fig_new_deaths_by_refdate(corona_cases_and_deaths_with_nowcast),
-            "fig_new_cases_by_reporting_date": create_fig_new_cases_by_reporting_date(corona_cases_and_deaths_with_nowcast),
-            "fig_total_cases_by_refdate": create_fig_total_cases_by_refdate(corona_cases_and_deaths_with_nowcast),
-            "fig_total_deaths_by_refdate": create_fig_total_deaths_by_refdate(corona_cases_and_deaths_with_nowcast)
+            "fig_new_deaths_per_refdate": figure_new_deaths_by_refdate(corona_cases_and_deaths_with_nowcast),
+            "fig_new_cases_by_reporting_date": figure_new_cases_by_reporting_date(corona_cases_and_deaths_with_nowcast),
+            "fig_total_cases_by_refdate": figure_total_cases_by_refdate(corona_cases_and_deaths_with_nowcast),
+            "fig_total_deaths_by_refdate": figure_total_deaths_by_refdate(corona_cases_and_deaths_with_nowcast)
             }

@@ -61,10 +61,20 @@ it.
 You can unselect the plot by clicking the corresponding name in the plot legend. Clicking the name again displays the 
 plot again.
 #### Show only one plot
-By double-clicking on the specific plot name in the legend, this plot can be selected individually. By double-clicking on the name again, all plots are displayed again.
+By double-clicking on the specific plot name in the legend, this plot can be selected individually. By double-clicking 
+on the name again, all plots are displayed again.
 
 
 ## Installation
+One dependency is ```pdftotext```. Because of this you have to make sure that you have ```poppler``` installed. For Mac 
+you can run
+
+```
+brew install pkg-config poppler
+```
+
+on your terminal. For other OS see [here](https://pypi.org/project/pdftotext/).
+
  First install the virtual environment within the dashboard folder. open your terminal and navigate to the project's
   directory. 
 ````
@@ -84,6 +94,15 @@ This starts a local server. The terminal displays the `IP-Address` to access the
  
  ```
 http://127.0.0.1:8050/
+```
+
+If you want to use ```gunicorn```, e.g. for production, run in your terminal not the first command, but
+```
+pipenv run gunicorn app:server -b localhost:8000
+```
+. Now you can find the app under
+```
+http://127.0.0.1:8000/
 ```
 
 ## Run automatic update of data

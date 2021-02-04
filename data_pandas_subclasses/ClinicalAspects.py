@@ -65,8 +65,14 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Klinische_Aspekte.xlsx;jsessionid=7D837F724D8740A949BB7CB9F6BF4450.internet101?__blob=publicationFile"
         response = requests.get(url)
         file_object = BytesIO(response.content)
-        clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name=1, header=2)
-                                                      .dropna(how="all", axis=1))
+
+        try:
+          clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name="Daten", header=2)
+                                                        .dropna(how="all", axis=1))
+        except:
+          clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name=0, header=2)
+                                                        .dropna(how="all", axis=1))
+          
         clinical_aspects = rename_columns_german_to_english(clinical_aspects)
 
         clinical_aspects.loc[:, 'no symptoms or no symptoms significant for COVID-19 in %'] = clinical_aspects.\

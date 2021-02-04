@@ -18,6 +18,8 @@ requests = "*"
 xlrd = "==1.2.0"
 pdftotext = "*"
 openpyxl = "*"
+gunicorn = "*"
+gevent = "*"
 
 [requires]
 python_version = "3.8"

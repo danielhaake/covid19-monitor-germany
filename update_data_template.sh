@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-cd /Users/daniel.haake/Documents/Projekte/corona_dashboard/dashboard
+#cd /path/to/your/project/folder
 /usr/local/bin/pipenv run python update_data.py
