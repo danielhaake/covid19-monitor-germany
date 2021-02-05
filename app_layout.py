@@ -22,7 +22,7 @@ from data_pandas_subclasses.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.NumberPCRTests import NumberPCRTestsDataFrame
 
 THtml = TypeVar('THtml', html.H1, html.H2, html.H3, html.H4, html.H5, html.H6, html.Br, html.A, html.Hr, str)
-
+TNum = TypeVar('TNum', int, float)
 
 class Layout:
     class FiguresDict(TypedDict):
@@ -250,12 +250,7 @@ class Layout:
         ]
 
     def _block_daily_overview_cases(self, daily_figures: DailyFiguresDict) -> List[THtml]:
-        prefix_mean_cases_change = ""
-        if daily_figures["last_mean_cases_change_since_day_before"] > 0:
-            prefix_mean_cases_change = "+"
-
-        if daily_figures["last_mean_cases_change_since_day_before"] == 0:
-            prefix_mean_cases_change = "±"
+        prefix_mean_cases_change = self._get_prefix(daily_figures["last_mean_cases_change_since_day_before"])
 
         return [html.H2(children=["cases"]),
                 html.Br(),
@@ -279,11 +274,7 @@ class Layout:
                 ]
 
     def _block_daily_overview_deaths(self, daily_figures: DailyFiguresDict) -> List[THtml]:
-        prefix_mean_deaths_change = ""
-        if daily_figures["last_mean_deaths_change_since_day_before"] > 0:
-            prefix_mean_deaths_change = "+"
-        if daily_figures["last_mean_deaths_change_since_day_before"] == 0:
-            prefix_mean_deaths_change = "±"
+        prefix_mean_deaths_change = self._get_prefix(daily_figures["last_mean_deaths_change_since_day_before"])
 
         return [html.H2(children=["deaths"]),
                 html.Br(),
@@ -307,23 +298,10 @@ class Layout:
                 ]
 
     def _block_daily_overview_r0(self, daily_figures: DailyFiguresDict) -> List[THtml]:
-        prefix_r0_change = ""
-        if daily_figures["last_r0_change_since_day_before"] > 0:
-            prefix_r0_change = "+"
-        if daily_figures["last_r0_change_since_day_before"] == 0:
-            prefix_r0_change = "±"
-
-        prefix_r0_rki_change = ""
-        if daily_figures["last_r0_by_nowcast_rki_change_since_day_before"] > 0:
-            prefix_r0_rki_change = "+"
-        if daily_figures["last_r0_by_nowcast_rki_change_since_day_before"] == 0:
-            prefix_r0_rki_change = "±"
-
-        prefix_r0_intensive_care_change = ""
-        if daily_figures["last_r0_by_new_admissions_to_intensive_care_change_since_day_before"] > 0:
-            prefix_r0_intensive_care_change = "+"
-        if daily_figures["last_r0_by_new_admissions_to_intensive_care_change_since_day_before"] == 0:
-            prefix_r0_intensive_care_change = "±"
+        prefix_r0_change = self._get_prefix(daily_figures["last_r0_change_since_day_before"])
+        prefix_r0_rki_change = self._get_prefix(daily_figures["last_r0_by_nowcast_rki_change_since_day_before"])
+        prefix_r0_intensive_care_change = \
+            self._get_prefix(daily_figures["last_r0_by_new_admissions_to_intensive_care_change_since_day_before"])
 
         return [html.H2(children=["R0"]),
                 html.Br(),
@@ -350,23 +328,10 @@ class Layout:
                 ]
 
     def _block_daily_overview_last_7_days(self, daily_figures: DailyFiguresDict) -> List[THtml]:
-        prefix_cases_7_days_change = ""
-        if daily_figures["cases_last_7_days_change_since_day_before"] > 0:
-            prefix_cases_7_days_change = "+"
-        if daily_figures["cases_last_7_days_change_since_day_before"] == 0:
-            prefix_cases_7_days_change = "±"
-
-        prefix_cases_7_days_by_reporting_date_change = ""
-        if daily_figures["cases_last_7_days_by_reporting_date_change_since_day_before"] > 0:
-            prefix_cases_7_days_by_reporting_date_change = "+"
-        if daily_figures["cases_last_7_days_by_reporting_date_change_since_day_before"] == 0:
-            prefix_cases_7_days_by_reporting_date_change = "±"
-
-        prefix_deaths_7_days_change = ""
-        if daily_figures["deaths_last_7_days_change_since_day_before"] > 0:
-            prefix_deaths_7_days_change = "+"
-        if daily_figures["deaths_last_7_days_change_since_day_before"] == 0:
-            prefix_deaths_7_days_change = "±"
+        prefix_cases_7_days_change = self._get_prefix(daily_figures["cases_last_7_days_change_since_day_before"])
+        prefix_cases_7_days_by_reporting_date_change = \
+            self._get_prefix(daily_figures["cases_last_7_days_by_reporting_date_change_since_day_before"])
+        prefix_deaths_7_days_change = self._get_prefix(daily_figures["deaths_last_7_days_change_since_day_before"])
 
         return [html.H2(children=["last 7 days"]),
                 html.Br(),
@@ -391,6 +356,16 @@ class Layout:
                 html.Br(),
                 'deaths per 1,000,000 inhabitants'
                 ]
+
+    def _get_prefix(self, number: TNum) -> str:
+        prefix = ""
+
+        if number > 0:
+            prefix = "+"
+        elif number == 0:
+            prefix = "±"
+
+        return prefix
 
     def _get_daily_figures(self,
                            corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
