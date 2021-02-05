@@ -16,7 +16,9 @@ app = dash.Dash(__name__,
                 meta_tags=[{'name': 'author',
                             'content': 'Daniel Haake (Data Collection, Data Preparation, Data Analysis & Visualisation)'
                                        ' & Christian Kirifidis (Visualisation)'}])
-app.layout = layout(app)
+
+layout = Layout()
+app.layout = layout.layout()
 
 server = app.server  # important for using with gunicorn
 
@@ -25,8 +27,8 @@ server = app.server  # important for using with gunicorn
 @app.callback(
     dash.dependencies.Output('tabs-global-overview', 'children'),
     [dash.dependencies.Input('graph-update', 'n_intervals')])
-def update_graph_cases_mean_3(n):
-    return tabs_with_graphs()
+def update_tabs_with_graphs(n):
+    return layout.tabs_with_graphs()
 
 
 if __name__ == '__main__':
