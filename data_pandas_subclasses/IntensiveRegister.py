@@ -262,6 +262,9 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[:, 'invasively ventilated (mean ±3 days)'] = \
             self.calculate_7d_moving_mean_for_column('invasively ventilated')
 
+        self.loc[:, 'with treatment completed (change from previous day, mean ±3 days)'] = \
+            self.calculate_7d_moving_mean_for_column('with treatment completed (change from previous day)')
+
     def _calculate_number_of_used_and_unused_intensive_care_beds(self) -> None:
 
         def calculate_intensive_care_patients_without_positive_covid19_test():
@@ -309,9 +312,6 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
         self.loc[:, 'invasively ventilated (change from previous day)'] = \
             calculate_change_from_previous_day_for('invasively ventilated')
-
-        self.loc[:, 'with treatment completed (change from previous day)'] = \
-            calculate_change_from_previous_day_for('with treatment completed')
 
         self.loc[:, 'thereof deceased (change from previous day)'] = \
             calculate_change_from_previous_day_for('thereof deceased')
