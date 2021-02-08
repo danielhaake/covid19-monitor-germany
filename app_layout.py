@@ -132,6 +132,14 @@ class Layout:
                         id='tab-intensive-care',
                         children=self._tab_corona_intensive_care(intensive_register)
                         ),
+
+                dcc.Tab(label='Data sources description',
+                        value='tab-data-sources-description',
+                        className='tab',
+                        selected_className='tab-selected',
+                        id='tab-data-sources-description',
+                        children=self._tab_data_sources_description()
+                        )
                 ]
 
     def _tab_daily_overview(self,
@@ -235,6 +243,12 @@ class Layout:
                 id='graph-fig-intensive-beds-prop',
                 figure=self._figure_intensive_beds_prop(intensive_register))
         ]
+
+    def _tab_data_sources_description(self) -> List[dcc.Markdown]:
+        with open('./data_sources_description.md', 'r', encoding='utf-8') as input_file:
+            text = input_file.read()
+        return dcc.Markdown(text,
+                            id='data-sources-description-content')
 
     def _block_daily_overview_cases(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_cases_change = self._get_prefix(daily_figures["last_mean_cases_change_since_day_before"])
