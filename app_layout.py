@@ -244,7 +244,7 @@ class Layout:
                 figure=self._figure_intensive_beds_prop(intensive_register))
         ]
 
-    def _tab_data_sources_description(self) -> List[dcc.Markdown]:
+    def _tab_data_sources_description(self) -> dcc.Markdown:
         with open('./data_sources_description.md', 'r', encoding='utf-8') as input_file:
             text = input_file.read()
         return dcc.Markdown(text,
