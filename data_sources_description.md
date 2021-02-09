@@ -7,8 +7,11 @@ Here description of Intensive register data
 
 ## Plot data explained
 
-|Plot data | Description |
-|---|---|
+The table below shows all data used in the plots. 
+
+
+| Plot data | Description |
+| --- | --- |
 |Daily Overview | Daily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily Overview | 
 |reported cases of last day |  | 
 |reported deaths of last day |  | 

@@ -101,9 +101,23 @@ h6 {
     margin: 2%;
 }
 
-#data-sources-description-content table,
-#data-sources-description-content th,
+#data-sources-description-content table {
+    padding: 8px;
+    background: #EFEFEF;
+    text-align: center;
+}
+
+#data-sources-description-content th {
+    background: grey;
+    border-top: 4px solid #999;
+    color: white;
+    padding: 8px;
+}
+
+#data-sources-description-content tr:nth-child(even){background-color: white;}
+#data-sources-description-content tr:hover {background-color: #ddd;}
 #data-sources-description-content td {
-  border: thin solid black;
-  border-collapse: collapse;
+    border: 1px solid #f2f2f2;
+    padding: 8px;
+    border-collapse: collapse;
 }
