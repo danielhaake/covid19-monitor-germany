@@ -108,8 +108,7 @@ h6 {
 }
 
 #data-sources-description-content th {
-    background: grey;
-    border-top: 4px solid #999;
+    background: #0079A4;
     color: white;
     padding: 8px;
 }
