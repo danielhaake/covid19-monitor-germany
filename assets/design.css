@@ -113,8 +113,14 @@ h6 {
     padding: 8px;
 }
 
-#data-sources-description-content tr:nth-child(even){background-color: white;}
-#data-sources-description-content tr:hover {background-color: #ddd;}
+#data-sources-description-content tr:nth-child(even){
+    background-color: white;
+}
+
+#data-sources-description-content tr:hover {
+    background-color: #ddd;
+}
+
 #data-sources-description-content td {
     border: 1px solid #f2f2f2;
     padding: 8px;

@@ -39,8 +39,3 @@ Thumbs.db
 # Folders #
 ###########
 __pycache__/
-
-# Project specific ignores #
-############################
-update_data.sh
-
