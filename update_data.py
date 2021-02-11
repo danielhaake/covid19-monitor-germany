@@ -21,14 +21,14 @@ if __name__ == '__main__':
     except Exception:
         traceback.print_exc()
     try:
-        NumberPCRTestsDataFrame.update_csv_with_new_data_from_rki()
-    except Exception:
-        traceback.print_exc()
-    try:
         ClinicalAspectsDataFrame.update_csv_with_new_data_from_rki()
     except Exception:
         traceback.print_exc()
     try:
         AgeDistributionDataFrame.get_age_distribution_of_cases_and_deaths()
+    except Exception:
+        traceback.print_exc()
+    try:
+        NumberPCRTestsDataFrame.update_csv_with_new_data_from_rki()
     except Exception:
         traceback.print_exc()
