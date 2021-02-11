@@ -19,7 +19,6 @@ class NumberPCRTestsSeries(pd.Series):
 
 
 class NumberPCRTestsDataFrame(pd.DataFrame):
-
     _path = "data/number_of_tests_germany.csv"
 
     @property
@@ -31,7 +30,7 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
         return NumberPCRTestsSeries
 
     @staticmethod
-    def from_csv(path: str=None) -> 'NumberPCRTestsDataFrame':
+    def from_csv(path: str = None) -> 'NumberPCRTestsDataFrame':
         if path is None:
             path = NumberPCRTestsDataFrame._path
         number_pcr_tests = NumberPCRTestsDataFrame(pd.read_csv(path,
@@ -45,30 +44,33 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
         self._path = path
 
     @staticmethod
-    def update_csv_with_new_data_from_rki(to_csv: bool=True, path: str=None) -> 'NumberPCRTestsDataFrame':
+    def update_csv_with_new_data_from_rki(to_csv: bool = True, path: str = None) -> 'NumberPCRTestsDataFrame':
 
         def rename_columns_german_to_english(df: NumberPCRTestsDataFrame) -> NumberPCRTestsDataFrame:
             return df.rename(columns={'Anzahl Testungen': 'number of tests',
                                       'Positiv getestet': 'positive tested',
                                       'Kalenderwoche': 'calendar week',
-                                      'Positiven-quote (%)': 'positive rate (%)',
-                                      'Anzahl übermittelnde Labore': 'number of transmitting laboratories'
+                                      'Positivenquote (%)': 'positive rate (%)',
+                                      'Anzahl übermittelnder Labore': 'number of transmitting laboratories'
                                       })
 
         url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx?__blob=publicationFile'
         response = requests.get(url)
         file_object = BytesIO(response.content)
-        number_pcr_tests = NumberPCRTestsDataFrame(pd.read_excel(file_object, sheet_name="Testzahlen", header=2)\
-                                                     .drop("Unnamed: 0", axis=1))
+
+        # sheet name and position of header was changing over time
+        number_pcr_tests = NumberPCRTestsDataFrame(pd.read_excel(file_object,
+                                                                 sheet_name="1_Testzahlerfassung"))
 
         number_pcr_tests = rename_columns_german_to_english(number_pcr_tests)
 
         number_pcr_tests["negative tested"] = number_pcr_tests.calculate_number_of_negative_tests()
 
-        number_pcr_tests["change in number of tests compared to previous week (%)"] = number_pcr_tests.\
+        number_pcr_tests["change in number of tests compared to previous week (%)"] = number_pcr_tests. \
             calculate_change_in_number_of_tests_compared_to_previous_week_in_percent()
 
         number_pcr_tests = number_pcr_tests._cleaning_because_of_calendar_week_column()
+        number_pcr_tests = number_pcr_tests.set_index("calendar week")
 
         if to_csv:
             if path is None:
@@ -92,7 +94,7 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
         self.loc[self.loc[:, "calendar week"] == "Bis einschließlich KW10, 2020", :"calendar week"] = "≤10"
         first_not_included_row = self.loc[self.loc[:, "calendar week"] == "Summe"].index[0]
         self.loc[:, "calendar week"] = self.loc[:, "calendar week"].astype("str")
-        self.loc[:, "calendar week"] = self.loc[:, "calendar week"].str.replace("*", "")
+        self.loc[:, "calendar week"] = self.loc[:, "calendar week"].str.replace("*", "", regex=True)
         calendar_week_splitted = self.loc[:, "calendar week"].str.split("/")
         self.loc[:, "week of year"] = calendar_week_splitted.str[0]
         self.loc[:, "year"] = calendar_week_splitted.str[1]
