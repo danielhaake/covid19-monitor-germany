@@ -27,15 +27,15 @@ be selected via the tabs with the same names.
 * reported deaths of last day
 * R0 of last day
 * figures of last 7 days
-* new reported deaths by reporting date (start of illness, alternatively reporting date)
+* new reported deaths by reporting date (start of illness, alternativeliy reporting date)
 * delay in reporting between public health departments and the RKI
 
 
 #### Corona Cases
 * cases reported by RKI
-* total reported cases by reference date (start of illness, alternatively reporting date)
+* total reported cases by reference date (start of illness, alternativeliy reporting date)
 * deaths reported by RKI
-* total reported deaths by reference date (start of illness, alternatively reporting date)
+* total reported deaths by reference date (start of illness, alternativeliy reporting date)
 * R0 and daily proportional change
 * 7 day incidence
 * Number of PCR tests
@@ -107,7 +107,8 @@ http://127.0.0.1:8000/
 
 ## Run automatic update of data
 This project has a script called ```update_data.py```, which performes the updates for all used data sources. In the 
-main folder also exists a shell-script called ```update_data.sh```. You can create a cron job to run the script every 10 minutes, for example. To get this script
+main folder also exists a shell-script called ```update_data.sh```. Inside this script you have to change to path to 
+your project folder. Then you can create a cron job to run the script every 10 minutes, for example. To get this script
 running every 10 minutes on a mac, go to Terminal and use the command
 
 ```crontab -e```.
