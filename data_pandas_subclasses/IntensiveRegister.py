@@ -54,12 +54,16 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
     @staticmethod
     def update_csv_with_intensive_register_data(path: str = None,
+                                                url_pdf: str=None,
+                                                url_csv: str=None,
                                                 days_incubation_period: int = 5,
                                                 days_from_symptoms_to_intensive_care: int = 9) \
             -> 'IntensiveRegisterDataFrame':
 
         intensive_register = IntensiveRegisterDataFrame.from_csv(path)
         intensive_register._update_intensive_register_data(path=path,
+                                                           url_pdf=url_pdf,
+                                                           url_csv=url_csv,
                                                            days_incubation_period=days_incubation_period,
                                                            days_from_symptoms_to_intensiv_care=
                                                            days_from_symptoms_to_intensive_care,
@@ -69,12 +73,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
     def _update_intensive_register_data(self,
                                         path: str = None,
+                                        url_pdf: str = None,
+                                        url_csv: str = None,
                                         days_incubation_period: int = 5,
                                         days_from_symptoms_to_intensiv_care: int = 9,
                                         to_csv: bool = True) -> None:
 
-        self._get_cases_from_intensive_register_report()
-        self._get_capacities_intensivregister_report()
+        self._get_cases_from_intensive_register_report(url_pdf)
+        self._get_capacities_intensivregister_report(url_pdf, url_csv)
         self._calculate_changes_from_previous_day()
         self._calculate_number_of_used_and_unused_intensive_care_beds()
         self._delete_outliers()
@@ -319,12 +325,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[:, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
             calculate_newly_admitted_covid19_intensive_care_patients()
 
-    def _get_cases_from_intensive_register_report(self) -> None:
+    def _get_cases_from_intensive_register_report(self, url_pdf: str=None) -> None:
 
-        def get_cases_table_from_pdf():
+        def get_cases_table_from_pdf(url_pdf: str=None):
             pdf_table_area_cases = (262, 34, 366, 561)
             # pdf_table_area_cases = (277, 34, 380, 561)
-            pdf = read_pdf(self._url_pdf,
+            if url_pdf is None:
+                url_pdf = self._url_pdf
+            pdf = read_pdf(url_pdf,
                            encoding='utf-8',
                            guess=False,
                            stream=True,
@@ -368,7 +376,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
             return int(thereof_deceased)
 
         date = self._get_date_from_intensive_register_pdf()
-        pdf = get_cases_table_from_pdf()
+        pdf = get_cases_table_from_pdf(url_pdf)
 
         self.loc[date, 'intensive care patients with positive COVID-19 test'] = \
             intensive_care_patients_with_positive_covid19_test(pdf)
@@ -376,12 +384,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[date, 'with treatment completed'] = with_treatment_completed(pdf)
         self.loc[date, 'thereof deceased'] = thereof_deceased(pdf)
 
-    def _get_capacities_intensivregister_report(self) -> None:
+    def _get_capacities_intensivregister_report(self, url_pdf: str=None, url_csv: str=None) -> None:
 
-        def get_capacities_table_from_pdf():
+        def get_capacities_table_from_pdf(url_pdf: str=None):
             pdf_table_area_capacities = (422, 34, 465, 561)
             # pdf_table_area_capacities = (437, 34, 481, 561)
-            pdf = read_pdf(self._url_pdf,
+            if url_pdf is None:
+                url_pdf = self._url_pdf
+            pdf = read_pdf(url_pdf,
                            encoding='utf-8',
                            guess=False,
                            stream=True,
@@ -398,8 +408,10 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                            )
             return pdf[0].set_index("Status")
 
-        def get_last_csv_from_intensive_register_and_date():
-            csv = pd.read_csv(self._url_csv)
+        def get_last_csv_from_intensive_register_and_date(url_csv: str=None):
+            if url_csv is None:
+                url_csv = self._url_csv
+            csv = pd.read_csv(url_csv)
             csv.daten_stand = pd.to_datetime(csv.daten_stand)
             csv.daten_stand = csv.daten_stand.dt.strftime('%Y-%m-%d')
             csv.daten_stand = pd.to_datetime(csv.daten_stand)
@@ -426,11 +438,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
             return csv.iloc[0]["betten_frei"]
 
         date = self._get_date_from_intensive_register_pdf()
-        pdf = get_capacities_table_from_pdf()
+        pdf = get_capacities_table_from_pdf(url_pdf)
 
         self.loc[date, 'emergency reserve'] = emergency_reserve(pdf)
 
-        csv, date = get_last_csv_from_intensive_register_and_date()
+        csv, date = get_last_csv_from_intensive_register_and_date(url_csv)
 
         self.loc[date, 'number of reporting areas'] = number_of_reporting_areas(csv)
         self.loc[date, 'COVID-19 cases'] = covid19_cases(csv)

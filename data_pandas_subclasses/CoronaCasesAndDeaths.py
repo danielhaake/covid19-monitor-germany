@@ -318,12 +318,16 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                          rki_reporting_date: datetime,
                                          new_reported_cases: int,
                                          new_reported_deaths: int,
+                                         cases_cumulative: int = None,
+                                         deaths_cumulative: int = None,
                                          to_csv: bool = True,
                                          path: str = None) -> 'CoronaCasesAndDeathsDataFrame':
         self_copy = self.copy(deep=True)
         self_copy._upsert_cases_and_deaths_for_date(rki_reporting_date=rki_reporting_date,
                                                     new_reported_cases=new_reported_cases,
                                                     new_reported_deaths=new_reported_deaths,
+                                                    cases_cumulative=cases_cumulative,
+                                                    deaths_cumulative=deaths_cumulative,
                                                     to_csv=to_csv,
                                                     path=path)
         return self_copy
