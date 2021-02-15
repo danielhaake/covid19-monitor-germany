@@ -26,6 +26,7 @@ TNum = TypeVar('TNum', int, float)
 
 
 class Layout:
+
     class DailyFiguresDict(TypedDict):
         cases_cumulative: int
         last_cases_reported_by_rki: int
@@ -248,7 +249,8 @@ class Layout:
         with open('./data_sources_description.md', 'r', encoding='utf-8') as input_file:
             text = input_file.read()
         return dcc.Markdown(text,
-                            id='data-sources-description-content')
+                            id='data-sources-description-content',
+                            dangerously_allow_html=True)
 
     def _block_daily_overview_cases(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_cases_change = self._get_prefix(daily_figures["last_mean_cases_change_since_day_before"])
