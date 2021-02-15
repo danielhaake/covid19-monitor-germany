@@ -98,13 +98,17 @@ h6 {
 }
 
 #data-sources-description-content {
-    margin: 2%;
+    margin-left: 3%;
+    margin-right: 3%;
+    margin-top: 2%;
 }
 
 #data-sources-description-content table {
     padding: 8px;
     background: #EFEFEF;
     text-align: center;
+    margin-left: 5%;
+    margin-right: 5%;
 }
 
 #data-sources-description-content th {
