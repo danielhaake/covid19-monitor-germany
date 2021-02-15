@@ -1,55 +1,78 @@
-#### RKI
-The German Robert Koch Institute [(RKI)](https://www.rki.de/DE/Home/homepage_node.html) is an independent higher federal authority and reports directly to the Federal Ministry
-of Health. As a public health institution (Federal Institute for Infectious Diseases and Noncommunicable Diseases),
-it has the health of the entire population in mind and is a central research institution of the Federal Republic of Germany. - [Wikipedia](https://de.wikipedia.org/wiki/Robert_Koch-Institut)
+#### Data Sources
+The data used for the monitor are all from official sources. Data relating to intensive care units come from the 
+"DIVI-Intensivregister" [(www.intensivregister.de)](http://www.intensivregister.de). All other data come from the 
+"Robert-Koch-Institut" [(www.rki.de)](http://www.rki.de). The information is supplemented in part by our own 
+supplementary calculations, such as moving 7-day averages and the like. These are discussed in more detail in the lists 
+below. 
 
-The Robert Koch Institute continuously records the current COVID-19 situation, assesses all information and estimates
-the risk for the population in Germany. In addition, the RKI provides comprehensive recommendations for the expert 
-public and gives an overview of its own research projects. - [www.rki.de](https://www.rki.de/DE/Home/homepage_node.html)
+##### Robert-Koch-Institut (RKI)
+The "Robert-Koch-Institut" (RKI) is a federal institute in the portfolio of the Federal Ministry of Health. The RKI is 
+the central institution of the Federal Government in the field of disease surveillance and prevention and thus also the
+central institution of the Federal Government in the field of application and action-oriented biomedical research. The 
+core tasks of the RKI are the detection, prevention and control of diseases, especially infectious diseases.
 
-<br>
+In the course of the COVID-19 pandemic, the RKI provides data related to cases and deaths related to COVID-19, including 
+daily reporting of newly reported cases and deaths related to COVID-19, as well as other statistical values, such as age 
+distribution, clinical aspects such as percentage of hospitalized and percentage with or without symptoms, the number of 
+performed and positive tests each week, calculation of R0 values and of 7-day incidences.
 
-#### Intensive registry
-The [DIVI](https://www.intensivregister.de/#/index) Intensive Care Register records the free and occupied treatment 
-capacities in intensive care medicine of about 1,300 acute hospitals in Germany on a daily basis. In the context of 
-the SARS-CoV-2 pandemic, current case numbers of COVID-19 patients treated in intensive care are also recorded. [www.intensivregister.de](https://www.intensivregister.de/#/index)
+On the one hand, the [RKI offers an API](https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0) 
+from which new cases and deaths on that day can be retrieved. Furthermore, past cases and deaths are also listed via 
+this API. From this, further statistical values can be derived. 
 
-The DIVI Intensive Care Register is a real-time data collection and analysis environment for intensive care bed 
-capacities and aggregated case numbers for Germany. It is operated in collaboration between the German Interdisciplinary 
-Association for Intensive Care and Emergency Medicine (DIVI) and the Robert Koch Institute (RKI) as a public benefit 
-oriented project. [Wikipedia](https://de.wikipedia.org/wiki/DIVI-Intensivregister)
+On the other hand, the RKI provides [further files on their homepage on COVID-19 in the section "Data for download"](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/nCoV_node.html;jsessionid=50230283CD2606EAEE257CC46D1DB44A.internet061), 
+which already receive aggregated information, but also further information that cannot be queried from the API, such as 
+clinical aspects or number of weekly PCR tests performed. The homepage also answers 
+[frequently asked questions related to COVID-19](https://www.rki.de/SharedDocs/FAQ/NCOV2019/gesamt.html;jsessionid=5AD47B7F105F96C8A3128948EEE59189.internet092?nn=13490888).
 
-<br>
+
+##### Intensivregister
+Prior to the COVID-19 pandemic, there was no nationwide recording of the situation in intensive care units. This task 
+has been taken on by the "DIVI Intensivregister". The Intensive Care Register has been under construction since 
+March 2020. It records the free and occupied treatment capacities in intensive care medicine of about 1,300 acute hospitals in 
+Germany. Intensive care patients with a positive COVID-19 test are also recorded. The "DIVI-Intensivregister" makes the 
+[daily data available for download](https://www.intensivregister.de/#/aktuelle-lage/reports).
+
 
 #### Plot data explained
 
 The table below shows all data used in the plots. 
 
+##### Daily Overview
 
-| Plot data | Description | Source |
-| --- | --- | --- |
-|Daily Overview | Daily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily OverviewDaily Overview | | 
-|reported cases of last day |  |  |
-|reported deaths of last day |  |  |
-|R0 of last day |  |  |
-|figures of last 7 days |  |  |
-|new reported deaths by reporting date (start of illness, alternativeliy reporting date) |  |  |
-|delay in reporting between public health departments and the RKI |  |  |
-|Corona Cases |  |  |
-|cases reported by RKI |  | | 
-|total reported cases by reference date (start of illness, alternativeliy reporting date) |  | | 
-|deaths reported by RKI |  |  |
-|total reported deaths by reference date (start of illness, alternativeliy reporting date) |  | | 
-|R0 and daily proportional change |  |  |
-|7 day incidence |  |  |
-|Number of PCR tests |   || 
-|Clinical aspects |  |  |
-|distribution of inhabitants and deaths |  | | 
-|distribution of reported cases and deaths in relation to inhabitants |  | | 
-|Intensive care |  |  |
-|number of reporting areas |  | | 
-|new admissions of COVID-19 patients to intensive care unit since day before |  | | 
-|change from previous day of intensive care beds occupied by COVID-19 patients |  | | 
-|Proportion of COVID-19 patients receiving intensive care and ventilation |  |  |
-|intensive care beds occupied with and without COVID-19 patients |  |  |
-|intensive care beds proportional figures |  |  |
+| Plot data | Description |
+| --- | --- |
+|reported cases of last day | Every day, the RKI presents the newly reported case numbers. The problem is the fluctuation in the number of cases. Some health offices do not report any figures to the RKI at the weekend, and less testing is done at the weekend and then made up for during the week. This results in strong fluctuations in the reported case numbers. This means that comparisons with the previous day are not possible, and trends are hardly discernible. A trend analysis is only possible on the basis of a smoothed curve. This is possible with the calculation of a 7-day moving average. This means that the calculation for each day also includes every day of the week, including the weekend, which compensates for fluctuations caused by the weekend. For this reason, the focus is placed on the last calculated 7-day average. This gives a more realistic and comparable picture of the reported cases. | 
+|reported deaths of last day | The deaths reported daily by the RKI are also subject to strong fluctuations. If one looks at the time series, the fluctuations are even greater than in the reported case numbers. In order to be able to achieve better comparability and trend analysis for the deaths as well, the comparison of the daily reported death numbers is of no use. They can be either greatly underestimated or greatly overestimated. For this reason, the focus here has also been placed on the 7-day moving average.  | 
+|R0 of last day | The reproduction number R describes how many people an infected person infects on average. This makes it possible to calculate whether there is an increase or decrease in the incidence of infection. <br/><br/> The RKI reports a 4-day R-value and a 7-day R-value. Both values are calculated using the so-called [Nowcast RKI](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting.html). The Nowcast RKI estimates the number of new infections per day. In doing so, an attempt is made to calculate the time of illness and thus to adjust for reporting delays, among other things. However, if one looks at the temporal course of the Nowcast RKI, it is noticeable that the fluctuations are smaller, but nevertheless present. This is due to the fact that the onset of the disease is only known for a certain proportion of the reported cases, and the date when the case became known to the health authority is used as an alternative. As a result, the nowcast is also subject to a certain weekend-related fluctuation. For the reproduction figures of the RKI, the last 4 days are not used, because the reproduction figures are based on the estimate of the start of the disease (nowcast) and here the figures for an estimate are still imprecise. <br><br> For the 4-day R-value, the last 4 days are not taken into account and then the 4 days before are put into relation with the 4 days before. Thus, one time window may go from Saturday to Tuesday, and thus include days when reported numbers are lower, and the other time window may go from Wednesday to Saturday, with days when reported numbers are higher. Therefore, the RKI's 4-day R-value fluctuates more, as the weekend has a stronger influence here. This makes trend analysis difficult to perform. <br><br> For this reason, the RKI has established the more stable 7-day R value. Here, time windows of 7 days are compared with each other, whereby every day of the week occurs in both time windows and fluctuations are balanced out. This results in a more stable value, but the view is automatically directed further into the past. <br><br> In order to limit the time windows further to the 4 days in each case and thus not to direct the view too much into the past, but still to receive stable values, an own calculation was resorted to for the display. Here, the 7-day moving averages are used, which have balanced the fluctuations. Now the sum of the 7-day averages of the last 4 days is put into relation with the buzzer of the 7-day averages of the 4 days before. <br><br> Furthermore, one can try to calculate an R-value based on the new admissions to the ICU, which is done here. However, the reporting behavior of hospitals with respect to the situation in intensive care units is subject to even greater fluctuations. Especially when the numbers are low, the values can fluctuate widely. | 
+|figures of last 7 days | The RKI reports cases in the last 7 days per 100,000 population, the value known as the 7-day incidence. In doing so, they look at cases by reporting date. However, the reported cases of one day consist to no small extent of subsequent reports of the previous days. Therefore, not all cases by reporting date are known for the last reported day. This leads to a value that is calculated somewhat too low. A more accurate value can be obtained by simply calculating the reported cases of the last 7 days and applying them to 100,000 inhabitants rather than the reporting date. This way we have constant values. <br><br> However, it should be noted that the testing strategy also has an influence on the number of reported cases and thus on the 7-day incidence. Testing more persons, e.g., because more asymptomatic persons are tested, or deviating from before all persons hospitalized, illuminates the dark figure, but makes comparability with the first wave more difficult. | 
+|new reported deaths by reporting date (start of illness, alternativeliy reporting date) | This graph visualizes when the new deaths reported on that day were ill. If the onset of illness is not known for the newly reported deaths, the reporting date when the COVID-19 case (not yet a death at that time) became known to the health department is displayed as a substitute. | 
+|delay in reporting between public health departments and the RKI | This graph visualizes when the new cases reported on that day were known to the health departments. This makes it possible to visualize the reporting delay between the health offices and the RKI. | 
+
+<br><br>
+##### Corona Cases 
+
+| Plot data | Description |
+| --- | --- |
+|cases reported by RKI | The RKI reports the newly reported case numbers on a daily basis. This is the data status as of 0 o'clock of the day. Accordingly, these are the cases that were transmitted to the RKI by the health authorities the day before. Therefore, the date was brought forward by one day accordingly. For the sake of completeness, the date when the figures were reported by the RKI is also included. <br><br> As described in the "daily overview" section on COVID-19 cases, daily reported cases are subject to large weekend-related fluctuations. This means that trend analyses are hardly possible. To make this possible nevertheless, a 7-day moving average was calculated and visualized. <br><br> The RKI tries to calculate the onset of illness of the reported cases by the so-called nowcast. However, since the onset of illness is only known for some of the cases and the reporting date is used as a substitute, this value is also subject to weekend-related fluctuations. Here, too, a 7-day moving average was calculated to make a trend more visible. <br><br> Based on the calculated onset of illness, the onset of infection of the reported cases can be estimated. Here, in a simplified way, the curve is shifted forward by the mean incubation time. According to the RKI, the average incubation period is 5-6 days. When shifting the curve, 5 days were used. | 
+|total reported cases by reference date (start of illness, alternativeliy reporting date) | The RKI provides the reference date of the case for each case. If an onset of illness has been reported, it is the reported onset of illness. If the onset of the disease has not been reported, it is the date when the case was reported to the health authority.  | 
+|deaths reported by RKI | The RKI reports the newly reported deaths on a daily basis. This is the data status as of 0 o'clock of the day. Accordingly, these are the deaths that were transmitted to the RKI by the health offices the day before. Therefore, the date was brought forward by one day accordingly. For the sake of completeness, the date when the figures were reported by the RKI is also included. <br><br> New deaths reported daily are subject to even greater fluctuations than the number of cases reported daily. This makes it difficult to identify trends. By calculating the 7-day moving average, the daily situation can be represented much better and thus a trend can be made visible. <br><br> Furthermore, the case numbers are visualized according to the onset of illness. For a large part, the onset of disease is not known. Here, the date when the original case (not death) became known to the health offices is used. Here, too, a 7-day moving average is calculated, since this value is also subject to strong fluctuations due to the reporting date. It must be taken into account that the actual onset of the disease is usually before the reporting date. The actual curve progression after the onset of the disease should therefore actually lie somewhat further in advance than the visualization can show. | 
+|total reported deaths by reference date (start of illness, alternativeliy reporting date) | The RKI provides the reference date of the case for each case. If an onset of illness has been reported, it is the reported onset of illness. If the onset of the disease has not been reported, it is the date when the case was reported to the health authority. For deaths, the reference date is not the date when the death was reported, but when the illness started, or when the illness was reported. | 
+|R0 and daily proportional change | The reproduction number R describes how many people an infected person infects on average. This makes it possible to calculate whether there is an increase or decrease in the incidence of infection. Further information on the calculation can be found in the section "Daily overview - R-value", also for the so called "Nowcast". Because the increase in the incidence of infection is of interest, the 7-day R value was shifted forward by the mean incubation period of 5 days. In this way, it is possible to estimate at which points in time the incidence of infection increased or decreased more or less. It must further be noted that the testing strategy, such as more or less testing of asymptomatic cases, testing of some or all hospital admissions, etc., may also have an impact on the R-value. | 
+|7 day incidence | In this plot, the 7-day incidence is shown. On the one hand, the number of reported cases per 100,000 inhabitants is calculated using the reported cases, and on the other hand, the 7-day moving average is also used. This gives a somewhat clean curve, even though the fluctuations are not as high. <br><br> Also, we calculated how many deaths were reported per 1,000,000 inhabitants within the last 7 days. Again, an additional calculation was made using the 7-day moving means to calculate a clean curve shape. | 
+|Number of PCR tests | Every Wednesday, the RKI publishes how many PCR tests were performed in the previous week. Furthermore, the RKI indicates how many of these tests were positive. From this we calculate the number of PCR tests that were negative and we calculate the ratio of positive PCR tests to negative PCR tests. | 
+|Clinical aspects | Every Tuesday, the RKI publishes more detailed information on clinical aspects, e.g., the proportion of individuals with no symptoms or no symptoms significant for COVID-19, the proportion of reported cases that were hopsitalized over time, or even the proportion who died. These values refer only to the reported cases and thus to the bright field. Since there are also unreported cases ("dark field"), the actual values for hospitalizations and proportion of deceased are normally lower than the values visualized here. For the last few weeks, it must be borne in mind that the values shown may still rise, that cases reported now may also die in the future, and that the value will therefore rise retrospectively. | 
+|distribution of inhabitants and deaths | This plot visualizes how many individuals died for each age group submitted by the RKI via the API. For a better estimation, it is also visualized how many [inhabitants per age group live in Germany as of 31.12.2019](https://de.statista.com/statistik/daten/studie/1351/umfrage/altersstruktur-der-bevoelkerung-deutschlands/). | 
+|distribution of reported cases and deaths in relation to inhabitants | This plot picks up on the "distribution of inhabitants and deaths" plot. It visualizes how many people per 100,000 inhabitants and age group tested positive for COVID-19 or died per 1,000,000 inhabitants. It must be taken into account that a higher number of persons tested positive in the oldest age group does not necessarily mean that there were also relatively more in this age group. This may also be related to the testing strategy, if all hospitalized persons are tested or if there is an increased number of persons in nursing homes. As a result, these groups of persons are tested more closely, which leads to a stronger brightening of the dark field. | 
+
+<br><br>
+##### Intensive care 
+
+| Plot data | Description |
+| --- | --- |
+|number of reporting areas | The "DIVI-Intensivregister" was launched in the wake of the COVID 19 pandemic in March 2020 and built up from there. Thus, over time, more and more hospitals reported their figures on the situation in intensive care units to the registry. Therefore, the figures should be taken somewhat with a grain of salt, as at that time the registry was still under construction. In this plot it can now be seen how many areas have reported the figures per day to the "DIVI-Intensivregister". | 
+|new admissions of COVID-19 patients to intensive care unit since day before | In this plot, daily ICU admissions with positive COVID-19 test are visualized. The new admissions are calculated from the difference between the ICU beds occupied by patients with COVID-19 test and the completed treatments of patients with positive COVID-19 test reported for the day. Obviously, the reporting behavior of the individual areas leads to strong fluctuations in the figures. In order to provide a more realistic picture of the actual situation and also to better visualize a trend, a 7-day moving mean was also calculated. For some days there were [outliers or no reported values](https://www.intensivregister.de/#/aktuelle-lage/reports), so that for a certain period no complete 7 days were available for the calculation of the 7-day moving average. Therefore, the graph shows a gap for this time.| 
+|change from previous day of intensive care beds occupied by COVID-19 patients | This plot indicates how the number of ICU patients with positive COVID-19 tests changed on a daily basis. Again, the reported numbers are subject to greater variation. For smoothing and better trend analysis, a 7-day moving average was also calculated and visualized here. | 
+|Proportion of COVID-19 patients receiving intensive care and ventilation | It visualizes how many of the ICU patients with a positive COVID-19 test require invasive ventilation and how many require non-invasive ventilation. In addition, these two values were put into relation and visualized as well. | 
+|intensive care beds occupied with and without COVID-19 patients | The numbers of intensive care patients with a positive COVID-19 test, intensive care patients without a COVID-19 test, free intensive care beds and the emergency reserve are shown. in addition, it was calculated how many intensive care beds without and with emergency reserve are available daily and how many intensive care beds in total are available daily. Since more intensive care beds are occupied during the week than at weekends, resulting in a ripple effect, a 7-day moving average was calculated to improve comparability of the daily values. | 
+|intensive care beds proportional figures | This plot picks up on the plot "ICU beds occupied with and without COVID-19 patients". Some relations are calculated and visualized as follows. The aim is to show what percentage of intensive care beds are occupied by patients with a positive COVID-19 test. | 
