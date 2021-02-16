@@ -71,11 +71,11 @@ class NowcastRKIDataFrame(pd.DataFrame):
                                       "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
                                           "max cases (Nowcast RKI)",
                                       "Punktschätzer des 7-Tage-R Wertes":
-                                          "7 day R0 (Nowcast RKI)",
+                                          "7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
-                                          "min 7 day R0 (Nowcast RKI)",
+                                          "min 7 day R value (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
-                                          "max 7 day R0 (Nowcast RKI)"
+                                          "max 7 day R value (Nowcast RKI)"
                                       }
                              ).set_index("date")
 
@@ -118,12 +118,12 @@ class NowcastRKIDataFrame(pd.DataFrame):
                 "min Infections (based on 7 day nowcast of RKI - 5 days regarding incubation period)",
             "max cases (Nowcast RKI)":
                 "max Infections (based on 7 day nowcast of RKI - 5 days regarding incubation period)",
-            "7 day R0 (Nowcast RKI)":
-                "7 day R0 (Nowcast RKI, -5 days incubation period)",
-            "min 7 day R0 (Nowcast RKI)":
-                "min 7 day R0 (Nowcast RKI, -5 days incubation period)",
-            "max 7 day R0 (Nowcast RKI)":
-                "max 7 day R0 (Nowcast RKI, -5 days incubation period)"
+            "7 day R value (Nowcast RKI)":
+                "7 day R value (Nowcast RKI, -5 days incubation period)",
+            "min 7 day R value (Nowcast RKI)":
+                "min 7 day R value (Nowcast RKI, -5 days incubation period)",
+            "max 7 day R value (Nowcast RKI)":
+                "max 7 day R value (Nowcast RKI, -5 days incubation period)"
         })
 
     def calculate_7d_moving_mean_for_column(self, column_name: str) -> List[TNum]:
@@ -168,13 +168,13 @@ class NowcastRKIDataFrame(pd.DataFrame):
     def get_third_last_date_for_mean_values(self) -> dt.datetime:
         return self.get_last_date_for_mean_values() - pd.DateOffset(2)
 
-    def get_last_r0(self) -> float:
+    def get_last_r_value(self) -> float:
         second_last_date = self.get_second_last_date()
-        return self.loc[second_last_date, "7 day R0 (Nowcast RKI)"]
+        return self.loc[second_last_date, "7 day R value (Nowcast RKI)"]
 
-    def get_second_last_r0(self) -> float:
+    def get_second_last_r_value(self) -> float:
         third_last_date = self.get_third_last_date()
-        return self.loc[third_last_date, "7 day R0 (Nowcast RKI)"]
+        return self.loc[third_last_date, "7 day R value (Nowcast RKI)"]
 
-    def get_change_from_second_last_to_last_date_for_r0(self) -> float:
-        return self.get_last_r0() - self.get_second_last_r0()
+    def get_change_from_second_last_to_last_date_for_r_value(self) -> float:
+        return self.get_last_r_value() - self.get_second_last_r_value()

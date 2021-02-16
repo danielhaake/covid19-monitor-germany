@@ -85,7 +85,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self._calculate_number_of_used_and_unused_intensive_care_beds()
         self._delete_outliers()
         self._calculate_7_day_moving_means()
-        self._calculate_r0_by_moving_mean_newly_admitted_covid_19_intensive_care_patients()
+        self._calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients()
         self._calculate_possible_infection_date(days_from_symptoms_to_intensiv_care, days_incubation_period)
 
         self._calculate_proportional_columns()
@@ -165,7 +165,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
             self.loc[:,
             ['newly admitted intensive care patients with a positive COVID-19 test',
              'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
-             'R0 calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)']]
+             'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)']]
 
         intensive_register_by_infection_date = intensive_register_by_infection_date.reset_index()
         intensive_register_by_infection_date.loc[:, "date"] = \
@@ -178,14 +178,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                 'calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test',
             'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)':
                 'calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
-            'R0 calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)':
-                'R0 by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
+            'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)':
+                'R value by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
         })
         self. \
             drop(
             ['calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test',
              'calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
-             'R0 by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'],
+             'R value by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'],
             axis=1, inplace=True)
         self.__dict__.update(self.merge(intensive_register_by_infection_date,
                                         how="outer",
@@ -232,7 +232,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                 for date
                 in self.index]
 
-    def _calculate_r0_by_moving_mean_newly_admitted_covid_19_intensive_care_patients(self) -> None:
+    def _calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients(self) -> None:
 
         moving_mean_newly_admitted_covid_19_intensive_care_patients_column_name = \
             'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
@@ -243,7 +243,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
             calculate_sum_3d_to_0d_before_for(moving_mean_newly_admitted_covid_19_intensive_care_patients_column_name)
 
         self.loc[:,
-        'R0 calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
+        'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
             [cases_sum_3d_to_0d_before[i] / cases_sum_7d_to_4d_before[i]
              if cases_sum_7d_to_4d_before[i] != 0
              else np.nan
@@ -470,17 +470,17 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
     def get_second_last_date_for_mean_values(self) -> dt.datetime:
         return self.get_last_date_for_mean_values() - pd.DateOffset(1)
 
-    def get_last_r0_by_mean_cases(self) -> float:
+    def get_last_r_value_by_mean_cases(self) -> float:
         last_date = self.get_last_date_for_mean_values()
         return self.loc[last_date,
-                        "R0 calculated by newly admitted intensive care patients with a " \
+                        "R value calculated by newly admitted intensive care patients with a " \
                         "positive COVID-19 test (mean ±3 days)"]
 
-    def get_second_last_r0_by_mean_cases(self) -> float:
+    def get_second_last_r_value_by_mean_cases(self) -> float:
         second_last_date = self.get_second_last_date_for_mean_values()
         return self.loc[second_last_date,
-                        "R0 calculated by newly admitted intensive care patients with a " \
+                        "R value calculated by newly admitted intensive care patients with a " \
                         "positive COVID-19 test (mean ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_r0_by_mean_cases(self) -> float:
-        return self.get_last_r0_by_mean_cases() - self.get_second_last_r0_by_mean_cases()
+    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()

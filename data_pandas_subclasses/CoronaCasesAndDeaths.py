@@ -214,7 +214,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         self.loc[:, "deaths (mean of ±3 days) by reporting date"] = \
             self.calculate_7d_moving_mean_for_column("deaths by reporting date")
 
-        self.loc[:, "R0 by cases (mean of ±3 days)"] = self.calculate_r0_by_moving_mean_cases()
+        self.loc[:, "R value by cases (mean of ±3 days)"] = self.calculate_r_value_by_moving_mean_cases()
 
         self.loc[:, "daily proportionate increase of cases (mean of ±3 days)"] = self. \
             calculate_daily_proportionate_increase_for("cases (mean of ±3 days)")
@@ -267,7 +267,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                 for date
                 in self.index]
 
-    def calculate_r0_by_moving_mean_cases(self) -> List[float]:
+    def calculate_r_value_by_moving_mean_cases(self) -> List[float]:
         moving_mean_cases_column_name = "cases (mean of ±3 days)"
 
         cases_sum_7d_to_4d_before = self.calculate_sum_7d_to_4d_before_for(moving_mean_cases_column_name)
@@ -1308,16 +1308,16 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         last_date = self.get_last_date()
         return self.loc[last_date, "deaths cumulative"]
 
-    def get_last_r0_by_mean_cases(self) -> float:
+    def get_last_r_value_by_mean_cases(self) -> float:
         last_date_for_mean_values = self.get_last_date_for_mean_values()
-        return self.loc[last_date_for_mean_values, "R0 by cases (mean of ±3 days)"]
+        return self.loc[last_date_for_mean_values, "R value by cases (mean of ±3 days)"]
 
-    def get_second_last_r0_by_mean_cases(self) -> float:
+    def get_second_last_r_value_by_mean_cases(self) -> float:
         second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
-        return self.loc[second_last_date_for_mean_values, "R0 by cases (mean of ±3 days)"]
+        return self.loc[second_last_date_for_mean_values, "R value by cases (mean of ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_r0_by_mean_cases(self) -> float:
-        return self.get_last_r0_by_mean_cases() - self.get_second_last_r0_by_mean_cases()
+    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()
 
     def get_cases_last_7_days(self) -> int:
         last_date = self.get_last_date()
