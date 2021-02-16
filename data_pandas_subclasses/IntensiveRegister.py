@@ -1,5 +1,8 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
+from dotenv import load_dotenv
+
 from io import BytesIO
 from typing import TypeVar, List
 
@@ -12,6 +15,7 @@ from pdftotext import PDF
 import urllib
 from datetime import datetime
 
+load_dotenv()
 TNum = TypeVar('TNum', int, float)
 
 
@@ -26,7 +30,10 @@ class IntensiveRegisterSeries(pd.Series):
 
 
 class IntensiveRegisterDataFrame(pd.DataFrame):
-    _path = "data/intensive_register_total.csv"
+
+    _folder_path = "data/"
+    _filename = "intensive_register_total.csv"
+    _path = _folder_path + _filename
     _url_pdf = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Report.pdf"
     _url_csv = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv"
 
@@ -41,13 +48,23 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
     def _set_path(self, path: str):
         self._path = path
 
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
+
     @staticmethod
     def from_csv(path: str = None) -> 'IntensiveRegisterDataFrame':
         if path is None:
-            path = IntensiveRegisterDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
+            else:
+                path = IntensiveRegisterDataFrame._path
+
         intensive_register = IntensiveRegisterDataFrame(pd.read_csv(path,
                                                                     parse_dates=['date'],
                                                                     index_col="date"))
+        if os.environ.get('FOLDER_PATH') is not None:
+            intensive_register._set_folder_path(os.environ.get('FOLDER_PATH'))
+
         if path is not None:
             intensive_register._set_path(path)
         return intensive_register
@@ -94,7 +111,12 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
         if to_csv:
             if path is None:
-                path = IntensiveRegisterDataFrame._path
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
+                    self._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    self._set_path(path)
+                else:
+                    path = IntensiveRegisterDataFrame._path
             self.to_csv(path)
 
     def _delete_outliers(self) -> None:

@@ -3,6 +3,11 @@
 update_data.sh
 
 
+# Secret files #
+################
+.env
+
+
 # Compiled source #
 ###################
 *.com

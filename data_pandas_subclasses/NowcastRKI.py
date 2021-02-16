@@ -1,6 +1,8 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
 
+from dotenv import load_dotenv
 from io import BytesIO
 
 import datetime as dt
@@ -10,6 +12,7 @@ import pandas as pd
 import numpy as np
 import requests
 
+load_dotenv()
 TNum = TypeVar('TNum', int, float)
 
 
@@ -24,7 +27,10 @@ class NowcastRKISeries(pd.Series):
 
 
 class NowcastRKIDataFrame(pd.DataFrame):
-    _path = "data/nowcast_rki.csv"
+
+    _folder_path = "data/"
+    _filename = "nowcast_rki.csv"
+    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -37,13 +43,24 @@ class NowcastRKIDataFrame(pd.DataFrame):
     def _set_path(self, path: str):
         self._path = path
 
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
+
     @staticmethod
     def from_csv(path: str=None) -> 'NowcastRKIDataFrame':
         if path is None:
-            path = NowcastRKIDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
+            else:
+                path = NowcastRKIDataFrame._path
+
         nowcast_rki = NowcastRKIDataFrame(pd.read_csv(path,
                                                       parse_dates=['date'],
                                                       index_col="date"))
+
+        if os.environ.get('FOLDER_PATH') is not None:
+            nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
+
         if path is not None:
             nowcast_rki._set_path(path)
 
@@ -97,7 +114,12 @@ class NowcastRKIDataFrame(pd.DataFrame):
 
         if to_csv:
             if path is None:
-                path = NowcastRKIDataFrame._path
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
+                    nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    nowcast_rki._set_path(path)
+                else:
+                    path = NowcastRKIDataFrame._path
             nowcast_rki.to_csv(path)
 
         return nowcast_rki
