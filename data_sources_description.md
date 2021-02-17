@@ -1,37 +1,42 @@
 #### Data Sources
-The data used for the monitor are all from official sources. Data relating to intensive care units come from the 
-"DIVI-Intensivregister" [(www.intensivregister.de)](http://www.intensivregister.de). All other data come from the 
-"Robert-Koch-Institut" [(www.rki.de)](http://www.rki.de). The information is supplemented in part by our own 
-supplementary calculations, such as moving 7-day averages and the like. These are discussed in more detail in the lists 
+The data used for the monitor comes from official sources in Germany. Data relating to intensive care units comes from the 
+"DIVI-Intensivregister" [(www.intensivregister.de)](http://www.intensivregister.de). All other data comes from the 
+"Robert-Koch-Institut" [(www.rki.de)](http://www.rki.de). The information is supplemented in part by our own calculations, 
+such as moving 7-day averages and the like. These are discussed in more detail in the lists 
 below. 
 
 ##### Robert-Koch-Institut (RKI)
-The "Robert-Koch-Institut" (RKI) is a federal institute in the portfolio of the Federal Ministry of Health. The RKI is 
-the central institution of the Federal Government in the field of disease surveillance and prevention and thus also the
-central institution of the Federal Government in the field of application and action-oriented biomedical research. The 
-core tasks of the RKI are the detection, prevention and control of diseases, especially infectious diseases.
+_"The Robert Koch Institute continuously records the current COVID-19 situation, assesses all information and estimates
+the risk for the population in Germany. In addition, the RKI provides comprehensive recommendations for the expert 
+public and gives an overview of its own research projects."_ [(www.rki.de)](http://www.rki.de)
 
-In the course of the COVID-19 pandemic, the RKI provides data related to cases and deaths related to COVID-19, including 
-daily reporting of newly reported cases and deaths related to COVID-19, as well as other statistical values, such as age 
-distribution, clinical aspects such as percentage of hospitalized and percentage with or without symptoms, the number of 
-performed and positive tests each week, calculation of R0 values and of 7-day incidences.
+_"The Robert Koch Institute (RKI) is a German federal government agency and research institute responsible for disease 
+control and prevention. It is located in Berlin and Wernigerode. As an upper federal agency, it is subordinate to the 
+Federal Ministry of Health."_ - [Wikipedia](https://en.wikipedia.org/wiki/Robert_Koch_Institute)
 
-On the one hand, the [RKI offers an API](https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0) 
-from which new cases and deaths on that day can be retrieved. Furthermore, past cases and deaths are also listed via 
-this API. From this, further statistical values can be derived. 
+In the course of the COVID-19 pandemic, the RKI provides daily reporting of newly reported cases and deaths related to 
+COVID-19. This includes statistics about: 
+- age distribution 
+- percentage of people hospitalized
+- percentage of people with or without symptoms
+- the number of performed and positive tests each week
+- Calculations of R values and of 7-day incidences
 
-On the other hand, the RKI provides [further files on their homepage on COVID-19 in the section "Data for download"](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/nCoV_node.html;jsessionid=50230283CD2606EAEE257CC46D1DB44A.internet061), 
-which already receive aggregated information, but also further information that cannot be queried from the API, such as 
-clinical aspects or number of weekly PCR tests performed. The homepage also answers 
+The [RKI offers an API](https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0) where data can be obtained. 
+This includes daily cases and deaths as well as past cases and deaths. Based on this data, further statistical values can be derived. 
+
+Additionally, the RKI provides files on their homepage on COVID-19 in the section, ["Data for download"](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/nCoV_node.html;jsessionid=50230283CD2606EAEE257CC46D1DB44A.internet061).
+They contain aggregated information and information that cannot be queried by the API. This includes clinical aspects,
+or the number of weekly PCR tests performed. The homepage also answers 
 [frequently asked questions related to COVID-19](https://www.rki.de/SharedDocs/FAQ/NCOV2019/gesamt.html;jsessionid=5AD47B7F105F96C8A3128948EEE59189.internet092?nn=13490888).
 
 
 ##### Intensivregister
-Prior to the COVID-19 pandemic, there was no nationwide recording of the situation in intensive care units. This task 
-has been taken on by the "DIVI Intensivregister". The Intensive Care Register has been under construction since 
-March 2020. It records the free and occupied treatment capacities in intensive care medicine of about 1,300 acute hospitals in 
-Germany. Intensive care patients with a positive COVID-19 test are also recorded. The "DIVI-Intensivregister" makes the 
-[daily data available for download](https://www.intensivregister.de/#/aktuelle-lage/reports).
+Prior to the COVID-19 pandemic, there was no nationwide record of the state of intensive care units. This task 
+has been taken on by the "DIVI Intensivregister". The Intensive Care Register was established in March 2020. It records
+the free and occupied treatment capacities for intensive care units in about 1,300 hospitals in 
+Germany, including intensive care patients with a positive COVID-19 test. The "DIVI-Intensivregister" provides daily 
+[data for download](https://www.intensivregister.de/#/aktuelle-lage/reports).
 
 
 #### Plot data explained
