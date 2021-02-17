@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import logging
 import os
 from dotenv import load_dotenv
 
@@ -16,6 +17,7 @@ import urllib
 from datetime import datetime
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 TNum = TypeVar('TNum', int, float)
 
 
@@ -77,7 +79,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                                                 days_from_symptoms_to_intensive_care: int = 9) \
             -> 'IntensiveRegisterDataFrame':
 
+        logging.info("START UPDATE PROCESS FOR INTENSIVE REGISTER")
+
         intensive_register = IntensiveRegisterDataFrame.from_csv(path)
+        logging.info("initial loading of CSV finished")
+
         intensive_register._update_intensive_register_data(path=path,
                                                            url_pdf=url_pdf,
                                                            url_csv=url_csv,
@@ -86,6 +92,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                                                            days_from_symptoms_to_intensive_care,
                                                            to_csv=True)
 
+        logging.info("FINISHED UPDATE PROCESS FOR INTENSIVE REGISTER")
         return intensive_register
 
     def _update_intensive_register_data(self,
@@ -96,8 +103,10 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                                         days_from_symptoms_to_intensiv_care: int = 9,
                                         to_csv: bool = True) -> None:
 
+        logging.info("start update with new data from RKI API")
+
         self._get_cases_from_intensive_register_report(url_pdf)
-        self._get_capacities_intensivregister_report(url_pdf, url_csv)
+        self._get_capacities_intensive_register_report(url_pdf, url_csv)
         self._calculate_changes_from_previous_day()
         self._calculate_number_of_used_and_unused_intensive_care_beds()
         self._delete_outliers()
@@ -106,6 +115,8 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self._calculate_possible_infection_date(days_from_symptoms_to_intensiv_care, days_incubation_period)
 
         self._calculate_proportional_columns()
+
+        logging.info("finished update with new data from RKI API")
 
         self = self.dropna(how="all", axis=0)
 
@@ -118,11 +129,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                 else:
                     path = IntensiveRegisterDataFrame._path
             self.to_csv(path)
+            logging.info(f"updated IntensiveRegisterDataFrame has been written to {path}")
 
     def _delete_outliers(self) -> None:
         """The 'DIVI Intensivregister' reports outliers because of bigger corrections of some hospitals or
         anomalies in the figures for some dates. This method deletes these outliers.
         see: https://www.intensivregister.de/#/aktuelle-lage/reports"""
+
+        logging.info("delete outliers")
 
         outlier_dates = [pd.to_datetime("2021-01-15"),
                          pd.to_datetime("2021-01-20")]
@@ -133,8 +147,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         for outlier_date in outlier_dates:
             for outlier_column in outlier_columns:
                 self.loc[outlier_date, outlier_column] = np.nan
+        logging.info("outliers has been removed")
 
     def _calculate_proportional_columns(self) -> None:
+
+        logging.info("calculate proportional columns")
 
         def calculate_invasively_ventilated_in_percent():
             return [self.iloc[i]['invasively ventilated'] /
@@ -182,7 +199,12 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         'Proportion of patients with positive COVID-19 test in available intensive care beds incl. emergency reserve (%)'] = \
             calculate_proportion_covid19_intensive_care_patients_to_available_beds_incl_emergency_reserve()
 
+        logging.info("calculated proportional columns has been added")
+
     def _calculate_possible_infection_date(self, days_from_symptoms_to_intensiv_care, days_incubation_period) -> None:
+
+        logging.info("calculate possible infection date")
+
         intensive_register_by_infection_date = \
             self.loc[:,
             ['newly admitted intensive care patients with a positive COVID-19 test',
@@ -213,6 +235,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                                         how="outer",
                                         left_index=True,
                                         right_index=True).__dict__)
+        logging.info("calculated possible infection date has been added")
 
     def _calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(self,
                                                                               column_name: str,
@@ -256,6 +279,8 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
     def _calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients(self) -> None:
 
+        logging.info("calculate R value by moving mean newly admitted covid-19 intensive care patients")
+
         moving_mean_newly_admitted_covid_19_intensive_care_patients_column_name = \
             'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
 
@@ -270,8 +295,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
              if cases_sum_7d_to_4d_before[i] != 0
              else np.nan
              for i in range(len(cases_sum_3d_to_0d_before))]
+        logging.info("calculated R value by moving mean newly admitted covid-19 intensive care patients has been added")
 
     def _calculate_7_day_moving_means(self) -> List[TNum]:
+
+        logging.info("calculate 7 day moving means")
 
         self.loc[:, 'intensive care patients with positive COVID-19 test (change from previous day, mean ±3 days)'] = \
             self.calculate_7d_moving_mean_for_column(
@@ -293,7 +321,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[:, 'with treatment completed (change from previous day, mean ±3 days)'] = \
             self.calculate_7d_moving_mean_for_column('with treatment completed (change from previous day)')
 
+        logging.info("calculated 7 day moving means has been added")
+
     def _calculate_number_of_used_and_unused_intensive_care_beds(self) -> None:
+
+        logging.info("calculate number of uses and unused intensive care beds")
 
         def calculate_intensive_care_patients_without_positive_covid19_test():
             return self.loc[:, 'occupied intensive care beds'] - self.loc[:, 'COVID-19 cases']
@@ -314,8 +346,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[:, 'number of intensive care beds incl. emergency reserve'] = \
             calculate_number_of_intensive_care_beds_incl_emergency_reserve()
         self.loc[:, 'not invasively ventilated'] = calculate_not_invasively_ventilated()
+        logging.info("calculated number of uses and unused intensive care beds has been added")
 
     def _calculate_changes_from_previous_day(self) -> None:
+
+        logging.info("calculate changes from previous day")
 
         def calculate_change_from_previous_day_for(column_name: str):
             return [(self.loc[date, column_name]) - (self.loc[date - pd.DateOffset(1), column_name])
@@ -347,7 +382,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[:, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
             calculate_newly_admitted_covid19_intensive_care_patients()
 
+        logging.info("calculated changes from previous day has been added")
+
     def _get_cases_from_intensive_register_report(self, url_pdf: str=None) -> None:
+
+        logging.info("get cases from intensive register report")
 
         def get_cases_table_from_pdf(url_pdf: str=None):
             pdf_table_area_cases = (262, 34, 366, 561)
@@ -405,8 +444,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[date, 'invasively ventilated'] = invasively_ventilated(pdf)
         self.loc[date, 'with treatment completed'] = with_treatment_completed(pdf)
         self.loc[date, 'thereof deceased'] = thereof_deceased(pdf)
+        logging.info("cases from intensive register report has been added")
 
-    def _get_capacities_intensivregister_report(self, url_pdf: str=None, url_csv: str=None) -> None:
+    def _get_capacities_intensive_register_report(self, url_pdf: str=None, url_csv: str=None) -> None:
+
+        logging.info("get capacities from intensive register report")
 
         def get_capacities_table_from_pdf(url_pdf: str=None):
             pdf_table_area_capacities = (422, 34, 465, 561)
@@ -471,6 +513,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[date, 'invasively ventilated'] = invasively_ventilated(csv)
         self.loc[date, 'free intensive care beds'] = free_intensive_care_beds(csv)
         self.loc[date, 'occupied intensive care beds'] = csv.iloc[0]["betten_belegt"]
+        logging.info("capacities from intensive register report has been added")
 
     def _get_date_from_intensive_register_pdf(self) -> dt.datetime:
         file = urllib.request.urlopen(self._url_pdf).read()

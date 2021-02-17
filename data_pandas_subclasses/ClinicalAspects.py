@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ import pandas as pd
 import requests
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 class ClinicalAspectsSeries(pd.Series):
     @property
@@ -78,6 +80,9 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
                                       'Anteil Verstorben': 'proportion deceased'
                                       })
 
+        logging.info("START UPDATE PROCESS FOR CLINICAL ASPECTS")
+        logging.info("start downloading file from RKI")
+
         url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Klinische_Aspekte.xlsx;jsessionid=7D837F724D8740A949BB7CB9F6BF4450.internet101?__blob=publicationFile"
         response = requests.get(url)
         file_object = BytesIO(response.content)
@@ -113,7 +118,8 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         else:
             clinical_aspects._set_path(path)
         clinical_aspects.to_csv(path)
-        # TODO clinical_aspects.to_csv('./data/clinical_aspects.csv')
+        logging.info(f"new ClinicalAspectsDataFrame has been written to {path}")
+        logging.info("FINISHED UPDATE PROCESS FOR CLINICAL ASPECTS")
         return clinical_aspects
 
     def _convert_from_float_to_percent_for(self, column_name) -> float:

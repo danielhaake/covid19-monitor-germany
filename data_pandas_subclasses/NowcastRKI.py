@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ import numpy as np
 import requests
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 TNum = TypeVar('TNum', int, float)
 
 
@@ -70,7 +72,12 @@ class NowcastRKIDataFrame(pd.DataFrame):
     @staticmethod
     def update_with_new_data_from_rki(to_csv: bool=True, path: str=None) -> 'NowcastRKIDataFrame':
 
+        logging.info("START UPDATE PROCESS FOR NOWCAST RKI")
+
         def select_and_rename_german_columns_and_set_index_after_download_from_rki(df):
+
+            logging.info("select and rename german columns into english of downloaded file")
+
             df = df.loc[:, ["Datum des Erkrankungsbeginns",
                             "Punktschätzer der Anzahl Neuerkrankungen",
                             "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
@@ -96,6 +103,7 @@ class NowcastRKIDataFrame(pd.DataFrame):
                                       }
                              ).set_index("date")
 
+        logging.info("start download of new file from RKI")
 
         url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting_Zahlen.xlsx?__blob=publicationFile'
         response = requests.get(url)
@@ -106,6 +114,8 @@ class NowcastRKIDataFrame(pd.DataFrame):
                                                         header=0))
 
         nowcast_rki = select_and_rename_german_columns_and_set_index_after_download_from_rki(nowcast_rki)
+
+        logging.info("calculate 7 day moving mean for cases from Nowcast RKI")
         nowcast_rki.loc[:, "cases (mean of ±3 days of Nowcast RKI)"] = \
             nowcast_rki.calculate_7d_moving_mean_for_column("cases (Nowcast RKI)")
 
@@ -121,12 +131,17 @@ class NowcastRKIDataFrame(pd.DataFrame):
                 else:
                     path = NowcastRKIDataFrame._path
             nowcast_rki.to_csv(path)
+            logging.info(f"new NowcastRKIDataFrame has been written to {path}")
+
+        logging.info("FINISHED UPDATE PROCESS FOR NOWCAST RKI")
 
         return nowcast_rki
 
 
     def calculate_df_with_shifted_date_because_of_incubation_period(self, incubation_period_in_days=5) \
             -> 'NowcastRKIDataFrame':
+
+        logging.info("calculate DF with shifted date because of incubation period")
 
         self_copy = self.copy(deep=True)
 
