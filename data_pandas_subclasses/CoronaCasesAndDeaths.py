@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import logging
 import os
 
 from datetime import datetime
@@ -13,6 +14,7 @@ import numpy as np
 import requests
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 TNum = TypeVar('TNum', int, float)
 
 
@@ -68,8 +70,11 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
 
     @staticmethod
     def update_csv_with_data_from_rki_api(path: str = None):
+        logging.info("START UPDATE PROCESS FOR CORONA CASES AND DEATHS")
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv(path)
+        logging.info("initial loading of CSV finished")
         corona_cases_and_deaths._update_with_new_data_from_rki_api(to_csv=True, path=path)
+        logging.info("FINISHED UPDATE PROCESS FOR CORONA CASES AND DEATHS")
 
     @staticmethod
     def initial_loading_from_rki() -> 'CoronaCasesAndDeathsDataFrame':
@@ -121,6 +126,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         # it is possible that we call the methods while the dataset is updated
         # then we could have different dates for reported cases and deaths
         # to have the the same date we rerun the methods until we have the same dates
+        logging.info("start update with new data from RKI API")
         while True:
 
             # get last reported figures
@@ -199,6 +205,8 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                                         overall_deaths_with_unknown_start_of_illness],
                                                        axis=1))
 
+        logging.info("new and total cases and deaths by reporting and reference date were added")
+
         self.index = self.index.rename("date")
 
         self._upsert_cases_and_deaths_for_date(rki_reporting_date=rki_reporting_date,
@@ -208,6 +216,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                                deaths_cumulative=deaths_cumulative,
                                                to_csv=to_csv,
                                                path=path)
+        logging.info("finished update with new data from RKI API")
 
     def upsert_statistics(self, inhabitants: int = 83166711) -> 'CoronaCasesAndDeathsDataFrame':
         self_copy = self.copy(deep=True)
@@ -376,6 +385,8 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         self.loc[date, "case fatility rate (CFR)"] = cfr
         self.loc[date, "non-deceased reported cases"] = non_deceased_reported_cases
 
+        logging.info("new cases and deaths for date were added")
+
         self._upsert_statistics()
 
         if to_csv:
@@ -387,6 +398,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                 else:
                     path = CoronaCasesAndDeathsDataFrame._path
             self.to_csv(path)
+            logging.info(f"updated CoronaCasesAndDeathsDataFrame has been written to {path}")
 
 
     @staticmethod

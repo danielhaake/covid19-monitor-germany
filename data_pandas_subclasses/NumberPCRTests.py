@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -11,6 +12,7 @@ import numpy as np
 import requests
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 class NumberPCRTestsSeries(pd.Series):
     @property
@@ -65,6 +67,7 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
     def update_csv_with_new_data_from_rki(to_csv: bool = True, path: str = None) -> 'NumberPCRTestsDataFrame':
 
         def rename_columns_german_to_english(df: NumberPCRTestsDataFrame) -> NumberPCRTestsDataFrame:
+            logging.info("rename columns from german to english of downloaded file")
             return df.rename(columns={'Anzahl Testungen': 'number of tests',
                                       'Positiv getestet': 'positive tested',
                                       'Kalenderwoche': 'calendar week',
@@ -72,6 +75,9 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
                                       'Anzahl übermittelnder Labore': 'number of transmitting laboratories'
                                       })
 
+        logging.info("START UPDATE PROCESS FOR NUMBER OF PCR TESTS")
+
+        logging.info("start download of new file from RKI")
         url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx?__blob=publicationFile'
         response = requests.get(url)
         file_object = BytesIO(response.content)
@@ -99,21 +105,27 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
                 else:
                     path = NumberPCRTestsDataFrame._path
             number_pcr_tests.to_csv(path)
-        # TODO number_pcr_tests.to_csv("./data/number_of_tests_germany.csv")
+            logging.info(f"new NumberPCRTestsDataFrame has been written to {path}")
+
+        logging.info("FINISHED UPDATE PROCESS FOR NUMBER OF PCR TESTS")
+
         return number_pcr_tests
 
     def calculate_change_in_number_of_tests_compared_to_previous_week_in_percent(self) -> List[float]:
+        logging.info("calculate change in number of pcr tests compared to previous week in percent")
         return 2 * [np.nan] + \
                [(self.loc[i, "number of tests"] / self.loc[i - 1, "number of tests"]) * 100 - 100
                 for i in range(2, len(self) - 1)] \
                + [np.nan]
 
     def calculate_number_of_negative_tests(self) -> List[int]:
+        logging.info("calculate number of negative tests")
         return [self.loc[i, "number of tests"] -
                 self.loc[i, "positive tested"]
                 for i in range(len(self))]
 
     def _cleaning_because_of_calendar_week_column(self) -> 'NumberPCRTestsDataFrame':
+        logging.info("cleaning because of calendar week column")
         self.loc[self.loc[:, "calendar week"] == "Bis einschließlich KW10, 2020", :"calendar week"] = "≤10"
         first_not_included_row = self.loc[self.loc[:, "calendar week"] == "Summe"].index[0]
         self.loc[:, "calendar week"] = self.loc[:, "calendar week"].astype("str")

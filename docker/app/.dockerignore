@@ -11,6 +11,10 @@ Pipfile
 Pipfile.lock
 Readme.md
 
+# Secret files #
+################
+.env
+
 # Compiled source #
 ###################
 *.com

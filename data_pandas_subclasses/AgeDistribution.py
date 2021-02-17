@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ import pandas as pd
 import requests
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 class AgeDistributionSeries(pd.Series):
     @property
@@ -60,6 +62,8 @@ class AgeDistributionDataFrame(pd.DataFrame):
     @staticmethod
     def get_age_distribution_of_cases_and_deaths(to_csv: bool = True, path: str = None) -> 'AgeDistributionDataFrame':
 
+        logging.info("START DOWNLOADING CASES AND DEATHS PER AGE GROUP")
+
         inhabitants_per_age_group = AgeDistributionDataFrame.get_inhabitants_by_age_group()
         total_number_of_reported_cases_by_age_group = \
             AgeDistributionDataFrame.get_total_number_of_reported_cases_by_age_group()
@@ -100,6 +104,9 @@ class AgeDistributionDataFrame(pd.DataFrame):
                 else:
                     path = AgeDistributionDataFrame._path
             age_distribution.to_csv(path)
+            logging.info(f"new AgeDistributionDataFrame has been written to {path}")
+
+        logging.info("FINISHED DOWNLOADING CASES AND DEATHS PER AGE GROUP")
 
         return age_distribution
 
