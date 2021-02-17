@@ -1,10 +1,14 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
+
+from dotenv import load_dotenv
 from io import BytesIO
 
 import pandas as pd
 import requests
 
+load_dotenv()
 
 class AgeDistributionSeries(pd.Series):
     @property
@@ -18,7 +22,9 @@ class AgeDistributionSeries(pd.Series):
 
 class AgeDistributionDataFrame(pd.DataFrame):
 
-    _path = "data/distribution_of_inhabitants_and_cases_and_deaths.csv"
+    _folder_path = "data/"
+    _filename = "distribution_of_inhabitants_and_cases_and_deaths.csv"
+    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -31,11 +37,22 @@ class AgeDistributionDataFrame(pd.DataFrame):
     def _set_path(self, path):
         self._path = path
 
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
+
     @staticmethod
     def from_csv(path: str=None) -> 'AgeDistributionDataFrame':
         if path is None:
-            path = AgeDistributionDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
+            else:
+                path = AgeDistributionDataFrame._path
+
         distribution = AgeDistributionDataFrame(pd.read_csv(path).set_index("age group"))
+
+        if os.environ.get('FOLDER_PATH') is not None:
+            distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
+
         if path is not None:
             distribution._set_path(path)
         return distribution
@@ -76,7 +93,12 @@ class AgeDistributionDataFrame(pd.DataFrame):
 
         if to_csv:
             if path is None:
-                path = AgeDistributionDataFrame._path
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
+                    age_distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    age_distribution._set_path(path)
+                else:
+                    path = AgeDistributionDataFrame._path
             age_distribution.to_csv(path)
 
         return age_distribution

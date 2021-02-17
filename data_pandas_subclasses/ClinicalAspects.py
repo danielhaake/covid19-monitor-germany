@@ -1,10 +1,14 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
+
+from dotenv import load_dotenv
 from io import BytesIO
 
 import pandas as pd
 import requests
 
+load_dotenv()
 
 class ClinicalAspectsSeries(pd.Series):
     @property
@@ -18,7 +22,9 @@ class ClinicalAspectsSeries(pd.Series):
 
 class ClinicalAspectsDataFrame(pd.DataFrame):
 
-    _path = "data/clinical_aspects.csv"
+    _folder_path = "data/"
+    _filename = "clinical_aspects.csv"
+    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -31,11 +37,21 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
     def _set_path(self, path: str):
         self._path = path
 
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
+
     @staticmethod
     def from_csv(path: str=None) -> 'ClinicalAspectsDataFrame':
         if path is None:
-            path = ClinicalAspectsDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
+            else:
+                path = ClinicalAspectsDataFrame._path
+
         clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(path, index_col="calendar week"))
+
+        if os.environ.get('FOLDER_PATH') is not None:
+            clinical_aspects._set_folder_path(os.environ.get('FOLDER_PATH'))
 
         if path is not None:
             clinical_aspects._set_path(path)
@@ -88,7 +104,12 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         clinical_aspects = clinical_aspects.set_index('calendar week')
 
         if path is None:
-            path = ClinicalAspectsDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
+                clinical_aspects._set_folder_path(os.environ.get('FOLDER_PATH'))
+                clinical_aspects._set_path(path)
+            else:
+                path = ClinicalAspectsDataFrame._path
         else:
             clinical_aspects._set_path(path)
         clinical_aspects.to_csv(path)

@@ -1,5 +1,8 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
+from dotenv import load_dotenv
+
 from io import BytesIO
 from typing import TypeVar, List
 
@@ -12,6 +15,7 @@ from pdftotext import PDF
 import urllib
 from datetime import datetime
 
+load_dotenv()
 TNum = TypeVar('TNum', int, float)
 
 
@@ -26,7 +30,10 @@ class IntensiveRegisterSeries(pd.Series):
 
 
 class IntensiveRegisterDataFrame(pd.DataFrame):
-    _path = "data/intensive_register_total.csv"
+
+    _folder_path = "data/"
+    _filename = "intensive_register_total.csv"
+    _path = _folder_path + _filename
     _url_pdf = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Report.pdf"
     _url_csv = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv"
 
@@ -41,13 +48,23 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
     def _set_path(self, path: str):
         self._path = path
 
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
+
     @staticmethod
     def from_csv(path: str = None) -> 'IntensiveRegisterDataFrame':
         if path is None:
-            path = IntensiveRegisterDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
+            else:
+                path = IntensiveRegisterDataFrame._path
+
         intensive_register = IntensiveRegisterDataFrame(pd.read_csv(path,
                                                                     parse_dates=['date'],
                                                                     index_col="date"))
+        if os.environ.get('FOLDER_PATH') is not None:
+            intensive_register._set_folder_path(os.environ.get('FOLDER_PATH'))
+
         if path is not None:
             intensive_register._set_path(path)
         return intensive_register
@@ -85,7 +102,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self._calculate_number_of_used_and_unused_intensive_care_beds()
         self._delete_outliers()
         self._calculate_7_day_moving_means()
-        self._calculate_r0_by_moving_mean_newly_admitted_covid_19_intensive_care_patients()
+        self._calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients()
         self._calculate_possible_infection_date(days_from_symptoms_to_intensiv_care, days_incubation_period)
 
         self._calculate_proportional_columns()
@@ -94,7 +111,12 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
         if to_csv:
             if path is None:
-                path = IntensiveRegisterDataFrame._path
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
+                    self._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    self._set_path(path)
+                else:
+                    path = IntensiveRegisterDataFrame._path
             self.to_csv(path)
 
     def _delete_outliers(self) -> None:
@@ -165,7 +187,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
             self.loc[:,
             ['newly admitted intensive care patients with a positive COVID-19 test',
              'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
-             'R0 calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)']]
+             'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)']]
 
         intensive_register_by_infection_date = intensive_register_by_infection_date.reset_index()
         intensive_register_by_infection_date.loc[:, "date"] = \
@@ -178,14 +200,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                 'calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test',
             'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)':
                 'calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
-            'R0 calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)':
-                'R0 by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
+            'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)':
+                'R value by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
         })
         self. \
             drop(
             ['calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test',
              'calculated start of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
-             'R0 by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'],
+             'R value by calculated onset of infection of newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'],
             axis=1, inplace=True)
         self.__dict__.update(self.merge(intensive_register_by_infection_date,
                                         how="outer",
@@ -232,7 +254,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                 for date
                 in self.index]
 
-    def _calculate_r0_by_moving_mean_newly_admitted_covid_19_intensive_care_patients(self) -> None:
+    def _calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients(self) -> None:
 
         moving_mean_newly_admitted_covid_19_intensive_care_patients_column_name = \
             'newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'
@@ -243,7 +265,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
             calculate_sum_3d_to_0d_before_for(moving_mean_newly_admitted_covid_19_intensive_care_patients_column_name)
 
         self.loc[:,
-        'R0 calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
+        'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
             [cases_sum_3d_to_0d_before[i] / cases_sum_7d_to_4d_before[i]
              if cases_sum_7d_to_4d_before[i] != 0
              else np.nan
@@ -470,17 +492,17 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
     def get_second_last_date_for_mean_values(self) -> dt.datetime:
         return self.get_last_date_for_mean_values() - pd.DateOffset(1)
 
-    def get_last_r0_by_mean_cases(self) -> float:
+    def get_last_r_value_by_mean_cases(self) -> float:
         last_date = self.get_last_date_for_mean_values()
         return self.loc[last_date,
-                        "R0 calculated by newly admitted intensive care patients with a " \
+                        "R value calculated by newly admitted intensive care patients with a " \
                         "positive COVID-19 test (mean ±3 days)"]
 
-    def get_second_last_r0_by_mean_cases(self) -> float:
+    def get_second_last_r_value_by_mean_cases(self) -> float:
         second_last_date = self.get_second_last_date_for_mean_values()
         return self.loc[second_last_date,
-                        "R0 calculated by newly admitted intensive care patients with a " \
+                        "R value calculated by newly admitted intensive care patients with a " \
                         "positive COVID-19 test (mean ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_r0_by_mean_cases(self) -> float:
-        return self.get_last_r0_by_mean_cases() - self.get_second_last_r0_by_mean_cases()
+    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()

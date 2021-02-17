@@ -1,3 +1,13 @@
+# project related files #
+#########################
+update_data.sh
+
+
+# Secret files #
+################
+.env
+
+
 # Compiled source #
 ###################
 *.com
@@ -39,8 +49,3 @@ Thumbs.db
 # Folders #
 ###########
 __pycache__/
-
-# Project specific ignores #
-############################
-update_data.sh
-

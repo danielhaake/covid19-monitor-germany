@@ -1,6 +1,9 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
+
 from datetime import datetime
+from dotenv import load_dotenv
 from io import BytesIO
 from typing import List, TypeVar, Tuple
 
@@ -9,6 +12,7 @@ import pandas as pd
 import numpy as np
 import requests
 
+load_dotenv()
 TNum = TypeVar('TNum', int, float)
 
 
@@ -23,7 +27,10 @@ class CoronaCasesAndDeathsSeries(pd.Series):
 
 
 class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
-    _path = "data/corona_cases_and_deaths.csv"
+
+    _folder_path = "data/"
+    _filename = "corona_cases_and_deaths.csv"
+    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -36,14 +43,24 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
     def _set_path(self, path: str):
         self._path = path
 
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
+
     @staticmethod
     def from_csv(path: str = None) -> 'CoronaCasesAndDeathsDataFrame':
         if path is None:
-            path = CoronaCasesAndDeathsDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + CoronaCasesAndDeathsDataFrame._filename
+            else:
+                path = CoronaCasesAndDeathsDataFrame._path
 
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame(pd.read_csv(path,
                                                                             parse_dates=['date', 'RKI reporting date'],
                                                                             index_col="date"))
+
+        if os.environ.get('FOLDER_PATH') is not None:
+            corona_cases_and_deaths._set_folder_path(os.environ.get('FOLDER_PATH'))
+
         if path is not None:
             corona_cases_and_deaths._set_path(path)
 
@@ -214,7 +231,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         self.loc[:, "deaths (mean of ±3 days) by reporting date"] = \
             self.calculate_7d_moving_mean_for_column("deaths by reporting date")
 
-        self.loc[:, "R0 by cases (mean of ±3 days)"] = self.calculate_r0_by_moving_mean_cases()
+        self.loc[:, "R value by cases (mean of ±3 days)"] = self.calculate_r_value_by_moving_mean_cases()
 
         self.loc[:, "daily proportionate increase of cases (mean of ±3 days)"] = self. \
             calculate_daily_proportionate_increase_for("cases (mean of ±3 days)")
@@ -267,7 +284,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                 for date
                 in self.index]
 
-    def calculate_r0_by_moving_mean_cases(self) -> List[float]:
+    def calculate_r_value_by_moving_mean_cases(self) -> List[float]:
         moving_mean_cases_column_name = "cases (mean of ±3 days)"
 
         cases_sum_7d_to_4d_before = self.calculate_sum_7d_to_4d_before_for(moving_mean_cases_column_name)
@@ -363,7 +380,12 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
 
         if to_csv:
             if path is None:
-                path = CoronaCasesAndDeathsDataFrame._path
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + CoronaCasesAndDeathsDataFrame._filename
+                    self._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    self._set_path(path)
+                else:
+                    path = CoronaCasesAndDeathsDataFrame._path
             self.to_csv(path)
 
 
@@ -1308,16 +1330,16 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         last_date = self.get_last_date()
         return self.loc[last_date, "deaths cumulative"]
 
-    def get_last_r0_by_mean_cases(self) -> float:
+    def get_last_r_value_by_mean_cases(self) -> float:
         last_date_for_mean_values = self.get_last_date_for_mean_values()
-        return self.loc[last_date_for_mean_values, "R0 by cases (mean of ±3 days)"]
+        return self.loc[last_date_for_mean_values, "R value by cases (mean of ±3 days)"]
 
-    def get_second_last_r0_by_mean_cases(self) -> float:
+    def get_second_last_r_value_by_mean_cases(self) -> float:
         second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
-        return self.loc[second_last_date_for_mean_values, "R0 by cases (mean of ±3 days)"]
+        return self.loc[second_last_date_for_mean_values, "R value by cases (mean of ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_r0_by_mean_cases(self) -> float:
-        return self.get_last_r0_by_mean_cases() - self.get_second_last_r0_by_mean_cases()
+    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()
 
     def get_cases_last_7_days(self) -> int:
         last_date = self.get_last_date()

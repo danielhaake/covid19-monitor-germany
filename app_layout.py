@@ -26,6 +26,7 @@ TNum = TypeVar('TNum', int, float)
 
 
 class Layout:
+
     class DailyFiguresDict(TypedDict):
         cases_cumulative: int
         last_cases_reported_by_rki: int
@@ -41,12 +42,12 @@ class Layout:
         last_mean_deaths_change_since_day_before: int
         deaths_last_7_days: int
         deaths_last_7_days_change_since_day_before: int
-        last_r0: float
-        last_r0_change_since_day_before: float
-        last_r0_by_nowcast_rki: float
-        last_r0_by_nowcast_rki_change_since_day_before: float
-        last_r0_by_new_admissions_to_intensive_care: float
-        last_r0_by_new_admissions_to_intensive_care_change_since_day_before: float
+        last_r_value: float
+        last_r_value_change_since_day_before: float
+        last_r_value_by_nowcast_rki: float
+        last_r_value_by_nowcast_rki_change_since_day_before: float
+        last_r_value_by_new_admissions_to_intensive_care: float
+        last_r_value_by_new_admissions_to_intensive_care_change_since_day_before: float
 
     def __init__(self):
         self.config = configparser.ConfigParser(interpolation=None)
@@ -132,6 +133,14 @@ class Layout:
                         id='tab-intensive-care',
                         children=self._tab_corona_intensive_care(intensive_register)
                         ),
+
+                dcc.Tab(label='Data sources description',
+                        value='tab-data-sources-description',
+                        className='tab',
+                        selected_className='tab-selected',
+                        id='tab-data-sources-description',
+                        children=self._tab_data_sources_description()
+                        )
                 ]
 
     def _tab_daily_overview(self,
@@ -153,8 +162,8 @@ class Layout:
                              ),
                              html.Div(
                                  className='daily-overview-single-figure',
-                                 id='daily-overview-r0',
-                                 children=self._block_daily_overview_r0(daily_figures)
+                                 id='daily-overview-r-value',
+                                 children=self._block_daily_overview_r_value(daily_figures)
                              ),
                              html.Div(
                                  className='daily-overview-single-figure',
@@ -195,8 +204,8 @@ class Layout:
                 id='graph-total-deaths-by-refdate',
                 figure=self._figure_total_deaths_by_refdate(corona_cases_and_deaths, nowcast_rki)),
             dcc.Graph(
-                id='graph-r0',
-                figure=self._figure_r0(corona_cases_and_deaths, nowcast_rki)),
+                id='graph-r-value',
+                figure=self._figure_r_value(corona_cases_and_deaths, nowcast_rki)),
             dcc.Graph(
                 id='graph-7d-incidence',
                 figure=self._figure_7d_incidences(corona_cases_and_deaths, nowcast_rki)),
@@ -235,6 +244,13 @@ class Layout:
                 id='graph-fig-intensive-beds-prop',
                 figure=self._figure_intensive_beds_prop(intensive_register))
         ]
+
+    def _tab_data_sources_description(self) -> dcc.Markdown:
+        with open('./data_sources_description.md', 'r', encoding='utf-8') as input_file:
+            text = input_file.read()
+        return dcc.Markdown(text,
+                            id='data-sources-description-content',
+                            dangerously_allow_html=True)
 
     def _block_daily_overview_cases(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_cases_change = self._get_prefix(daily_figures["last_mean_cases_change_since_day_before"])
@@ -284,34 +300,34 @@ class Layout:
                 'new reported deaths by RKI'
                 ]
 
-    def _block_daily_overview_r0(self, daily_figures: DailyFiguresDict) -> List[THtml]:
-        prefix_r0_change = self._get_prefix(daily_figures["last_r0_change_since_day_before"])
-        prefix_r0_rki_change = self._get_prefix(daily_figures["last_r0_by_nowcast_rki_change_since_day_before"])
-        prefix_r0_intensive_care_change = \
-            self._get_prefix(daily_figures["last_r0_by_new_admissions_to_intensive_care_change_since_day_before"])
+    def _block_daily_overview_r_value(self, daily_figures: DailyFiguresDict) -> List[THtml]:
+        prefix_r_value_change = self._get_prefix(daily_figures["last_r_value_change_since_day_before"])
+        prefix_r_value_rki_change = self._get_prefix(daily_figures["last_r_value_by_nowcast_rki_change_since_day_before"])
+        prefix_r_value_intensive_care_change = \
+            self._get_prefix(daily_figures["last_r_value_by_new_admissions_to_intensive_care_change_since_day_before"])
 
-        return [html.H2(children=["R0"]),
+        return [html.H2("R value"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["last_r0"]:,}']),
-                'R0 calculated by mean cases',
+                html.H3(f'{daily_figures["last_r_value"]:,}'),
+                'R value calculated by mean cases',
                 html.Br(),
                 html.Br(),
-                f'{prefix_r0_change}{daily_figures["last_r0_change_since_day_before"]:,}',
+                f'{prefix_r_value_change}{daily_figures["last_r_value_change_since_day_before"]:,}',
                 html.Br(),
                 'change since day before',
                 html.Br(),
                 html.Br(),
-                f'{daily_figures["last_r0_by_nowcast_rki"]:,} '
-                f'({prefix_r0_rki_change}{daily_figures["last_r0_by_nowcast_rki_change_since_day_before"]:,})',
+                f'{daily_figures["last_r_value_by_nowcast_rki"]:,} '
+                f'({prefix_r_value_rki_change}{daily_figures["last_r_value_by_nowcast_rki_change_since_day_before"]:,})',
                 html.Br(),
-                '7 day R0 reported by RKI',
+                '7 day R value reported by RKI',
                 html.Br(),
                 html.Br(),
-                f'{daily_figures["last_r0_by_new_admissions_to_intensive_care"]:,} '
-                f'({prefix_r0_intensive_care_change}'
-                f'{daily_figures["last_r0_by_new_admissions_to_intensive_care_change_since_day_before"]:,})',
+                f'{daily_figures["last_r_value_by_new_admissions_to_intensive_care"]:,} '
+                f'({prefix_r_value_intensive_care_change}'
+                f'{daily_figures["last_r_value_by_new_admissions_to_intensive_care_change_since_day_before"]:,})',
                 html.Br(),
-                'R0 by new admissions to intensive care'
+                'R value by new admissions to intensive care'
                 ]
 
     def _block_daily_overview_last_7_days(self, daily_figures: DailyFiguresDict) -> List[THtml]:
@@ -398,13 +414,13 @@ class Layout:
                 get_change_from_second_last_to_last_date_for_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
         incidence_deaths_change = int(np.round(incidence_deaths_change))
 
-        last_r0 = np.round(corona_cases_and_deaths.get_last_r0_by_mean_cases(), 2)
-        r0_change = np.round(corona_cases_and_deaths.get_change_from_second_last_to_last_date_for_r0_by_mean_cases(), 2)
-        last_r0_nowcast = np.round(nowcast_rki.get_last_r0(), 2)
-        r0_nowcast_change = np.round(nowcast_rki.get_change_from_second_last_to_last_date_for_r0(), 2)
-        last_r0_intensive_register = np.round(intensive_register.get_last_r0_by_mean_cases(), 2)
-        r0_intensive_register_change = np.round(
-            intensive_register.get_change_from_second_last_to_last_date_for_r0_by_mean_cases(), 2)
+        last_r_value = np.round(corona_cases_and_deaths.get_last_r_value_by_mean_cases(), 2)
+        r_value_change = np.round(corona_cases_and_deaths.get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
+        last_r_value_nowcast = np.round(nowcast_rki.get_last_r_value(), 2)
+        r_value_nowcast_change = np.round(nowcast_rki.get_change_from_second_last_to_last_date_for_r_value(), 2)
+        last_r_value_intensive_register = np.round(intensive_register.get_last_r_value_by_mean_cases(), 2)
+        r_value_intensive_register_change = np.round(
+            intensive_register.get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
 
         daily_figures: Layout.DailyFiguresDict = \
             {"cases_cumulative": cases_cumulative,
@@ -421,12 +437,12 @@ class Layout:
              "last_mean_deaths_change_since_day_before": last_mean_deaths_change_day_before,
              "deaths_last_7_days": incidence_deaths,
              "deaths_last_7_days_change_since_day_before": incidence_deaths_change,
-             "last_r0": last_r0,
-             "last_r0_change_since_day_before": r0_change,
-             "last_r0_by_nowcast_rki": last_r0_nowcast,
-             "last_r0_by_nowcast_rki_change_since_day_before": r0_nowcast_change,
-             "last_r0_by_new_admissions_to_intensive_care": last_r0_intensive_register,
-             "last_r0_by_new_admissions_to_intensive_care_change_since_day_before": r0_intensive_register_change
+             "last_r_value": last_r_value,
+             "last_r_value_change_since_day_before": r_value_change,
+             "last_r_value_by_nowcast_rki": last_r_value_nowcast,
+             "last_r_value_by_nowcast_rki_change_since_day_before": r_value_nowcast_change,
+             "last_r_value_by_new_admissions_to_intensive_care": last_r_value_intensive_register,
+             "last_r_value_by_new_admissions_to_intensive_care_change_since_day_before": r_value_intensive_register_change
              }
 
         return daily_figures
@@ -507,16 +523,16 @@ class Layout:
 
         return fig
 
-    def _figure_r0(self,
-                   corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
-                   nowcast_rki: NowcastRKIDataFrame) -> Figure:
+    def _figure_r_value(self,
+                        corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
+                        nowcast_rki: NowcastRKIDataFrame) -> Figure:
 
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1).reset_index()
 
         fig = px.line(corona_cases_and_deaths_with_nowcast,
-                      x=self.config["FIG_R0"]["x"],
-                      y=json.loads(self.config["FIG_R0"]["y"]),
-                      color_discrete_map=json.loads(self.config["FIG_R0"]["color_discrete_map"]),
+                      x=self.config["FIG_R_VALUE"]["x"],
+                      y=json.loads(self.config["FIG_R_VALUE"]["y"]),
+                      color_discrete_map=json.loads(self.config["FIG_R_VALUE"]["color_discrete_map"]),
                       render_mode=self.config["ALL_FIGS"]["render_mode"])
 
         min_date = corona_cases_and_deaths_with_nowcast.date.min()
@@ -527,17 +543,17 @@ class Layout:
                    "x0": min_date,
                    "x1": max_date}]
 
-        fig.update_layout(title=self.config["FIG_R0"]["title"],
-                          xaxis_title=self.config["FIG_R0"]["xaxis_title"],
-                          yaxis_title=self.config["FIG_R0"]["yaxis_title"],
+        fig.update_layout(title=self.config["FIG_R_VALUE"]["title"],
+                          xaxis_title=self.config["FIG_R_VALUE"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_R_VALUE"]["yaxis_title"],
                           shapes=shapes,
-                          yaxis=json.loads(self.config["FIG_R0"]["yaxis"]),
+                          yaxis=json.loads(self.config["FIG_R_VALUE"]["yaxis"]),
                           legend=json.loads(self.config["ALL_FIGS"]["legend"]),
                           font_family=self.config["ALL_FIGS"]["font_family"],
                           font_color=self.config["ALL_FIGS"]["font_color"],
                           plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
                           paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
-                          yaxis_tickformat=self.config["FIG_R0"]["yaxis_tickformat"])
+                          yaxis_tickformat=self.config["FIG_R_VALUE"]["yaxis_tickformat"])
         return fig
 
     def _figure_7d_incidences(self,

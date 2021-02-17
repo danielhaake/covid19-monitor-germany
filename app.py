@@ -14,8 +14,9 @@ from app_layout import *
 app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.BOOTSTRAP],
                 meta_tags=[{'name': 'author',
-                            'content': 'Daniel Haake (Data Collection, Data Preparation, Data Analysis & Visualisation)'
-                                       ' & Christian Kirifidis (Visualisation)'}])
+                            'content': 'Daniel Haake (Dashboard Application, Data Collection, Data Preparation, '
+                                       'Data Analysis & Visualization) '
+                                       '& Christian Kirifidis (Dashboard Application & Visualization)'}])
 
 layout = Layout()
 app.layout = layout.layout()
@@ -32,4 +33,4 @@ def update_tabs_with_graphs(n):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(host="0.0.0.0", debug=False)

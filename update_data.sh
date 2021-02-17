@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-#cd /path/to/project/folder
+cd /Users/daniel.haake/privat/Projekte/covid19_monitor_germany
 /usr/local/bin/pipenv run python update_data.py

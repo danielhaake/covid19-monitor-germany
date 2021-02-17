@@ -119,9 +119,10 @@ output into a log file. You can do it with
 ```*/10 * * * * /path/to/your/project/folder/update_data.sh >> /path/to/your/project/folder/update_data.log 2>&1```.
 
 ## Contributors
-[Daniel Haake](https://www.linkedin.com/in/daniel-haake/): Data Collection, Data Preparation, Data Analysis & Visualisation
+[Daniel Haake](https://www.linkedin.com/in/daniel-haake/): Dashboard Application, Data Collection, Data Preparation, 
+Data Analysis & Visualization
 
-[Christian Kirifidis](https://www.linkedin.com/in/christian-kirifidis/): Visualisation
+[Christian Kirifidis](https://www.linkedin.com/in/christian-kirifidis/): Dashboard Application & Visualization
 
 ## License
 The software is available under licence conditions of [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0).

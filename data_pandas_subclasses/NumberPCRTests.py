@@ -1,5 +1,8 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import os
+
+from dotenv import load_dotenv
 from io import BytesIO
 from typing import List
 
@@ -7,6 +10,7 @@ import pandas as pd
 import numpy as np
 import requests
 
+load_dotenv()
 
 class NumberPCRTestsSeries(pd.Series):
     @property
@@ -19,7 +23,10 @@ class NumberPCRTestsSeries(pd.Series):
 
 
 class NumberPCRTestsDataFrame(pd.DataFrame):
-    _path = "data/number_of_tests_germany.csv"
+
+    _folder_path = "data/"
+    _filename = "number_of_tests_germany.csv"
+    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -32,9 +39,17 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
     @staticmethod
     def from_csv(path: str = None) -> 'NumberPCRTestsDataFrame':
         if path is None:
-            path = NumberPCRTestsDataFrame._path
+            if os.environ.get('FOLDER_PATH') is not None:
+                path = os.environ.get('FOLDER_PATH') + NumberPCRTestsDataFrame._filename
+            else:
+                path = NumberPCRTestsDataFrame._path
+
         number_pcr_tests = NumberPCRTestsDataFrame(pd.read_csv(path,
                                                                index_col="calendar week"))
+
+        if os.environ.get('FOLDER_PATH') is not None:
+            number_pcr_tests._set_folder_path(os.environ.get('FOLDER_PATH'))
+
         if path is not None:
             number_pcr_tests._set_path(path)
 
@@ -42,6 +57,9 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
 
     def _set_path(self, path: str):
         self._path = path
+
+    def _set_folder_path(self, folder_path: str):
+        self._folder_path = folder_path
 
     @staticmethod
     def update_csv_with_new_data_from_rki(to_csv: bool = True, path: str = None) -> 'NumberPCRTestsDataFrame':
@@ -74,7 +92,12 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
 
         if to_csv:
             if path is None:
-                path = NumberPCRTestsDataFrame._path
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + NumberPCRTestsDataFrame._filename
+                    number_pcr_tests._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    number_pcr_tests._set_path(path)
+                else:
+                    path = NumberPCRTestsDataFrame._path
             number_pcr_tests.to_csv(path)
         # TODO number_pcr_tests.to_csv("./data/number_of_tests_germany.csv")
         return number_pcr_tests

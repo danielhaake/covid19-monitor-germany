@@ -1,4 +1,4 @@
-from python:3.8
+FROM python:3.8
 
 LABEL maintainer='https://www.linkedin.com/in/daniel-haake/'
 

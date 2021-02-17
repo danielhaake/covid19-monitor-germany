@@ -20,6 +20,8 @@ pdftotext = "*"
 openpyxl = "*"
 gunicorn = "*"
 gevent = "*"
+s3fs = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.8"
