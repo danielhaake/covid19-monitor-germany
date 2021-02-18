@@ -17,4 +17,4 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
 
-CMD ["pipenv", "run", "python", "update_data.py"]
+CMD ["/app/docker/update_data/run.sh"]
