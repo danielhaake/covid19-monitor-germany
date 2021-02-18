@@ -44,12 +44,14 @@ class AgeDistributionDataFrame(pd.DataFrame):
 
     @staticmethod
     def from_csv(path: str=None) -> 'AgeDistributionDataFrame':
+
         if path is None:
             if os.environ.get('FOLDER_PATH') is not None:
                 path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
             else:
                 path = AgeDistributionDataFrame._path
 
+        logging.info(f"start loading AgeDistributionDataFrame from {path}")
         distribution = AgeDistributionDataFrame(pd.read_csv(path).set_index("age group"))
 
         if os.environ.get('FOLDER_PATH') is not None:
@@ -57,6 +59,8 @@ class AgeDistributionDataFrame(pd.DataFrame):
 
         if path is not None:
             distribution._set_path(path)
+
+        logging.info(f"AgeDistributionDataFrame successfully loaded from {path}")
         return distribution
 
     @staticmethod

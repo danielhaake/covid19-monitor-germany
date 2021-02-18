@@ -50,12 +50,14 @@ class NowcastRKIDataFrame(pd.DataFrame):
 
     @staticmethod
     def from_csv(path: str=None) -> 'NowcastRKIDataFrame':
+
         if path is None:
             if os.environ.get('FOLDER_PATH') is not None:
                 path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
             else:
                 path = NowcastRKIDataFrame._path
 
+        logging.info(f"start loading NowcastRKIDataFrame from {path}")
         nowcast_rki = NowcastRKIDataFrame(pd.read_csv(path,
                                                       parse_dates=['date'],
                                                       index_col="date"))
@@ -66,6 +68,7 @@ class NowcastRKIDataFrame(pd.DataFrame):
         if path is not None:
             nowcast_rki._set_path(path)
 
+        logging.info(f"NowcastRKIDataFrame successfully loaded from {path}")
         return nowcast_rki
 
 
