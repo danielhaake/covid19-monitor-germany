@@ -40,12 +40,14 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
 
     @staticmethod
     def from_csv(path: str = None) -> 'NumberPCRTestsDataFrame':
+
         if path is None:
             if os.environ.get('FOLDER_PATH') is not None:
                 path = os.environ.get('FOLDER_PATH') + NumberPCRTestsDataFrame._filename
             else:
                 path = NumberPCRTestsDataFrame._path
 
+        logging.info(f"start loading NumberPCRTestsDataFrame from {path}")
         number_pcr_tests = NumberPCRTestsDataFrame(pd.read_csv(path,
                                                                index_col="calendar week"))
 
@@ -55,6 +57,7 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
         if path is not None:
             number_pcr_tests._set_path(path)
 
+        logging.info(f"NumberPCRTestsDataFrame successfully loaded from {path}")
         return number_pcr_tests
 
     def _set_path(self, path: str):

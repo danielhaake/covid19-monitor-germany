@@ -1,4 +1,5 @@
 # ------------------------------ CREATE PLOTS ----------------------------------------#
+import logging
 from typing import List, TypeVar, TypedDict
 
 import dash_core_components as dcc
@@ -21,6 +22,7 @@ from data_pandas_subclasses.ClinicalAspects import ClinicalAspectsDataFrame
 from data_pandas_subclasses.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.NumberPCRTests import NumberPCRTestsDataFrame
 
+logging.basicConfig(level=logging.INFO)
 THtml = TypeVar('THtml', html.H1, html.H2, html.H3, html.H4, html.H5, html.H6, html.Br, html.A, html.Hr, str)
 TNum = TypeVar('TNum', int, float)
 
@@ -56,11 +58,10 @@ class Layout:
     def layout(self) -> html.Div:
         return html.Div(
             children=[
-                html.Div(
+                html.Header(
                     id='headline',
                     children=self._headline()
                 ),
-
                 html.Div(
                     id='tabs-with-graphs-and-figures',
                     children=[
@@ -72,6 +73,10 @@ class Layout:
                                  parent_className='tabs',
                                  children=self.tabs_with_graphs())
                     ]
+                ),
+                html.Footer(
+                    id='footer',
+                    children=self._footer()
                 )
             ]
         )
@@ -87,15 +92,35 @@ class Layout:
             html.Hr()
         ]
 
+    def _footer(self) -> List[THtml]:
+        return [
+            html.Hr(),
+            "developed by ",
+            html.A(
+                "Daniel Haake",
+                href='https://www.linkedin.com/in/daniel-haake/',
+                target='_blank'),
+            " & ",
+            html.A(
+                "Christian Kirifidis",
+                href='https://www.linkedin.com/in/christian-kirifidis/',
+                target='_blank'),
+            html.Br(),
+            html.A(
+                "Impressum",
+                href='https://www.unbelievable-machine.com/impressum/')
+        ]
+
     def tabs_with_graphs(self) -> List[dcc.Tab]:
         # ----------------------------- LOAD DATA AS DATAFRAMES ----------------------#
-
+        logging.info("START LOADING OF DATAFRAMES")
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv()
         nowcast_rki = NowcastRKIDataFrame.from_csv()
         number_pcr_tests = NumberPCRTestsDataFrame.from_csv()
         intensive_register = IntensiveRegisterDataFrame.from_csv()
         clinical_aspects = ClinicalAspectsDataFrame.from_csv()
         age_distribution = AgeDistributionDataFrame.from_csv()
+        logging.info("FINISHED LOADING OF DATAFRAMES")
 
         # ----------------------------- LOAD DATA FOR DAILY OVERVIEW ----------------------#
 

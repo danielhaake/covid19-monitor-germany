@@ -50,12 +50,14 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
 
     @staticmethod
     def from_csv(path: str = None) -> 'CoronaCasesAndDeathsDataFrame':
+
         if path is None:
             if os.environ.get('FOLDER_PATH') is not None:
                 path = os.environ.get('FOLDER_PATH') + CoronaCasesAndDeathsDataFrame._filename
             else:
                 path = CoronaCasesAndDeathsDataFrame._path
 
+        logging.info(f"start loading CoronaCasesAndDeathsDataFrame from {path}")
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame(pd.read_csv(path,
                                                                             parse_dates=['date', 'RKI reporting date'],
                                                                             index_col="date"))
@@ -66,6 +68,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         if path is not None:
             corona_cases_and_deaths._set_path(path)
 
+        logging.info(f"CoronaCasesAndDeathsDataFrame successfully loaded from {path}")
         return corona_cases_and_deaths
 
     @staticmethod
