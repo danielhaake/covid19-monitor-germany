@@ -56,11 +56,10 @@ class Layout:
     def layout(self) -> html.Div:
         return html.Div(
             children=[
-                html.Div(
+                html.Header(
                     id='headline',
                     children=self._headline()
                 ),
-
                 html.Div(
                     id='tabs-with-graphs-and-figures',
                     children=[
