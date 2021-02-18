@@ -1,4 +1,5 @@
 # ------------------------------ CREATE PLOTS ----------------------------------------#
+import logging
 from typing import List, TypeVar, TypedDict
 
 import dash_core_components as dcc
@@ -21,6 +22,7 @@ from data_pandas_subclasses.ClinicalAspects import ClinicalAspectsDataFrame
 from data_pandas_subclasses.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.NumberPCRTests import NumberPCRTestsDataFrame
 
+logging.basicConfig(level=logging.INFO)
 THtml = TypeVar('THtml', html.H1, html.H2, html.H3, html.H4, html.H5, html.H6, html.Br, html.A, html.Hr, str)
 TNum = TypeVar('TNum', int, float)
 
@@ -111,13 +113,14 @@ class Layout:
 
     def tabs_with_graphs(self) -> List[dcc.Tab]:
         # ----------------------------- LOAD DATA AS DATAFRAMES ----------------------#
-
+        logging.info("START LOADING OF DATAFRAMES")
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv()
         nowcast_rki = NowcastRKIDataFrame.from_csv()
         number_pcr_tests = NumberPCRTestsDataFrame.from_csv()
         intensive_register = IntensiveRegisterDataFrame.from_csv()
         clinical_aspects = ClinicalAspectsDataFrame.from_csv()
         age_distribution = AgeDistributionDataFrame.from_csv()
+        logging.info("FINISHED LOADING OF DATAFRAMES")
 
         # ----------------------------- LOAD DATA FOR DAILY OVERVIEW ----------------------#
 

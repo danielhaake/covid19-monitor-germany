@@ -44,12 +44,14 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
 
     @staticmethod
     def from_csv(path: str=None) -> 'ClinicalAspectsDataFrame':
+
         if path is None:
             if os.environ.get('FOLDER_PATH') is not None:
                 path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
             else:
                 path = ClinicalAspectsDataFrame._path
 
+        logging.info(f"start loading ClinicalAspectsDataFrame from {path}")
         clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(path, index_col="calendar week"))
 
         if os.environ.get('FOLDER_PATH') is not None:
@@ -58,6 +60,7 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         if path is not None:
             clinical_aspects._set_path(path)
 
+        logging.info(f"ClinicalAspectsDataFrame successfully loaded from {path}")
         return clinical_aspects
 
     @staticmethod
