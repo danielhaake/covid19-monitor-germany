@@ -56,11 +56,10 @@ class Layout:
     def layout(self) -> html.Div:
         return html.Div(
             children=[
-                html.Div(
+                html.Header(
                     id='headline',
                     children=self._headline()
                 ),
-
                 html.Div(
                     id='tabs-with-graphs-and-figures',
                     children=[
@@ -72,6 +71,10 @@ class Layout:
                                  parent_className='tabs',
                                  children=self.tabs_with_graphs())
                     ]
+                ),
+                html.Footer(
+                    id='footer',
+                    children=self._footer()
                 )
             ]
         )
@@ -85,6 +88,25 @@ class Layout:
             html.H3(id='app-title',
                     children='COVID-19 MONITOR GERMANY'),
             html.Hr()
+        ]
+
+    def _footer(self) -> List[THtml]:
+        return [
+            html.Hr(),
+            "developed by ",
+            html.A(
+                "Daniel Haake",
+                href='https://www.linkedin.com/in/daniel-haake/',
+                target='_blank'),
+            " & ",
+            html.A(
+                "Christian Kirifidis",
+                href='https://www.linkedin.com/in/christian-kirifidis/',
+                target='_blank'),
+            html.Br(),
+            html.A(
+                "Impressum",
+                href='https://www.unbelievable-machine.com/impressum/')
         ]
 
     def tabs_with_graphs(self) -> List[dcc.Tab]:
