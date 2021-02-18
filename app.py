@@ -32,5 +32,11 @@ def update_tabs_with_graphs(n):
     return layout.tabs_with_graphs()
 
 
+# Path for health check
+@app.server.route("/ping")
+def ping():
+  return "{status: ok}"
+
+
 if __name__ == '__main__':
     app.run_server(host="0.0.0.0", debug=False)
