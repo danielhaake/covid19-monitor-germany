@@ -55,12 +55,14 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
     @staticmethod
     def from_csv(path: str = None) -> 'IntensiveRegisterDataFrame':
+
         if path is None:
             if os.environ.get('FOLDER_PATH') is not None:
                 path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
             else:
                 path = IntensiveRegisterDataFrame._path
 
+        logging.info(f"start loading IntensiveRegisterDataFrame from {path}")
         intensive_register = IntensiveRegisterDataFrame(pd.read_csv(path,
                                                                     parse_dates=['date'],
                                                                     index_col="date"))
@@ -69,6 +71,8 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
         if path is not None:
             intensive_register._set_path(path)
+
+        logging.info(f"IntensiveRegisterDataFrame successfully loaded from {path}")
         return intensive_register
 
     @staticmethod
