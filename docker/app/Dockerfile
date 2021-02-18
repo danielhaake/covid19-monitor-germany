@@ -18,4 +18,4 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 EXPOSE 8000
 
-CMD ["pipenv", "run", "gunicorn", "app:server", "-b", "0.0.0.0:8000", "--workers=2", "--threads=4", "--worker-class=gthread", "--log-file=-"]
+CMD ["/app/docker/app/run.sh"]
