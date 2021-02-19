@@ -495,9 +495,16 @@ class Layout:
                          x=self.config["FIG_CASES_MEAN_3"]["x"],
                          y=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG"]["y"]),
                          color_discrete_map=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG"]["color_discrete_map"]),
+                         render_mode=self.config["ALL_FIGS"]["render_mode"],
+                         hover_data=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG"]["hover_data"]))
+
+        subfig_2 = px.line(corona_cases_and_deaths_with_nowcast,
+                         x=self.config["FIG_CASES_MEAN_3"]["x"],
+                         y=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG_2"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG_2"]["color_discrete_map"]),
                          render_mode=self.config["ALL_FIGS"]["render_mode"])
 
-        fig.add_traces(mainfig.data + subfig.data)
+        fig.add_traces(mainfig.data + subfig.data + subfig_2.data)
 
         fig.update_layout(title=self.config["FIG_CASES_MEAN_3"]["title"],
                           xaxis_title=self.config["FIG_CASES_MEAN_3"]["xaxis_title"],
@@ -533,9 +540,16 @@ class Layout:
                          x=self.config["FIG_DEATHS_MEAN_3"]["x"],
                          y=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG"]["y"]),
                          color_discrete_map=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG"]["color_discrete_map"]),
+                         render_mode=self.config["ALL_FIGS"]["render_mode"],
+                         hover_data=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG"]["hover_data"]))
+
+        subfig_2 = px.line(corona_cases_and_deaths_with_nowcast,
+                         x=self.config["FIG_DEATHS_MEAN_3"]["x"],
+                         y=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG_2"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG_2"]["color_discrete_map"]),
                          render_mode=self.config["ALL_FIGS"]["render_mode"])
 
-        fig.add_traces(mainfig.data + subfig.data)
+        fig.add_traces(mainfig.data + subfig.data + subfig_2.data)
 
         fig.update_layout(title=self.config["FIG_DEATHS_MEAN_3"]["title"],
                           xaxis_title=self.config["FIG_DEATHS_MEAN_3"]["xaxis_title"],
