@@ -57,6 +57,7 @@ class Layout:
 
     def layout(self) -> html.Div:
         return html.Div(
+            id='layout',
             children=[
                 html.Header(
                     id='headline',
@@ -73,6 +74,10 @@ class Layout:
                                  parent_className='tabs',
                                  children=self.tabs_with_graphs())
                     ]
+                ),
+                html.Div(
+                    id='warning-message',
+                    children=self._warning_message()
                 ),
                 html.Footer(
                     id='footer',
@@ -110,6 +115,17 @@ class Layout:
                 "Impressum",
                 href='https://www.unbelievable-machine.com/impressum/')
         ]
+
+
+    def _warning_message(self) -> List[THtml]:
+        return [
+            html.Br(),
+            "This website is only viewable in landscape mode.",
+            html.Br(),
+            html.Br(),
+            "Please rotate your screen."
+        ]
+
 
     def tabs_with_graphs(self) -> List[dcc.Tab]:
         # ----------------------------- LOAD DATA AS DATAFRAMES ----------------------#
