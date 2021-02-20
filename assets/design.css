@@ -99,14 +99,20 @@ h6 {
 
 .daily-overview-figures {
     display: grid;
+    max-width: 2000px;
+    margin: auto;
 }
 
 @media (min-width: 500px) {
-  .daily-overview-figures { grid-template-columns: repeat(2, 1fr); }
+  .daily-overview-figures {
+      grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1000px) {
-  .daily-overview-figures { grid-template-columns: repeat(4, 1fr); }
+  .daily-overview-figures {
+      grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .daily-overview-single-figure {
@@ -160,4 +166,23 @@ h6 {
     height: 100%;
     text-align: center;
     background: #EDF0F6;
+}
+
+#warning-message {
+    display: none;
+    margin-left: 2%;
+}
+
+@media only screen and (max-width: 550px) and (orientation: portrait){
+    #tabs-with-graphs-and-figures {
+        display: none;
+    }
+    #warning-message {
+        display: block;
+    }
+}
+@media only screen and (orientation: landscape){
+    #warning-message {
+        display: none;
+    }
 }
