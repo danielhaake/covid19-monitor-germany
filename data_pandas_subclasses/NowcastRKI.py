@@ -139,6 +139,7 @@ class NowcastRKIDataFrame(pd.DataFrame):
                     nowcast_rki._set_path(path)
                 else:
                     path = NowcastRKIDataFrame._path
+            logging.info(f"try writing NowcastRKIDataFrame to {path}")
             nowcast_rki.to_csv(path)
             logging.info(f"new NowcastRKIDataFrame has been written to {path}")
 

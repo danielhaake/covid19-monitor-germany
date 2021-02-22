@@ -107,6 +107,7 @@ class NumberPCRTestsDataFrame(pd.DataFrame):
                     number_pcr_tests._set_path(path)
                 else:
                     path = NumberPCRTestsDataFrame._path
+            logging.info(f"try writing NumberPCRTestsDataFrame to {path}")
             number_pcr_tests.to_csv(path)
             logging.info(f"new NumberPCRTestsDataFrame has been written to {path}")
 

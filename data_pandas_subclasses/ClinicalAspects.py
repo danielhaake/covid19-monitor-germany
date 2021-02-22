@@ -120,6 +120,7 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
                 path = ClinicalAspectsDataFrame._path
         else:
             clinical_aspects._set_path(path)
+        logging.info(f"try writing ClinicalAspectsDataFrame to {path}")
         clinical_aspects.to_csv(path)
         logging.info(f"new ClinicalAspectsDataFrame has been written to {path}")
         logging.info("FINISHED UPDATE PROCESS FOR CLINICAL ASPECTS")
