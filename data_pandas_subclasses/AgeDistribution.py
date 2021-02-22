@@ -1,10 +1,11 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import boto3
 import logging
 import os
 
 from dotenv import load_dotenv
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import pandas as pd
 import requests
@@ -43,16 +44,31 @@ class AgeDistributionDataFrame(pd.DataFrame):
         self._folder_path = folder_path
 
     @staticmethod
-    def from_csv(path: str=None) -> 'AgeDistributionDataFrame':
+    def from_csv(s3_bucket: str=None, path: str=None) -> 'AgeDistributionDataFrame':
 
-        if path is None:
-            if os.environ.get('FOLDER_PATH') is not None:
-                path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
-            else:
-                path = AgeDistributionDataFrame._path
+        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+            if s3_bucket is None:
+                s3_bucket = os.environ.get('S3_BUCKET')
+                s3 = boto3.client('s3')
+                filename = AgeDistributionDataFrame._filename
+                logging.info(f"start loading AgeDistributionDataFrame with filename {filename} "
+                             f"from S3 Bucket {s3_bucket}")
+                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+                distribution = AgeDistributionDataFrame(pd.read_csv(read_file['Body']))
+                logging.info(f"AgeDistributionDataFrame with filename {filename} successfully loaded "
+                             f"from S3 Bucket {s3_bucket}")
+        else:
+            if path is None:
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
+                else:
+                    path = AgeDistributionDataFrame._path
 
-        logging.info(f"start loading AgeDistributionDataFrame from {path}")
-        distribution = AgeDistributionDataFrame(pd.read_csv(path).set_index("age group"))
+            logging.info(f"start loading AgeDistributionDataFrame from {path}")
+            distribution = AgeDistributionDataFrame(pd.read_csv(path))
+            logging.info(f"AgeDistributionDataFrame successfully loaded from {path}")
+
+        distribution = distribution.set_index("age group")
 
         if os.environ.get('FOLDER_PATH') is not None:
             distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
@@ -60,11 +76,12 @@ class AgeDistributionDataFrame(pd.DataFrame):
         if path is not None:
             distribution._set_path(path)
 
-        logging.info(f"AgeDistributionDataFrame successfully loaded from {path}")
         return distribution
 
     @staticmethod
-    def get_age_distribution_of_cases_and_deaths(to_csv: bool = True, path: str = None) -> 'AgeDistributionDataFrame':
+    def get_age_distribution_of_cases_and_deaths(to_csv: bool = True,
+                                                 s3_bucket: str=None,
+                                                 path: str = None) -> 'AgeDistributionDataFrame':
 
         logging.info("START DOWNLOADING CASES AND DEATHS PER AGE GROUP")
 
@@ -100,16 +117,30 @@ class AgeDistributionDataFrame(pd.DataFrame):
         age_distribution.index = age_distribution.index.rename('age group')
 
         if to_csv:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
-                    age_distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
-                    age_distribution._set_path(path)
-                else:
-                    path = AgeDistributionDataFrame._path
-            logging.info(f"try writing AgeDistributionDataFrame to {path}")
-            age_distribution.to_csv(path)
-            logging.info(f"new AgeDistributionDataFrame has been written to {path}")
+            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+                if s3_bucket is None:
+                    s3_bucket = os.environ.get('S3_BUCKET')
+                    csv_buffer = StringIO()
+                    age_distribution.to_csv(csv_buffer)
+                    s3 = boto3.client('s3')
+                    logging.info(f"try writing AgeDistributionDataFrame "
+                                 f"with filename {age_distribution._filename} "
+                                 f"to S3 Bucket {s3_bucket}")
+                    s3.put_object(Bucket=s3_bucket, Key=age_distribution._filename, Body=csv_buffer.getvalue())
+                    logging.info(f"updated AgeDistributionDataFrame "
+                                 f"with filename {age_distribution._filename} "
+                                 f"has been written to S3 Bucket {s3_bucket}")
+            else:
+                if path is None:
+                    if os.environ.get('FOLDER_PATH') is not None:
+                        path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
+                        age_distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
+                        age_distribution._set_path(path)
+                    else:
+                        path = AgeDistributionDataFrame._path
+                logging.info(f"try writing AgeDistributionDataFrame to {path}")
+                age_distribution.to_csv(path)
+                logging.info(f"new AgeDistributionDataFrame has been written to {path}")
 
         logging.info("FINISHED DOWNLOADING CASES AND DEATHS PER AGE GROUP")
 
@@ -282,4 +313,6 @@ class AgeDistributionDataFrame(pd.DataFrame):
                                        "A15-A34": 19117865,
                                        "A35-A59": 28919134,
                                        "A60-A79": 18057318,
-                                       "A80+": 5681135}, orient='index', columns=["inhabitants"])
+                                       "A80+": 5681135},
+                                      orient='index',
+                                      columns=["inhabitants"])

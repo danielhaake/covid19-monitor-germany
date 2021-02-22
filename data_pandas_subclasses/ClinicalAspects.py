@@ -1,10 +1,11 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import boto3
 import logging
 import os
 
 from dotenv import load_dotenv
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import pandas as pd
 import requests
@@ -43,16 +44,29 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         self._folder_path = folder_path
 
     @staticmethod
-    def from_csv(path: str=None) -> 'ClinicalAspectsDataFrame':
+    def from_csv(s3_bucket: str=None, path: str=None) -> 'ClinicalAspectsDataFrame':
 
-        if path is None:
-            if os.environ.get('FOLDER_PATH') is not None:
-                path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
-            else:
-                path = ClinicalAspectsDataFrame._path
+        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+            if s3_bucket is None:
+                s3_bucket = os.environ.get('S3_BUCKET')
+                s3 = boto3.client('s3')
+                filename = ClinicalAspectsDataFrame._filename
+                logging.info(f"start loading ClinicalAspectsDataFrame with filename {filename} "
+                             f"from S3 Bucket {s3_bucket}")
+                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+                clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(read_file['Body'], index_col="calendar week"))
+                logging.info(f"ClinicalAspectsDataFrame with filename {filename} successfully loaded "
+                             f"from S3 Bucket {s3_bucket}")
+        else:
+            if path is None:
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
+                else:
+                    path = ClinicalAspectsDataFrame._path
 
-        logging.info(f"start loading ClinicalAspectsDataFrame from {path}")
-        clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(path, index_col="calendar week"))
+            logging.info(f"start loading ClinicalAspectsDataFrame from {path}")
+            clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(path, index_col="calendar week"))
+            logging.info(f"ClinicalAspectsDataFrame successfully loaded from {path}")
 
         if os.environ.get('FOLDER_PATH') is not None:
             clinical_aspects._set_folder_path(os.environ.get('FOLDER_PATH'))
@@ -60,11 +74,10 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         if path is not None:
             clinical_aspects._set_path(path)
 
-        logging.info(f"ClinicalAspectsDataFrame successfully loaded from {path}")
         return clinical_aspects
 
     @staticmethod
-    def update_csv_with_new_data_from_rki(path: str=None):
+    def update_csv_with_new_data_from_rki(s3_bucket: str=None, path: str=None):
 
         def rename_columns_german_to_english(df: ClinicalAspectsDataFrame) -> ClinicalAspectsDataFrame:
             return df.rename(columns={'Meldejahr': 'reporting year',
@@ -111,18 +124,33 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         clinical_aspects.loc[:, 'calendar week'] = clinical_aspects.combine_columns_reporting_year_and_reporting_week()
         clinical_aspects = clinical_aspects.set_index('calendar week')
 
-        if path is None:
-            if os.environ.get('FOLDER_PATH') is not None:
-                path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
-                clinical_aspects._set_folder_path(os.environ.get('FOLDER_PATH'))
-                clinical_aspects._set_path(path)
-            else:
-                path = ClinicalAspectsDataFrame._path
+        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+            if s3_bucket is None:
+                s3_bucket = os.environ.get('S3_BUCKET')
+                csv_buffer = StringIO()
+                clinical_aspects.to_csv(csv_buffer)
+                s3 = boto3.client('s3')
+                logging.info(f"try writing ClinicalAspectsDataFrame "
+                             f"with filename {clinical_aspects._filename} "
+                             f"to S3 Bucket {s3_bucket}")
+                s3.put_object(Bucket=s3_bucket, Key=clinical_aspects._filename, Body=csv_buffer.getvalue())
+                logging.info(f"updated ClinicalAspectsDataFrame "
+                             f"with filename {clinical_aspects._filename} "
+                             f"has been written to S3 Bucket {s3_bucket}")
         else:
-            clinical_aspects._set_path(path)
-        logging.info(f"try writing ClinicalAspectsDataFrame to {path}")
-        clinical_aspects.to_csv(path)
-        logging.info(f"new ClinicalAspectsDataFrame has been written to {path}")
+            if path is None:
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + ClinicalAspectsDataFrame._filename
+                    clinical_aspects._set_folder_path(os.environ.get('FOLDER_PATH'))
+                    clinical_aspects._set_path(path)
+                else:
+                    path = ClinicalAspectsDataFrame._path
+            else:
+                clinical_aspects._set_path(path)
+            logging.info(f"try writing ClinicalAspectsDataFrame to {path}")
+            clinical_aspects.to_csv(path)
+            logging.info(f"new ClinicalAspectsDataFrame has been written to {path}")
+
         logging.info("FINISHED UPDATE PROCESS FOR CLINICAL ASPECTS")
         return clinical_aspects
 
