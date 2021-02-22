@@ -1,11 +1,12 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import boto3
 from datetime import datetime
 import logging
 import os
 
 from dotenv import load_dotenv
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import datetime as dt
 from typing import TypeVar, List
@@ -30,7 +31,6 @@ class NowcastRKISeries(pd.Series):
 
 
 class NowcastRKIDataFrame(pd.DataFrame):
-
     _folder_path = "data/"
     _filename = "nowcast_rki.csv"
     _path = _folder_path + _filename
@@ -50,18 +50,33 @@ class NowcastRKIDataFrame(pd.DataFrame):
         self._folder_path = folder_path
 
     @staticmethod
-    def from_csv(path: str=None) -> 'NowcastRKIDataFrame':
+    def from_csv(s3_bucket: str = None, path: str = None) -> 'NowcastRKIDataFrame':
 
-        if path is None:
-            if os.environ.get('FOLDER_PATH') is not None:
-                path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
-            else:
-                path = NowcastRKIDataFrame._path
+        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+            if s3_bucket is None:
+                s3_bucket = os.environ.get('S3_BUCKET')
+                s3 = boto3.client('s3')
+                filename = NowcastRKIDataFrame._filename
+                logging.info(f"start loading NowcastRKIDataFrame with filename {filename} "
+                             f"from S3 Bucket {s3_bucket}")
+                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+                nowcast_rki = NowcastRKIDataFrame(pd.read_csv(read_file['Body'],
+                                                              parse_dates=['date'],
+                                                              index_col="date"))
+                logging.info(f"NowcastRKIDataFrame with filename {filename} successfully loaded "
+                             f"from S3 Bucket {s3_bucket}")
+        else:
+            if path is None:
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
+                else:
+                    path = NowcastRKIDataFrame._path
 
-        logging.info(f"start loading NowcastRKIDataFrame from {path}")
-        nowcast_rki = NowcastRKIDataFrame(pd.read_csv(path,
-                                                      parse_dates=['date'],
-                                                      index_col="date"))
+            logging.info(f"start loading NowcastRKIDataFrame from {path}")
+            nowcast_rki = NowcastRKIDataFrame(pd.read_csv(path,
+                                                          parse_dates=['date'],
+                                                          index_col="date"))
+            logging.info(f"NowcastRKIDataFrame successfully loaded from {path}")
 
         if os.environ.get('FOLDER_PATH') is not None:
             nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
@@ -69,12 +84,11 @@ class NowcastRKIDataFrame(pd.DataFrame):
         if path is not None:
             nowcast_rki._set_path(path)
 
-        logging.info(f"NowcastRKIDataFrame successfully loaded from {path}")
         return nowcast_rki
 
-
     @staticmethod
-    def update_with_new_data_from_rki(to_csv: bool=True, path: str=None) -> 'NowcastRKIDataFrame':
+    def update_with_new_data_from_rki(to_csv: bool = True, s3_bucket: str = None,
+                                      path: str = None) -> 'NowcastRKIDataFrame':
 
         logging.info("START UPDATE PROCESS FOR NOWCAST RKI")
 
@@ -132,21 +146,34 @@ class NowcastRKIDataFrame(pd.DataFrame):
         nowcast_rki = pd.concat([nowcast_rki, nowcast_rki_infections], axis=1)
 
         if to_csv:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
-                    nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
-                    nowcast_rki._set_path(path)
-                else:
-                    path = NowcastRKIDataFrame._path
-            logging.info(f"try writing NowcastRKIDataFrame to {path}")
-            nowcast_rki.to_csv(path)
-            logging.info(f"new NowcastRKIDataFrame has been written to {path}")
+            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+                if s3_bucket is None:
+                    s3_bucket = os.environ.get('S3_BUCKET')
+                    csv_buffer = StringIO()
+                    nowcast_rki.to_csv(csv_buffer)
+                    s3 = boto3.client('s3')
+                    logging.info(f"try writing NowcastRKIDataFrame "
+                                 f"with filename {nowcast_rki._filename} "
+                                 f"to S3 Bucket {s3_bucket}")
+                    s3.put_object(Bucket=s3_bucket, Key=nowcast_rki._filename, Body=csv_buffer.getvalue())
+                    logging.info(f"updated NowcastRKIDataFrame "
+                                 f"with filename {nowcast_rki._filename} "
+                                 f"has been written to S3 Bucket {s3_bucket}")
+            else:
+                if path is None:
+                    if os.environ.get('FOLDER_PATH') is not None:
+                        path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
+                        nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
+                        nowcast_rki._set_path(path)
+                    else:
+                        path = NowcastRKIDataFrame._path
+                logging.info(f"try writing NowcastRKIDataFrame to {path}")
+                nowcast_rki.to_csv(path)
+                logging.info(f"new NowcastRKIDataFrame has been written to {path}")
 
         logging.info("FINISHED UPDATE PROCESS FOR NOWCAST RKI")
 
         return nowcast_rki
-
 
     def calculate_df_with_shifted_date_because_of_incubation_period(self, incubation_period_in_days=5) \
             -> 'NowcastRKIDataFrame':
@@ -187,7 +214,7 @@ class NowcastRKIDataFrame(pd.DataFrame):
                                                                               date: dt.datetime,
                                                                               days_backwards: int,
                                                                               period_in_days: int,
-                                                                              type: str="sum") -> TNum:
+                                                                              type: str = "sum") -> TNum:
         date_range = pd.date_range(date - pd.DateOffset(days_backwards), periods=period_in_days)
         cases = self.loc[self.index.isin(date_range), column_name]
         if len(cases) == period_in_days & cases.notna().sum() == period_in_days:

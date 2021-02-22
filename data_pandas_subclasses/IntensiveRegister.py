@@ -1,10 +1,11 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+import boto3
 import logging
 import os
 from dotenv import load_dotenv
 
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import TypeVar, List
 
 import pandas as pd
@@ -32,7 +33,6 @@ class IntensiveRegisterSeries(pd.Series):
 
 
 class IntensiveRegisterDataFrame(pd.DataFrame):
-
     _folder_path = "data/"
     _filename = "intensive_register_total.csv"
     _path = _folder_path + _filename
@@ -54,31 +54,47 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self._folder_path = folder_path
 
     @staticmethod
-    def from_csv(path: str = None) -> 'IntensiveRegisterDataFrame':
+    def from_csv(s3_bucket: str = None, path: str = None) -> 'IntensiveRegisterDataFrame':
 
-        if path is None:
-            if os.environ.get('FOLDER_PATH') is not None:
-                path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
-            else:
-                path = IntensiveRegisterDataFrame._path
+        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+            if s3_bucket is None:
+                s3_bucket = os.environ.get('S3_BUCKET')
+                s3 = boto3.client('s3')
+                filename = IntensiveRegisterDataFrame._filename
+                logging.info(f"start loading IntensiveRegisterDataFrame with filename {filename} "
+                             f"from S3 Bucket {s3_bucket}")
+                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+                intensive_register = IntensiveRegisterDataFrame(pd.read_csv(read_file['Body'],
+                                                                            parse_dates=['date'],
+                                                                            index_col="date"))
+                logging.info(f"IntensiveRegisterDataFrame with filename {filename} successfully loaded "
+                             f"from S3 Bucket {s3_bucket}")
+        else:
+            if path is None:
+                if os.environ.get('FOLDER_PATH') is not None:
+                    path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
+                else:
+                    path = IntensiveRegisterDataFrame._path
 
-        logging.info(f"start loading IntensiveRegisterDataFrame from {path}")
-        intensive_register = IntensiveRegisterDataFrame(pd.read_csv(path,
-                                                                    parse_dates=['date'],
-                                                                    index_col="date"))
+            logging.info(f"start loading IntensiveRegisterDataFrame from {path}")
+            intensive_register = IntensiveRegisterDataFrame(pd.read_csv(path,
+                                                                        parse_dates=['date'],
+                                                                        index_col="date"))
+            logging.info(f"IntensiveRegisterDataFrame successfully loaded from {path}")
+
         if os.environ.get('FOLDER_PATH') is not None:
             intensive_register._set_folder_path(os.environ.get('FOLDER_PATH'))
 
         if path is not None:
             intensive_register._set_path(path)
 
-        logging.info(f"IntensiveRegisterDataFrame successfully loaded from {path}")
         return intensive_register
 
     @staticmethod
-    def update_csv_with_intensive_register_data(path: str = None,
-                                                url_pdf: str=None,
-                                                url_csv: str=None,
+    def update_csv_with_intensive_register_data(s3_bucket: str = None,
+                                                path: str = None,
+                                                url_pdf: str = None,
+                                                url_csv: str = None,
                                                 days_incubation_period: int = 5,
                                                 days_from_symptoms_to_intensive_care: int = 9) \
             -> 'IntensiveRegisterDataFrame':
@@ -88,7 +104,8 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         intensive_register = IntensiveRegisterDataFrame.from_csv(path)
         logging.info("initial loading of CSV finished")
 
-        intensive_register._update_intensive_register_data(path=path,
+        intensive_register._update_intensive_register_data(s3_bucket=s3_bucket,
+                                                           path=path,
                                                            url_pdf=url_pdf,
                                                            url_csv=url_csv,
                                                            days_incubation_period=days_incubation_period,
@@ -100,6 +117,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         return intensive_register
 
     def _update_intensive_register_data(self,
+                                        s3_bucket: str = None,
                                         path: str = None,
                                         url_pdf: str = None,
                                         url_csv: str = None,
@@ -125,16 +143,30 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self = self.dropna(how="all", axis=0)
 
         if to_csv:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
-                    self._set_folder_path(os.environ.get('FOLDER_PATH'))
-                    self._set_path(path)
-                else:
-                    path = IntensiveRegisterDataFrame._path
-            logging.info(f"try writing IntensiveRegisterDataFrame to {path}")
-            self.to_csv(path)
-            logging.info(f"updated IntensiveRegisterDataFrame has been written to {path}")
+            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
+                if s3_bucket is None:
+                    s3_bucket = os.environ.get('S3_BUCKET')
+                    csv_buffer = StringIO()
+                    self.to_csv(csv_buffer)
+                    s3 = boto3.client('s3')
+                    logging.info(f"try writing IntensiveRegisterDataFrame "
+                                 f"with filename {self._filename} "
+                                 f"to S3 Bucket {s3_bucket}")
+                    s3.put_object(Bucket=s3_bucket, Key=self._filename, Body=csv_buffer.getvalue())
+                    logging.info(f"updated IntensiveRegisterDataFrame "
+                                 f"with filename {self._filename} "
+                                 f"has been written to S3 Bucket {s3_bucket}")
+            else:
+                if path is None:
+                    if os.environ.get('FOLDER_PATH') is not None:
+                        path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
+                        self._set_folder_path(os.environ.get('FOLDER_PATH'))
+                        self._set_path(path)
+                    else:
+                        path = IntensiveRegisterDataFrame._path
+                logging.info(f"try writing IntensiveRegisterDataFrame to {path}")
+                self.to_csv(path)
+                logging.info(f"updated IntensiveRegisterDataFrame has been written to {path}")
 
     def _delete_outliers(self) -> None:
         """The 'DIVI Intensivregister' reports outliers because of bigger corrections of some hospitals or
@@ -389,11 +421,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
         logging.info("calculated changes from previous day has been added")
 
-    def _get_cases_from_intensive_register_report(self, url_pdf: str=None) -> None:
+    def _get_cases_from_intensive_register_report(self, url_pdf: str = None) -> None:
 
         logging.info("get cases from intensive register report")
 
-        def get_cases_table_from_pdf(url_pdf: str=None):
+        def get_cases_table_from_pdf(url_pdf: str = None):
             pdf_table_area_cases = (262, 34, 366, 561)
             # pdf_table_area_cases = (277, 34, 380, 561)
             if url_pdf is None:
@@ -451,11 +483,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self.loc[date, 'thereof deceased'] = thereof_deceased(pdf)
         logging.info("cases from intensive register report has been added")
 
-    def _get_capacities_intensive_register_report(self, url_pdf: str=None, url_csv: str=None) -> None:
+    def _get_capacities_intensive_register_report(self, url_pdf: str = None, url_csv: str = None) -> None:
 
         logging.info("get capacities from intensive register report")
 
-        def get_capacities_table_from_pdf(url_pdf: str=None):
+        def get_capacities_table_from_pdf(url_pdf: str = None):
             pdf_table_area_capacities = (422, 34, 465, 561)
             # pdf_table_area_capacities = (437, 34, 481, 561)
             if url_pdf is None:
@@ -477,7 +509,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                            )
             return pdf[0].set_index("Status")
 
-        def get_last_csv_from_intensive_register_and_date(url_csv: str=None):
+        def get_last_csv_from_intensive_register_and_date(url_csv: str = None):
             if url_csv is None:
                 url_csv = self._url_csv
             csv = pd.read_csv(url_csv)
