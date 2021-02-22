@@ -132,6 +132,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
                     self._set_path(path)
                 else:
                     path = IntensiveRegisterDataFrame._path
+            logging.info(f"try writing IntensiveRegisterDataFrame to {path}")
             self.to_csv(path)
             logging.info(f"updated IntensiveRegisterDataFrame has been written to {path}")
 

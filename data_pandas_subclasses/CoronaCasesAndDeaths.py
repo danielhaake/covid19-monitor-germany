@@ -400,6 +400,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                     self._set_path(path)
                 else:
                     path = CoronaCasesAndDeathsDataFrame._path
+            logging.info(f"try writing CoronaCasesAndDeathsDataFrame to {path}")
             self.to_csv(path)
             logging.info(f"updated CoronaCasesAndDeathsDataFrame has been written to {path}")
 

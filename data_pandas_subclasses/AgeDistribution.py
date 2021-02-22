@@ -107,6 +107,7 @@ class AgeDistributionDataFrame(pd.DataFrame):
                     age_distribution._set_path(path)
                 else:
                     path = AgeDistributionDataFrame._path
+            logging.info(f"try writing AgeDistributionDataFrame to {path}")
             age_distribution.to_csv(path)
             logging.info(f"new AgeDistributionDataFrame has been written to {path}")
 
