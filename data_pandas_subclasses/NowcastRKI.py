@@ -1,5 +1,6 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
+from datetime import datetime
 import logging
 import os
 
@@ -112,9 +113,14 @@ class NowcastRKIDataFrame(pd.DataFrame):
         response = requests.get(url)
         file_object = BytesIO(response.content)
 
+        dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
+
         nowcast_rki = NowcastRKIDataFrame(pd.read_excel(file_object,
                                                         sheet_name=1,
-                                                        header=0))
+                                                        header=0,
+                                                        thousands=".",
+                                                        parse_dates=['Datum des Erkrankungsbeginns'],
+                                                        date_parser=dateparse).replace(",", ".", regex=True))
 
         nowcast_rki = select_and_rename_german_columns_and_set_index_after_download_from_rki(nowcast_rki)
 

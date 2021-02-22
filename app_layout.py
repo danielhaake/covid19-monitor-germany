@@ -15,7 +15,7 @@ from plotly.graph_objects import Figure
 import pandas as pd
 import numpy as np
 
-from data_pandas_subclasses.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame
+from data_pandas_subclasses.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame, CoronaCasesAndDeathsSeries
 from data_pandas_subclasses.NowcastRKI import NowcastRKIDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
 from data_pandas_subclasses.ClinicalAspects import ClinicalAspectsDataFrame
@@ -57,6 +57,7 @@ class Layout:
 
     def layout(self) -> html.Div:
         return html.Div(
+            id='layout',
             children=[
                 html.Header(
                     id='headline',
@@ -73,6 +74,10 @@ class Layout:
                                  parent_className='tabs',
                                  children=self.tabs_with_graphs())
                     ]
+                ),
+                html.Div(
+                    id='warning-message',
+                    children=self._warning_message()
                 ),
                 html.Footer(
                     id='footer',
@@ -110,6 +115,17 @@ class Layout:
                 "Impressum",
                 href='https://www.unbelievable-machine.com/impressum/')
         ]
+
+
+    def _warning_message(self) -> List[THtml]:
+        return [
+            html.Br(),
+            "This website is only viewable in landscape mode.",
+            html.Br(),
+            html.Br(),
+            "Please rotate your screen."
+        ]
+
 
     def tabs_with_graphs(self) -> List[dcc.Tab]:
         # ----------------------------- LOAD DATA AS DATAFRAMES ----------------------#
@@ -477,10 +493,10 @@ class Layout:
                              nowcast_rki: NowcastRKIDataFrame) -> Figure:
 
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1).reset_index()
-
-        corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_CASES_MEAN_3"]["hover_data"]] = \
-            corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_CASES_MEAN_3"]["hover_data"]] \
-                .dt.strftime('%b %d, %Y')
+        corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_CASES_MEAN_3"]["hover_data_strftime"]] = \
+            self._format_column_strftime(corona_cases_and_deaths_with_nowcast, "FIG_CASES_MEAN_3")
+        corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_CASES_MEAN_3"]["hover_data_format_column"]] = \
+            self._format_hover_data_column(corona_cases_and_deaths_with_nowcast, "FIG_CASES_MEAN_3")
 
         fig = make_subplots(specs=[[{"secondary_y": False}]])
 
@@ -489,15 +505,22 @@ class Layout:
                           y=json.loads(self.config["FIG_CASES_MEAN_3"]["y"]),
                           color_discrete_map=json.loads(self.config["FIG_CASES_MEAN_3"]["color_discrete_map"]),
                           render_mode=self.config["ALL_FIGS"]["render_mode"],
-                          hover_data=[self.config["FIG_CASES_MEAN_3"]["hover_data"]])
+                          hover_data=json.loads(self.config["FIG_CASES_MEAN_3"]["hover_data"]))
 
         subfig = px.line(corona_cases_and_deaths_with_nowcast,
                          x=self.config["FIG_CASES_MEAN_3"]["x"],
                          y=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG"]["y"]),
                          color_discrete_map=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG"]["color_discrete_map"]),
+                         render_mode=self.config["ALL_FIGS"]["render_mode"],
+                         hover_data=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG"]["hover_data"]))
+
+        subfig_2 = px.line(corona_cases_and_deaths_with_nowcast,
+                         x=self.config["FIG_CASES_MEAN_3"]["x"],
+                         y=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG_2"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_CASES_MEAN_3_SUBFIG_2"]["color_discrete_map"]),
                          render_mode=self.config["ALL_FIGS"]["render_mode"])
 
-        fig.add_traces(mainfig.data + subfig.data)
+        fig.add_traces(mainfig.data + subfig.data + subfig_2.data)
 
         fig.update_layout(title=self.config["FIG_CASES_MEAN_3"]["title"],
                           xaxis_title=self.config["FIG_CASES_MEAN_3"]["xaxis_title"],
@@ -515,9 +538,10 @@ class Layout:
                               nowcast_rki: NowcastRKIDataFrame) -> Figure:
 
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1).reset_index()
-        corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_DEATHS_MEAN_3"]["hover_data"]] = \
-            corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_DEATHS_MEAN_3"]["hover_data"]] \
-                .dt.strftime('%b %d, %Y')
+        corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_DEATHS_MEAN_3"]["hover_data_strftime"]] = \
+            self._format_column_strftime(corona_cases_and_deaths_with_nowcast, "FIG_DEATHS_MEAN_3")
+        corona_cases_and_deaths_with_nowcast.loc[:, self.config["FIG_DEATHS_MEAN_3"]["hover_data_format_column"]] = \
+            self._format_hover_data_column(corona_cases_and_deaths_with_nowcast, "FIG_DEATHS_MEAN_3")
 
         fig = make_subplots(specs=[[{"secondary_y": False}]])
 
@@ -526,15 +550,22 @@ class Layout:
                           y=json.loads(self.config["FIG_DEATHS_MEAN_3"]["y"]),
                           color_discrete_map=json.loads(self.config["FIG_DEATHS_MEAN_3"]["color_discrete_map"]),
                           render_mode=self.config["ALL_FIGS"]["render_mode"],
-                          hover_data=[self.config["FIG_DEATHS_MEAN_3"]["hover_data"]])
+                          hover_data=json.loads(self.config["FIG_DEATHS_MEAN_3"]["hover_data"]))
 
         subfig = px.line(corona_cases_and_deaths_with_nowcast,
                          x=self.config["FIG_DEATHS_MEAN_3"]["x"],
                          y=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG"]["y"]),
                          color_discrete_map=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG"]["color_discrete_map"]),
+                         render_mode=self.config["ALL_FIGS"]["render_mode"],
+                         hover_data=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG"]["hover_data"]))
+
+        subfig_2 = px.line(corona_cases_and_deaths_with_nowcast,
+                         x=self.config["FIG_DEATHS_MEAN_3"]["x"],
+                         y=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG_2"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_DEATHS_MEAN_3_SUBFIG_2"]["color_discrete_map"]),
                          render_mode=self.config["ALL_FIGS"]["render_mode"])
 
-        fig.add_traces(mainfig.data + subfig.data)
+        fig.add_traces(mainfig.data + subfig.data + subfig_2.data)
 
         fig.update_layout(title=self.config["FIG_DEATHS_MEAN_3"]["title"],
                           xaxis_title=self.config["FIG_DEATHS_MEAN_3"]["xaxis_title"],
@@ -547,6 +578,19 @@ class Layout:
                           yaxis_tickformat=self.config["FIG_DEATHS_MEAN_3"]["yaxis_tickformat"])
 
         return fig
+
+    def _format_hover_data_column(self,
+                                  corona_cases_and_deaths_with_nowcast: CoronaCasesAndDeathsDataFrame,
+                                  config_section: str) -> CoronaCasesAndDeathsSeries:
+        str_format = "{:" + self.config[config_section]["hover_data_format"] + "}"
+        return corona_cases_and_deaths_with_nowcast.loc[:, self.config[config_section]["hover_data_format_column"]] \
+                .map(str_format.format)
+
+    def _format_column_strftime(self,
+                                corona_cases_and_deaths_with_nowcast: CoronaCasesAndDeathsDataFrame,
+                                config_section: str) -> CoronaCasesAndDeathsSeries:
+        return corona_cases_and_deaths_with_nowcast.loc[:, self.config[config_section]["hover_data_strftime"]] \
+                .dt.strftime('%b %d, %Y')
 
     def _figure_r_value(self,
                         corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
