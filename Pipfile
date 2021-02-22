@@ -20,7 +20,6 @@ pdftotext = "*"
 openpyxl = "*"
 gunicorn = "*"
 gevent = "*"
-s3fs = "*"
 python-dotenv = "*"
 
 [requires]
