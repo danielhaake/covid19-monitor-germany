@@ -18,6 +18,7 @@ app = dash.Dash(__name__,
                                        'Data Analysis & Visualization) '
                                        '& Christian Kirifidis (Dashboard Application & Visualization)'}])
 
+app.title = 'COVID-19 Monitor Germany'
 layout = Layout()
 app.layout = layout.layout()
 
