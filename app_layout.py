@@ -3,6 +3,7 @@ import logging
 from typing import List, TypeVar, TypedDict
 
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 
 import configparser
@@ -69,9 +70,8 @@ class Layout:
                         dcc.Interval('graph-update',
                                      interval=600000,
                                      n_intervals=0),
-                        dcc.Tabs(id='tabs-global-overview',
-                                 value='daily-overview',
-                                 parent_className='tabs',
+                        dbc.Tabs(id='tabs-global-overview',
+                                 className='nav-justified',
                                  children=self.tabs_with_graphs())
                     ]
                 ),
@@ -145,20 +145,18 @@ class Layout:
         # TAB STYLING
         # https://dash.plotly.com/dash-core-components/tabs
 
-        return [dcc.Tab(label='Daily Overview',
-                        value='daily-overview',
-                        className='tab',
-                        selected_className='tab-selected',
+        return [dbc.Tab(label='Daily Overview',
+                        labelClassName='tab',
+                        activeLabelClassName='tab-selected',
                         id='tab-daily-overview',
                         children=self._tab_daily_overview(daily_figures,
                                                           corona_cases_and_deaths,
                                                           nowcast_rki)
                         ),
 
-                dcc.Tab(label='Corona cases',
-                        value='tab-corona-cases',
-                        className='tab',
-                        selected_className='tab-selected',
+                dbc.Tab(label='Corona cases',
+                        labelClassName='tab',
+                        activeLabelClassName='tab-selected',
                         id='tab-corona-cases',
                         children=self._tab_corona_cases(corona_cases_and_deaths,
                                                         nowcast_rki,
@@ -167,18 +165,16 @@ class Layout:
                                                         age_distribution)
                         ),
 
-                dcc.Tab(label='Intensive care',
-                        value='tab-intensive-care',
-                        className='tab',
-                        selected_className='tab-selected',
+                dbc.Tab(label='Intensive care',
+                        labelClassName='tab',
+                        activeLabelClassName='tab-selected',
                         id='tab-intensive-care',
                         children=self._tab_corona_intensive_care(intensive_register)
                         ),
 
-                dcc.Tab(label='Data sources description',
-                        value='tab-data-sources-description',
-                        className='tab',
-                        selected_className='tab-selected',
+                dbc.Tab(label='Data sources description',
+                        labelClassName='tab',
+                        activeLabelClassName='tab-selected',
                         id='tab-data-sources-description',
                         children=self._tab_data_sources_description()
                         )

@@ -76,17 +76,26 @@ h6 {
     display: inline-block;
 }
 
-#tabs-global-overview {
-
+.custom-tabs-container {
+    width: 100%;
 }
 
 .tab {
     height: 44px;
-    border-bottom: 1px solid #d6d6d6 !important;
+    border: 1px solid #d6d6d6;
     padding: 6px;
     display: flex !important;
     align-items: center;
     justify-content: center;
+    background-color: white !important;
+}
+
+.tab:link {
+    color: black;
+}
+
+.tab:hover {
+    color: black;
 }
 
 .tab-selected {
