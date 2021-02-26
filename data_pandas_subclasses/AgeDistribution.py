@@ -49,14 +49,14 @@ class AgeDistributionDataFrame(pd.DataFrame):
         if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
             if s3_bucket is None:
                 s3_bucket = os.environ.get('S3_BUCKET')
-                s3 = boto3.client('s3')
-                filename = AgeDistributionDataFrame._filename
-                logging.info(f"start loading AgeDistributionDataFrame with filename {filename} "
-                             f"from S3 Bucket {s3_bucket}")
-                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-                distribution = AgeDistributionDataFrame(pd.read_csv(read_file['Body']))
-                logging.info(f"AgeDistributionDataFrame with filename {filename} successfully loaded "
-                             f"from S3 Bucket {s3_bucket}")
+            s3 = boto3.client('s3')
+            filename = AgeDistributionDataFrame._filename
+            logging.info(f"start loading AgeDistributionDataFrame with filename {filename} "
+                         f"from S3 Bucket {s3_bucket}")
+            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+            distribution = AgeDistributionDataFrame(pd.read_csv(read_file['Body']))
+            logging.info(f"AgeDistributionDataFrame with filename {filename} successfully loaded "
+                         f"from S3 Bucket {s3_bucket}")
         else:
             if path is None:
                 if os.environ.get('FOLDER_PATH') is not None:

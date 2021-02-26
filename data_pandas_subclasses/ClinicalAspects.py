@@ -49,14 +49,14 @@ class ClinicalAspectsDataFrame(pd.DataFrame):
         if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
             if s3_bucket is None:
                 s3_bucket = os.environ.get('S3_BUCKET')
-                s3 = boto3.client('s3')
-                filename = ClinicalAspectsDataFrame._filename
-                logging.info(f"start loading ClinicalAspectsDataFrame with filename {filename} "
-                             f"from S3 Bucket {s3_bucket}")
-                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-                clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(read_file['Body'], index_col="calendar week"))
-                logging.info(f"ClinicalAspectsDataFrame with filename {filename} successfully loaded "
-                             f"from S3 Bucket {s3_bucket}")
+            s3 = boto3.client('s3')
+            filename = ClinicalAspectsDataFrame._filename
+            logging.info(f"start loading ClinicalAspectsDataFrame with filename {filename} "
+                         f"from S3 Bucket {s3_bucket}")
+            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+            clinical_aspects = ClinicalAspectsDataFrame(pd.read_csv(read_file['Body'], index_col="calendar week"))
+            logging.info(f"ClinicalAspectsDataFrame with filename {filename} successfully loaded "
+                         f"from S3 Bucket {s3_bucket}")
         else:
             if path is None:
                 if os.environ.get('FOLDER_PATH') is not None:
