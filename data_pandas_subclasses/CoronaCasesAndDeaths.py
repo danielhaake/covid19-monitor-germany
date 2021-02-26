@@ -55,17 +55,17 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
             if s3_bucket is None:
                 s3_bucket = os.environ.get('S3_BUCKET')
-                s3 = boto3.client('s3')
-                filename = CoronaCasesAndDeathsDataFrame._filename
-                logging.info(f"start loading CoronaCasesAndDeathsDataFrame with filename {filename} "
-                             f"from S3 Bucket {s3_bucket}")
-                read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-                corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame(pd.read_csv(read_file['Body'],
-                                                                                    parse_dates=['date',
-                                                                                                 'RKI reporting date'],
-                                                                                    index_col="date"))
-                logging.info(f"CoronaCasesAndDeathsDataFrame with filename {filename} successfully loaded "
-                             f"from S3 Bucket {s3_bucket}")
+            s3 = boto3.client('s3')
+            filename = CoronaCasesAndDeathsDataFrame._filename
+            logging.info(f"start loading CoronaCasesAndDeathsDataFrame with filename {filename} "
+                         f"from S3 Bucket {s3_bucket}")
+            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
+            corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame(pd.read_csv(read_file['Body'],
+                                                                                parse_dates=['date',
+                                                                                             'RKI reporting date'],
+                                                                                index_col="date"))
+            logging.info(f"CoronaCasesAndDeathsDataFrame with filename {filename} successfully loaded "
+                         f"from S3 Bucket {s3_bucket}")
         else:
             if path is None:
                 if os.environ.get('FOLDER_PATH') is not None:
