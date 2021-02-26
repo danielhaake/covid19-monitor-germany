@@ -21,7 +21,7 @@ app = dash.Dash(__name__,
 
 app.title = 'COVID-19 Monitor Germany'
 layout = Layout()
-app.layout = layout.layout()
+app.layout = layout.layout
 
 server = app.server  # important for using with gunicorn
 
