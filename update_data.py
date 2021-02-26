@@ -1,3 +1,5 @@
+import time
+
 import logging
 import traceback
 
@@ -13,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 if __name__ == '__main__':
 
     logging.info("START COMPLETE UPDATE PROCESS")
+    start_time = time.time()
     try:
         CoronaCasesAndDeathsDataFrame.update_csv_with_data_from_rki_api()
     except Exception:
@@ -37,5 +40,5 @@ if __name__ == '__main__':
         NumberPCRTestsDataFrame.update_csv_with_new_data_from_rki()
     except Exception:
         traceback.print_exc()
-
-    logging.info("FINISHED COMPLETE UPDATE PROCESS")
+    end_time = time.time()
+    logging.info(f"FINISHED COMPLETE UPDATE PROCESS IN {end_time - start_time} SECONDS")
