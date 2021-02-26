@@ -652,6 +652,8 @@ class Layout:
     def _figure_pcr_tests(self, number_pcr_tests: NumberPCRTestsDataFrame) -> Figure:
 
         number_pcr_tests = number_pcr_tests.reset_index()
+        number_pcr_tests.loc[:, self.config["FIG_PCR_TESTS"]["hover_data_format_column"]] = \
+            self._format_hover_data_column(number_pcr_tests, "FIG_PCR_TESTS")
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -659,7 +661,8 @@ class Layout:
             px.bar(number_pcr_tests,
                    x=self.config["FIG_PCR_TESTS"]["x"],
                    y=json.loads(self.config["FIG_PCR_TESTS"]["y"]),
-                   color_discrete_map=json.loads(self.config["FIG_PCR_TESTS"]["color_discrete_map"]))
+                   color_discrete_map=json.loads(self.config["FIG_PCR_TESTS"]["color_discrete_map"]),
+                   hover_data=json.loads(self.config["FIG_PCR_TESTS"]["hover_data"]))
 
         subfig = \
             px.line(number_pcr_tests,
