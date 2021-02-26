@@ -1,4 +1,6 @@
 # ------------------------------ CREATE PLOTS ----------------------------------------#
+import time
+
 import logging
 from typing import List, TypeVar, TypedDict
 
@@ -130,13 +132,15 @@ class Layout:
     def tabs_with_graphs(self) -> List[dcc.Tab]:
         # ----------------------------- LOAD DATA AS DATAFRAMES ----------------------#
         logging.info("START LOADING OF DATAFRAMES")
+        start_time = time.time()
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv()
         nowcast_rki = NowcastRKIDataFrame.from_csv()
         number_pcr_tests = NumberPCRTestsDataFrame.from_csv()
         intensive_register = IntensiveRegisterDataFrame.from_csv()
         clinical_aspects = ClinicalAspectsDataFrame.from_csv()
         age_distribution = AgeDistributionDataFrame.from_csv()
-        logging.info("FINISHED LOADING OF DATAFRAMES")
+        end_time = time.time()
+        logging.info(f"FINISHED LOADING OF DATAFRAMES IN {end_time - start_time} SECONDS")
 
         # ----------------------------- LOAD DATA FOR DAILY OVERVIEW ----------------------#
 
