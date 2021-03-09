@@ -17,12 +17,14 @@ from pdftotext import PDF
 import urllib
 from datetime import datetime
 
+from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 TNum = TypeVar('TNum', int, float)
 
 
-class IntensiveRegisterSeries(pd.Series):
+class IntensiveRegisterSeries(CoronaBaseDateIndexSeries):
     @property
     def _constructor(self):
         return IntensiveRegisterSeries
@@ -32,10 +34,9 @@ class IntensiveRegisterSeries(pd.Series):
         return IntensiveRegisterDataFrame
 
 
-class IntensiveRegisterDataFrame(pd.DataFrame):
-    _folder_path = "data/"
+class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
+
     _filename = "intensive_register_total.csv"
-    _path = _folder_path + _filename
     _url_pdf = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Report.pdf"
     _url_csv = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv"
 
@@ -47,52 +48,23 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
     def _constructor_sliced(self):
         return IntensiveRegisterSeries
 
-    def _set_path(self, path: str):
-        self._path = path
-
-    def _set_folder_path(self, folder_path: str):
-        self._folder_path = folder_path
-
     @staticmethod
-    def from_csv(s3_bucket: str = None, path: str = None) -> 'IntensiveRegisterDataFrame':
+    def from_csv(filename: str=None,
+                 s3_bucket: str=None,
+                 folder_path: str=None,
+                 class_name: str=None) -> 'IntensiveRegisterDataFrame':
 
-        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-            if s3_bucket is None:
-                s3_bucket = os.environ.get('S3_BUCKET')
-            s3 = boto3.client('s3')
+        if filename is None:
             filename = IntensiveRegisterDataFrame._filename
-            logging.info(f"start loading IntensiveRegisterDataFrame with filename {filename} "
-                         f"from S3 Bucket {s3_bucket}")
-            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-            intensive_register = IntensiveRegisterDataFrame(pd.read_csv(read_file['Body'],
-                                                                        parse_dates=['date'],
-                                                                        index_col="date"))
-            logging.info(f"IntensiveRegisterDataFrame with filename {filename} successfully loaded "
-                         f"from S3 Bucket {s3_bucket}")
-        else:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
-                else:
-                    path = IntensiveRegisterDataFrame._path
+        if class_name is None:
+            class_name = IntensiveRegisterDataFrame.__name__
+        df = CoronaBaseDateIndexDataFrame.from_csv(filename, s3_bucket, folder_path, class_name)
 
-            logging.info(f"start loading IntensiveRegisterDataFrame from {path}")
-            intensive_register = IntensiveRegisterDataFrame(pd.read_csv(path,
-                                                                        parse_dates=['date'],
-                                                                        index_col="date"))
-            logging.info(f"IntensiveRegisterDataFrame successfully loaded from {path}")
-
-        if os.environ.get('FOLDER_PATH') is not None:
-            intensive_register._set_folder_path(os.environ.get('FOLDER_PATH'))
-
-        if path is not None:
-            intensive_register._set_path(path)
-
-        return intensive_register
+        return IntensiveRegisterDataFrame(df)
 
     @staticmethod
     def update_csv_with_intensive_register_data(s3_bucket: str = None,
-                                                path: str = None,
+                                                folder_path: str = None,
                                                 url_pdf: str = None,
                                                 url_csv: str = None,
                                                 days_incubation_period: int = 5,
@@ -101,11 +73,11 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
         logging.info("START UPDATE PROCESS FOR INTENSIVE REGISTER")
 
-        intensive_register = IntensiveRegisterDataFrame.from_csv(path)
+        intensive_register = IntensiveRegisterDataFrame.from_csv(folder_path)
         logging.info("initial loading of CSV finished")
 
         intensive_register._update_intensive_register_data(s3_bucket=s3_bucket,
-                                                           path=path,
+                                                           folder_path=folder_path,
                                                            url_pdf=url_pdf,
                                                            url_csv=url_csv,
                                                            days_incubation_period=days_incubation_period,
@@ -118,7 +90,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
 
     def _update_intensive_register_data(self,
                                         s3_bucket: str = None,
-                                        path: str = None,
+                                        folder_path: str = None,
                                         url_pdf: str = None,
                                         url_csv: str = None,
                                         days_incubation_period: int = 5,
@@ -143,30 +115,7 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         self = self.dropna(how="all", axis=0)
 
         if to_csv:
-            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-                if s3_bucket is None:
-                    s3_bucket = os.environ.get('S3_BUCKET')
-                    csv_buffer = StringIO()
-                    self.to_csv(csv_buffer)
-                    s3 = boto3.client('s3')
-                    logging.info(f"try writing IntensiveRegisterDataFrame "
-                                 f"with filename {self._filename} "
-                                 f"to S3 Bucket {s3_bucket}")
-                    s3.put_object(Bucket=s3_bucket, Key=self._filename, Body=csv_buffer.getvalue())
-                    logging.info(f"updated IntensiveRegisterDataFrame "
-                                 f"with filename {self._filename} "
-                                 f"has been written to S3 Bucket {s3_bucket}")
-            else:
-                if path is None:
-                    if os.environ.get('FOLDER_PATH') is not None:
-                        path = os.environ.get('FOLDER_PATH') + IntensiveRegisterDataFrame._filename
-                        self._set_folder_path(os.environ.get('FOLDER_PATH'))
-                        self._set_path(path)
-                    else:
-                        path = IntensiveRegisterDataFrame._path
-                logging.info(f"try writing IntensiveRegisterDataFrame to {path}")
-                self.to_csv(path)
-                logging.info(f"updated IntensiveRegisterDataFrame has been written to {path}")
+            self.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
     def _delete_outliers(self) -> None:
         """The 'DIVI Intensivregister' reports outliers because of bigger corrections of some hospitals or
@@ -559,18 +508,6 @@ class IntensiveRegisterDataFrame(pd.DataFrame):
         date_as_str_german = pdf[0].split("bundesweit am ")[1].split(" um ")[0].replace(" ", "")
         date = pd.to_datetime(date_as_str_german, dayfirst=True)
         return date
-
-    def get_last_date(self) -> dt.datetime:
-        return self.index.max()
-
-    def get_second_last_date(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(1)
-
-    def get_last_date_for_mean_values(self) -> dt.datetime:
-        return self.index.max() - pd.DateOffset(3)
-
-    def get_second_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date_for_mean_values() - pd.DateOffset(1)
 
     def get_last_r_value_by_mean_cases(self) -> float:
         last_date = self.get_last_date_for_mean_values()

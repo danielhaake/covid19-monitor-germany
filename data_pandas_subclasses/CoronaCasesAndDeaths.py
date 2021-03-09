@@ -14,12 +14,14 @@ import pandas as pd
 import numpy as np
 import requests
 
+from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 TNum = TypeVar('TNum', int, float)
 
 
-class CoronaCasesAndDeathsSeries(pd.Series):
+class CoronaCasesAndDeathsSeries(CoronaBaseDateIndexSeries):
     @property
     def _constructor(self):
         return CoronaCasesAndDeathsSeries
@@ -29,11 +31,9 @@ class CoronaCasesAndDeathsSeries(pd.Series):
         return CoronaCasesAndDeathsDataFrame
 
 
-class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
+class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
 
-    _folder_path = "data/"
     _filename = "corona_cases_and_deaths.csv"
-    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -43,59 +43,28 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
     def _constructor_sliced(self):
         return CoronaCasesAndDeathsSeries
 
-    def _set_path(self, path: str):
-        self._path = path
-
-    def _set_folder_path(self, folder_path: str):
-        self._folder_path = folder_path
-
     @staticmethod
-    def from_csv(s3_bucket: str=None, path: str=None) -> 'CoronaCasesAndDeathsDataFrame':
+    def from_csv(filename: str=None,
+                 s3_bucket: str=None,
+                 folder_path: str=None,
+                 class_name: str=None) -> 'CoronaCasesAndDeathsDataFrame':
 
-        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-            if s3_bucket is None:
-                s3_bucket = os.environ.get('S3_BUCKET')
-            s3 = boto3.client('s3')
+        if filename is None:
             filename = CoronaCasesAndDeathsDataFrame._filename
-            logging.info(f"start loading CoronaCasesAndDeathsDataFrame with filename {filename} "
-                         f"from S3 Bucket {s3_bucket}")
-            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-            corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame(pd.read_csv(read_file['Body'],
-                                                                                parse_dates=['date',
-                                                                                             'RKI reporting date'],
-                                                                                index_col="date"))
-            logging.info(f"CoronaCasesAndDeathsDataFrame with filename {filename} successfully loaded "
-                         f"from S3 Bucket {s3_bucket}")
-        else:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + CoronaCasesAndDeathsDataFrame._filename
-                else:
-                    path = CoronaCasesAndDeathsDataFrame._path
-                logging.info(f"start loading CoronaCasesAndDeathsDataFrame from {path}")
-                corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame(pd.read_csv(path,
-                                                                                    parse_dates=['date',
-                                                                                                 'RKI reporting date'],
-                                                                                    index_col="date"))
-                logging.info(f"CoronaCasesAndDeathsDataFrame successfully loaded from {path}")
+        if class_name is None:
+            class_name = CoronaCasesAndDeathsDataFrame.__name__
+        df = CoronaBaseDateIndexDataFrame.from_csv(filename, s3_bucket, folder_path, class_name)
 
-        if os.environ.get('S3_BUCKET') is not None:
-            corona_cases_and_deaths._set_folder_path(os.environ.get('S3_BUCKET'))
-
-        if os.environ.get('FOLDER_PATH') is not None:
-            corona_cases_and_deaths._set_folder_path(os.environ.get('FOLDER_PATH'))
-
-        if path is not None:
-            corona_cases_and_deaths._set_path(path)
-
-        return corona_cases_and_deaths
+        return CoronaCasesAndDeathsDataFrame(df)
 
     @staticmethod
-    def update_csv_with_data_from_rki_api(s3_bucket: str=None, path: str = None):
+    def update_csv_with_data_from_rki_api(s3_bucket: str=None, folder_path: str = None):
         logging.info("START UPDATE PROCESS FOR CORONA CASES AND DEATHS")
-        corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv(path)
+        corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv(folder_path=folder_path)
         logging.info("initial loading of CSV finished")
-        corona_cases_and_deaths._update_with_new_data_from_rki_api(to_csv=True, s3_bucket=s3_bucket, path=path)
+        corona_cases_and_deaths._update_with_new_data_from_rki_api(to_csv=True,
+                                                                   s3_bucket=s3_bucket,
+                                                                   folder_path=folder_path)
         logging.info("FINISHED UPDATE PROCESS FOR CORONA CASES AND DEATHS")
 
     @staticmethod
@@ -137,13 +106,13 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         return rki_cases_and_deaths
 
 
-    def update_with_new_data_from_rki_api(self, to_csv: bool = True, s3_bucket: str=None, path: str = None) \
+    def update_with_new_data_from_rki_api(self, to_csv: bool = True, s3_bucket: str=None, folder_path: str = None) \
             -> 'CoronaCasesAndDeathsDataFrame':
         self_copy = self.copy(deep=True)
-        self_copy._update_with_new_data_from_rki_api(to_csv=to_csv, s3_bucket=s3_bucket, path=path)
+        self_copy._update_with_new_data_from_rki_api(to_csv=to_csv, s3_bucket=s3_bucket, folder_path=folder_path)
         return self_copy
 
-    def _update_with_new_data_from_rki_api(self, to_csv: bool = True, s3_bucket: str=None, path: str = None) -> None:
+    def _update_with_new_data_from_rki_api(self, to_csv: bool = True, s3_bucket: str=None, folder_path: str = None) -> None:
 
         # it is possible that we call the methods while the dataset is updated
         # then we could have different dates for reported cases and deaths
@@ -238,7 +207,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                                deaths_cumulative=deaths_cumulative,
                                                to_csv=to_csv,
                                                s3_bucket=s3_bucket,
-                                               path=path)
+                                               folder_path=folder_path)
         logging.info("finished update with new data from RKI API")
 
     def upsert_statistics(self, inhabitants: int = 83166711) -> 'CoronaCasesAndDeathsDataFrame':
@@ -371,7 +340,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                          deaths_cumulative: int = None,
                                          to_csv: bool = True,
                                          s3_bucket: str = None,
-                                         path: str = None) -> 'CoronaCasesAndDeathsDataFrame':
+                                         folder_path: str = None) -> 'CoronaCasesAndDeathsDataFrame':
         self_copy = self.copy(deep=True)
         self_copy._upsert_cases_and_deaths_for_date(rki_reporting_date=rki_reporting_date,
                                                     new_reported_cases=new_reported_cases,
@@ -380,7 +349,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                                     deaths_cumulative=deaths_cumulative,
                                                     to_csv=to_csv,
                                                     s3_bucket=s3_bucket,
-                                                    path=path)
+                                                    folder_path=folder_path)
         return self_copy
 
     def _upsert_cases_and_deaths_for_date(self,
@@ -391,7 +360,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
                                           deaths_cumulative: int = None,
                                           to_csv: bool = True,
                                           s3_bucket: str = None,
-                                          path: str = None) -> None:
+                                          folder_path: str = None) -> None:
 
         date = rki_reporting_date - pd.DateOffset(1)
         date_minus_1d = date - pd.DateOffset(1)
@@ -416,28 +385,7 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         self._upsert_statistics()
 
         if to_csv:
-            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-                if s3_bucket is None:
-                    s3_bucket = os.environ.get('S3_BUCKET')
-                    csv_buffer = StringIO()
-                    self.to_csv(csv_buffer)
-                    s3 = boto3.client('s3')
-                    logging.info(f"try writing CoronaCasesAndDeathsDataFrame with filename {self._filename} "
-                                 f"to S3 Bucket {s3_bucket}")
-                    s3.put_object(Bucket=s3_bucket, Key=self._filename, Body=csv_buffer.getvalue())
-                    logging.info(f"updated CoronaCasesAndDeathsDataFrame with filename {self._filename} has been "
-                                 f"written to S3 Bucket {s3_bucket}")
-            else:
-                if path is None:
-                    if os.environ.get('FOLDER_PATH') is not None:
-                        path = os.environ.get('FOLDER_PATH') + CoronaCasesAndDeathsDataFrame._filename
-                        self._set_folder_path(os.environ.get('FOLDER_PATH'))
-                        self._set_path(path)
-                    else:
-                        path = CoronaCasesAndDeathsDataFrame._path
-                logging.info(f"try writing CoronaCasesAndDeathsDataFrame to {path}")
-                self.to_csv(path)
-                logging.info(f"updated CoronaCasesAndDeathsDataFrame has been written to {path}")
+            self.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
 
     @staticmethod
@@ -1314,20 +1262,9 @@ class CoronaCasesAndDeathsDataFrame(pd.DataFrame):
         return overall_deaths_by_reporting_date.loc[:, 'new reported deaths by reporting date'], \
                datetime_of_data_status
 
-    def get_last_date(self) -> dt.datetime:
-        return self.index.max()
-
-    def get_second_last_date(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(1)
 
     def get_last_rki_reporting_date(self) -> dt.datetime:
         return self.loc[:, "RKI reporting date"].max()
-
-    def get_last_date_for_mean_values(self) -> dt.datetime:
-        return self.index.max() - pd.DateOffset(3)
-
-    def get_second_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date_for_mean_values() - pd.DateOffset(1)
 
     def get_last_reported_cases(self) -> int:
         last_date = self.get_last_date()

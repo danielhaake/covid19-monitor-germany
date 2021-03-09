@@ -15,12 +15,14 @@ import pandas as pd
 import numpy as np
 import requests
 
+from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 TNum = TypeVar('TNum', int, float)
 
 
-class NowcastRKISeries(pd.Series):
+class NowcastRKISeries(CoronaBaseDateIndexSeries):
     @property
     def _constructor(self):
         return NowcastRKISeries
@@ -30,10 +32,9 @@ class NowcastRKISeries(pd.Series):
         return NowcastRKIDataFrame
 
 
-class NowcastRKIDataFrame(pd.DataFrame):
-    _folder_path = "data/"
+class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
+
     _filename = "nowcast_rki.csv"
-    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -43,52 +44,24 @@ class NowcastRKIDataFrame(pd.DataFrame):
     def _constructor_sliced(self):
         return NowcastRKISeries
 
-    def _set_path(self, path: str):
-        self._path = path
-
-    def _set_folder_path(self, folder_path: str):
-        self._folder_path = folder_path
-
     @staticmethod
-    def from_csv(s3_bucket: str = None, path: str = None) -> 'NowcastRKIDataFrame':
+    def from_csv(filename: str=None,
+                 s3_bucket: str=None,
+                 folder_path: str=None,
+                 class_name: str=None) -> 'NowcastRKIDataFrame':
 
-        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-            if s3_bucket is None:
-                s3_bucket = os.environ.get('S3_BUCKET')
-            s3 = boto3.client('s3')
+        if filename is None:
             filename = NowcastRKIDataFrame._filename
-            logging.info(f"start loading NowcastRKIDataFrame with filename {filename} "
-                         f"from S3 Bucket {s3_bucket}")
-            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-            nowcast_rki = NowcastRKIDataFrame(pd.read_csv(read_file['Body'],
-                                                          parse_dates=['date'],
-                                                          index_col="date"))
-            logging.info(f"NowcastRKIDataFrame with filename {filename} successfully loaded "
-                         f"from S3 Bucket {s3_bucket}")
-        else:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
-                else:
-                    path = NowcastRKIDataFrame._path
+        if class_name is None:
+            class_name = NowcastRKIDataFrame.__name__
+        df = CoronaBaseDateIndexDataFrame.from_csv(filename, s3_bucket, folder_path, class_name)
 
-            logging.info(f"start loading NowcastRKIDataFrame from {path}")
-            nowcast_rki = NowcastRKIDataFrame(pd.read_csv(path,
-                                                          parse_dates=['date'],
-                                                          index_col="date"))
-            logging.info(f"NowcastRKIDataFrame successfully loaded from {path}")
-
-        if os.environ.get('FOLDER_PATH') is not None:
-            nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
-
-        if path is not None:
-            nowcast_rki._set_path(path)
-
-        return nowcast_rki
+        return NowcastRKIDataFrame(df)
 
     @staticmethod
-    def update_with_new_data_from_rki(to_csv: bool = True, s3_bucket: str = None,
-                                      path: str = None) -> 'NowcastRKIDataFrame':
+    def update_with_new_data_from_rki(to_csv: bool = True,
+                                      s3_bucket: str = None,
+                                      folder_path: str = None) -> 'NowcastRKIDataFrame':
 
         logging.info("START UPDATE PROCESS FOR NOWCAST RKI")
 
@@ -146,30 +119,7 @@ class NowcastRKIDataFrame(pd.DataFrame):
         nowcast_rki = pd.concat([nowcast_rki, nowcast_rki_infections], axis=1)
 
         if to_csv:
-            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-                if s3_bucket is None:
-                    s3_bucket = os.environ.get('S3_BUCKET')
-                    csv_buffer = StringIO()
-                    nowcast_rki.to_csv(csv_buffer)
-                    s3 = boto3.client('s3')
-                    logging.info(f"try writing NowcastRKIDataFrame "
-                                 f"with filename {nowcast_rki._filename} "
-                                 f"to S3 Bucket {s3_bucket}")
-                    s3.put_object(Bucket=s3_bucket, Key=nowcast_rki._filename, Body=csv_buffer.getvalue())
-                    logging.info(f"updated NowcastRKIDataFrame "
-                                 f"with filename {nowcast_rki._filename} "
-                                 f"has been written to S3 Bucket {s3_bucket}")
-            else:
-                if path is None:
-                    if os.environ.get('FOLDER_PATH') is not None:
-                        path = os.environ.get('FOLDER_PATH') + NowcastRKIDataFrame._filename
-                        nowcast_rki._set_folder_path(os.environ.get('FOLDER_PATH'))
-                        nowcast_rki._set_path(path)
-                    else:
-                        path = NowcastRKIDataFrame._path
-                logging.info(f"try writing NowcastRKIDataFrame to {path}")
-                nowcast_rki.to_csv(path)
-                logging.info(f"new NowcastRKIDataFrame has been written to {path}")
+            nowcast_rki.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
         logging.info("FINISHED UPDATE PROCESS FOR NOWCAST RKI")
 
@@ -223,24 +173,6 @@ class NowcastRKIDataFrame(pd.DataFrame):
             elif type == "mean":
                 return cases.mean()
         return np.nan
-
-    def get_last_date(self) -> dt.datetime:
-        return self.index.max()
-
-    def get_second_last_date(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(1)
-
-    def get_third_last_date(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(2)
-
-    def get_last_date_for_mean_values(self) -> dt.datetime:
-        return self.index.max() - pd.DateOffset(3)
-
-    def get_second_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date_for_mean_values() - pd.DateOffset(1)
-
-    def get_third_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date_for_mean_values() - pd.DateOffset(2)
 
     def get_last_r_value(self) -> float:
         second_last_date = self.get_second_last_date()
