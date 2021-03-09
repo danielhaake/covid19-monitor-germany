@@ -334,7 +334,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         logging.info("get cases from intensive register report")
 
         def get_cases_table_from_pdf(url_pdf: str = None):
-            pdf_table_area_cases = (262, 34, 366, 561)
+            pdf_table_area_cases = (231, 34, 345, 561)
+            # pdf_table_area_cases = (262, 34, 366, 561)
             # pdf_table_area_cases = (277, 34, 380, 561)
             if url_pdf is None:
                 url_pdf = self._url_pdf
@@ -368,27 +369,40 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
                 invasively_ventilated = invasively_ventilated.replace(".", "")
             return int(invasively_ventilated)
 
-        def with_treatment_completed(pdf):
-            with_treatment_completed = pdf.loc[pdf.loc[:, "Art"] == "mit abgeschlossener Behandlung", "Anzahl"].values[
-                0]
-            if isinstance(with_treatment_completed, str):
-                with_treatment_completed = with_treatment_completed.replace(".", "")
-            return int(with_treatment_completed)
+        def new_admissions_to_intensive_care_last_day(pdf):
+            new_admissions_to_intensive_care = \
+                pdf.loc[pdf.loc[:, "Art"] == "Neuaufnahmen (inkl. Verlegungen*)", "Veränderung zum Vortag"].values[0]
+            if isinstance(new_admissions_to_intensive_care, str):
+                new_admissions_to_intensive_care = new_admissions_to_intensive_care.replace(".", "").replace("+", "")
+            return int(new_admissions_to_intensive_care)
 
-        def thereof_deceased(pdf):
-            thereof_deceased = pdf.loc[pdf.loc[:, "Art"] == "davon verstorben", "Anzahl"].values[0]
+        def with_treatment_completed(pdf):
+            # with_treatment_completed = pdf.loc[pdf.loc[:, "Art"] == "mit abgeschlossener Behandlung", "Anzahl"].values[
+            #    0]
+            # if isinstance(with_treatment_completed, str):
+            #    with_treatment_completed = with_treatment_completed.replace(".", "")
+            # return int(with_treatment_completed)
+            return np.nan
+
+        def thereof_deceased_last_day(pdf):
+            thereof_deceased = pdf.loc[pdf.loc[:, "Art"] == "Verstorben auf ITS", "Veränderung zum Vortag"].values[0]
             if isinstance(thereof_deceased, str):
-                thereof_deceased = thereof_deceased.replace(".", "")
+                thereof_deceased = thereof_deceased.replace(".", "").replace("+", "")
             return int(thereof_deceased)
 
         date = self._get_date_from_intensive_register_pdf(url_pdf)
+        date_day_before = date - pd.DateOffset(1)
         pdf = get_cases_table_from_pdf(url_pdf)
 
         self.loc[date, 'intensive care patients with positive COVID-19 test'] = \
             intensive_care_patients_with_positive_covid19_test(pdf)
         self.loc[date, 'invasively ventilated'] = invasively_ventilated(pdf)
-        self.loc[date, 'with treatment completed'] = with_treatment_completed(pdf)
-        self.loc[date, 'thereof deceased'] = thereof_deceased(pdf)
+        self.loc[date, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
+            new_admissions_to_intensive_care_last_day(pdf)
+        # self.loc[date, 'with treatment completed'] = with_treatment_completed(pdf)
+        self.loc[date, 'thereof deceased (change from previous day)'] = thereof_deceased_last_day(pdf)
+        self.loc[date, 'thereof deceased'] = \
+            self.loc[date_day_before, 'thereof deceased'] + thereof_deceased_last_day(pdf)
         logging.info("cases from intensive register report has been added")
 
     def _get_capacities_intensive_register_report(self, url_pdf: str = None, url_csv: str = None) -> None:
@@ -396,7 +410,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         logging.info("get capacities from intensive register report")
 
         def get_capacities_table_from_pdf(url_pdf: str = None):
-            pdf_table_area_capacities = (422, 34, 465, 561)
+            pdf_table_area_capacities = (437, 34, 481, 561)
+            # pdf_table_area_capacities = (422, 34, 465, 561)
             # pdf_table_area_capacities = (437, 34, 481, 561)
             if url_pdf is None:
                 url_pdf = self._url_pdf
