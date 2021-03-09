@@ -102,8 +102,12 @@ class CoronaBaseDataFrame(pd.DataFrame):
         if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
             self._save_as_csv_to_s3(filename, s3_bucket)
 
-        else:
+        elif (os.environ.get('FOLDER_PATH') is not None) | (folder_path is not None):
             self._save_as_csv_to_path(filename, folder_path)
+
+        else:
+            raise ValueError("Neither argument s3_bucket nor argument folder_path has been set. "
+                             "However, either argument s3_bucket or argument folder_path must be set.")
 
     def _save_as_csv_to_s3(self, filename: str=None, s3_bucket: str=None):
         if filename is None:
