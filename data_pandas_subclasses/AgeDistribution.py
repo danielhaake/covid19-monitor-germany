@@ -10,10 +10,13 @@ from io import BytesIO, StringIO
 import pandas as pd
 import requests
 
+from data_pandas_subclasses.CoronaBase import CoronaBaseSeries, CoronaBaseDataFrame
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-class AgeDistributionSeries(pd.Series):
+
+class AgeDistributionSeries(CoronaBaseSeries):
     @property
     def _constructor(self):
         return AgeDistributionSeries
@@ -23,11 +26,9 @@ class AgeDistributionSeries(pd.Series):
         return AgeDistributionDataFrame
 
 
-class AgeDistributionDataFrame(pd.DataFrame):
+class AgeDistributionDataFrame(CoronaBaseDataFrame):
 
-    _folder_path = "data/"
     _filename = "distribution_of_inhabitants_and_cases_and_deaths.csv"
-    _path = _folder_path + _filename
 
     @property
     def _constructor(self):
@@ -37,51 +38,24 @@ class AgeDistributionDataFrame(pd.DataFrame):
     def _constructor_sliced(self):
         return AgeDistributionSeries
 
-    def _set_path(self, path):
-        self._path = path
-
-    def _set_folder_path(self, folder_path: str):
-        self._folder_path = folder_path
-
     @staticmethod
-    def from_csv(s3_bucket: str=None, path: str=None) -> 'AgeDistributionDataFrame':
+    def from_csv(filename: str=None,
+                 s3_bucket: str=None,
+                 folder_path: str=None,
+                 class_name: str=None) -> 'AgeDistributionDataFrame':
 
-        if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-            if s3_bucket is None:
-                s3_bucket = os.environ.get('S3_BUCKET')
-            s3 = boto3.client('s3')
+        if filename is None:
             filename = AgeDistributionDataFrame._filename
-            logging.info(f"start loading AgeDistributionDataFrame with filename {filename} "
-                         f"from S3 Bucket {s3_bucket}")
-            read_file = s3.get_object(Bucket=s3_bucket, Key=filename)
-            distribution = AgeDistributionDataFrame(pd.read_csv(read_file['Body']))
-            logging.info(f"AgeDistributionDataFrame with filename {filename} successfully loaded "
-                         f"from S3 Bucket {s3_bucket}")
-        else:
-            if path is None:
-                if os.environ.get('FOLDER_PATH') is not None:
-                    path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
-                else:
-                    path = AgeDistributionDataFrame._path
+        if class_name is None:
+            class_name = AgeDistributionDataFrame.__name__
+        df = CoronaBaseDataFrame.from_csv(filename, s3_bucket, folder_path, class_name)
 
-            logging.info(f"start loading AgeDistributionDataFrame from {path}")
-            distribution = AgeDistributionDataFrame(pd.read_csv(path))
-            logging.info(f"AgeDistributionDataFrame successfully loaded from {path}")
-
-        distribution = distribution.set_index("age group")
-
-        if os.environ.get('FOLDER_PATH') is not None:
-            distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
-
-        if path is not None:
-            distribution._set_path(path)
-
-        return distribution
+        return AgeDistributionDataFrame(df)
 
     @staticmethod
     def get_age_distribution_of_cases_and_deaths(to_csv: bool = True,
                                                  s3_bucket: str=None,
-                                                 path: str = None) -> 'AgeDistributionDataFrame':
+                                                 folder_path: str = None) -> 'AgeDistributionDataFrame':
 
         logging.info("START DOWNLOADING CASES AND DEATHS PER AGE GROUP")
 
@@ -117,30 +91,7 @@ class AgeDistributionDataFrame(pd.DataFrame):
         age_distribution.index = age_distribution.index.rename('age group')
 
         if to_csv:
-            if (os.environ.get('S3_BUCKET') is not None) | (s3_bucket is not None):
-                if s3_bucket is None:
-                    s3_bucket = os.environ.get('S3_BUCKET')
-                    csv_buffer = StringIO()
-                    age_distribution.to_csv(csv_buffer)
-                    s3 = boto3.client('s3')
-                    logging.info(f"try writing AgeDistributionDataFrame "
-                                 f"with filename {age_distribution._filename} "
-                                 f"to S3 Bucket {s3_bucket}")
-                    s3.put_object(Bucket=s3_bucket, Key=age_distribution._filename, Body=csv_buffer.getvalue())
-                    logging.info(f"updated AgeDistributionDataFrame "
-                                 f"with filename {age_distribution._filename} "
-                                 f"has been written to S3 Bucket {s3_bucket}")
-            else:
-                if path is None:
-                    if os.environ.get('FOLDER_PATH') is not None:
-                        path = os.environ.get('FOLDER_PATH') + AgeDistributionDataFrame._filename
-                        age_distribution._set_folder_path(os.environ.get('FOLDER_PATH'))
-                        age_distribution._set_path(path)
-                    else:
-                        path = AgeDistributionDataFrame._path
-                logging.info(f"try writing AgeDistributionDataFrame to {path}")
-                age_distribution.to_csv(path)
-                logging.info(f"new AgeDistributionDataFrame has been written to {path}")
+            age_distribution.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
         logging.info("FINISHED DOWNLOADING CASES AND DEATHS PER AGE GROUP")
 
@@ -182,9 +133,6 @@ class AgeDistributionDataFrame(pd.DataFrame):
         if "unbekannt" in new_reported_cases_per_age_group.index:
             new_reported_cases_per_age_group = new_reported_cases_per_age_group.rename(index={"unbekannt": "unknown"})
 
-        #datetime_of_data_status_str_german = new_reported_cases_per_age_group.iloc[0, :]["data status"]
-        #datetime_of_data_status = pd.to_datetime(datetime_of_data_status_str_german.split(",")[0], dayfirst=True)
-
         return new_reported_cases_per_age_group.sort_index() #, datetime_of_data_status
 
     @staticmethod
@@ -218,7 +166,6 @@ class AgeDistributionDataFrame(pd.DataFrame):
         total_number_of_cases_by_age_group = total_number_of_cases_by_age_group.rename(
             columns={'attributes.cases': 'total reported cases', 'attributes.Altersgruppe': 'age group'})
 
-        # overall_deaths_per_age_group.loc[:, 'reference date'] = pd.to_datetime(overall_deaths_per_age_group.loc[:, 'reference date'], unit='ms')
         total_number_of_cases_by_age_group = total_number_of_cases_by_age_group.set_index("age group")
 
         if "unbekannt" in total_number_of_cases_by_age_group.index:
