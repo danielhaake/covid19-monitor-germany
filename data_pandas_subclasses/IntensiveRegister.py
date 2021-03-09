@@ -422,7 +422,7 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
                 thereof_deceased = thereof_deceased.replace(".", "")
             return int(thereof_deceased)
 
-        date = self._get_date_from_intensive_register_pdf()
+        date = self._get_date_from_intensive_register_pdf(url_pdf)
         pdf = get_cases_table_from_pdf(url_pdf)
 
         self.loc[date, 'intensive care patients with positive COVID-19 test'] = \
@@ -487,7 +487,7 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         def free_intensive_care_beds(csv):
             return csv.iloc[0]["betten_frei"]
 
-        date = self._get_date_from_intensive_register_pdf()
+        date = self._get_date_from_intensive_register_pdf(url_pdf)
         pdf = get_capacities_table_from_pdf(url_pdf)
 
         self.loc[date, 'emergency reserve'] = emergency_reserve(pdf)
@@ -501,8 +501,10 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         self.loc[date, 'occupied intensive care beds'] = csv.iloc[0]["betten_belegt"]
         logging.info("capacities from intensive register report has been added")
 
-    def _get_date_from_intensive_register_pdf(self) -> dt.datetime:
-        file = urllib.request.urlopen(self._url_pdf).read()
+    def _get_date_from_intensive_register_pdf(self, url_pdf: str=None) -> dt.datetime:
+        if url_pdf is None:
+            url_pdf = self._url_pdf
+        file = urllib.request.urlopen(url_pdf).read()
         file = BytesIO(file)
         pdf = PDF(file)
         date_as_str_german = pdf[0].split("bundesweit am ")[1].split(" um ")[0].replace(" ", "")
