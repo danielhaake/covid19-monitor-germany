@@ -35,7 +35,6 @@ class IntensiveRegisterSeries(CoronaBaseDateIndexSeries):
 
 
 class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
-
     _filename = "intensive_register_total.csv"
     _url_pdf = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Report.pdf"
     _url_csv = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv"
@@ -49,10 +48,10 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         return IntensiveRegisterSeries
 
     @staticmethod
-    def from_csv(filename: str=None,
-                 s3_bucket: str=None,
-                 folder_path: str=None,
-                 class_name: str=None) -> 'IntensiveRegisterDataFrame':
+    def from_csv(filename: str = None,
+                 s3_bucket: str = None,
+                 folder_path: str = None,
+                 class_name: str = None) -> 'IntensiveRegisterDataFrame':
 
         if filename is None:
             filename = IntensiveRegisterDataFrame._filename
@@ -222,46 +221,6 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
                                         left_index=True,
                                         right_index=True).__dict__)
         logging.info("calculated possible infection date has been added")
-
-    def _calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(self,
-                                                                              column_name: str,
-                                                                              date: datetime,
-                                                                              days_backwards: int,
-                                                                              period_in_days: int,
-                                                                              type: str = "sum") -> TNum:
-        date_range = pd.date_range(date - pd.DateOffset(days_backwards), periods=period_in_days)
-        cases = self.loc[self.index.isin(date_range), column_name]
-        if len(cases) == period_in_days & cases.notna().sum() == period_in_days:
-            if type == "sum":
-                return cases.sum()
-            elif type == "mean":
-                return cases.mean()
-        return np.nan
-
-    def calculate_7d_moving_mean_for_column(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=3,
-                                                                                           period_in_days=7,
-                                                                                           type="mean")
-                for date
-                in self.index]
-
-    def calculate_sum_7d_to_4d_before_for(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=7,
-                                                                                           period_in_days=4)
-                for date
-                in self.index]
-
-    def calculate_sum_3d_to_0d_before_for(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=3,
-                                                                                           period_in_days=4)
-                for date
-                in self.index]
 
     def _calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients(self) -> None:
 
@@ -501,7 +460,7 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         self.loc[date, 'occupied intensive care beds'] = csv.iloc[0]["betten_belegt"]
         logging.info("capacities from intensive register report has been added")
 
-    def _get_date_from_intensive_register_pdf(self, url_pdf: str=None) -> dt.datetime:
+    def _get_date_from_intensive_register_pdf(self, url_pdf: str = None) -> dt.datetime:
         if url_pdf is None:
             url_pdf = self._url_pdf
         file = urllib.request.urlopen(url_pdf).read()

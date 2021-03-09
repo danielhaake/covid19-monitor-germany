@@ -150,29 +150,6 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
                 "max 7 day R value (Nowcast RKI, -5 days incubation period)"
         })
 
-    def calculate_7d_moving_mean_for_column(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=3,
-                                                                                           period_in_days=7,
-                                                                                           type="mean")
-                for date
-                in self.index]
-
-    def _calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(self,
-                                                                              column_name: str,
-                                                                              date: dt.datetime,
-                                                                              days_backwards: int,
-                                                                              period_in_days: int,
-                                                                              type: str = "sum") -> TNum:
-        date_range = pd.date_range(date - pd.DateOffset(days_backwards), periods=period_in_days)
-        cases = self.loc[self.index.isin(date_range), column_name]
-        if len(cases) == period_in_days & cases.notna().sum() == period_in_days:
-            if type == "sum":
-                return cases.sum()
-            elif type == "mean":
-                return cases.mean()
-        return np.nan
 
     def get_last_r_value(self) -> float:
         second_last_date = self.get_second_last_date()

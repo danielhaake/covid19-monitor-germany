@@ -259,32 +259,6 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             calculate_7_day_incidence_for_column("deaths (mean of ±3 days)", inhabitants)
 
 
-
-    def calculate_7d_moving_mean_for_column(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=3,
-                                                                                           period_in_days=7,
-                                                                                           type="mean")
-                for date
-                in self.index]
-
-    def calculate_sum_7d_to_4d_before_for(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=7,
-                                                                                           period_in_days=4)
-                for date
-                in self.index]
-
-    def calculate_sum_3d_to_0d_before_for(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=3,
-                                                                                           period_in_days=4)
-                for date
-                in self.index]
-
     def calculate_r_value_by_moving_mean_cases(self) -> List[float]:
         moving_mean_cases_column_name = "cases (mean of ±3 days)"
 
@@ -303,34 +277,11 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
                 for date
                 in self.index]
 
-    def calculate_sum_last_7_days_for_column(self, column_name: str) -> List[TNum]:
-        return [self._calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(column_name,
-                                                                                           date,
-                                                                                           days_backwards=6,
-                                                                                           period_in_days=7)
-                for date
-                in self.index]
-
     def calculate_7_day_incidence_for_column(self, column_name: str, inhabitants: int) -> List[float]:
         per_n_inhabitants = 100_000
         if "deaths" in column_name:
             per_n_inhabitants = 1_000_000
         return list(np.array(self.calculate_sum_last_7_days_for_column(column_name)) / inhabitants * per_n_inhabitants)
-
-    def _calculate_sum_or_mean_for_period_of_days_and_column_and_specific_day(self,
-                                                                              column_name: str,
-                                                                              date: datetime,
-                                                                              days_backwards: int,
-                                                                              period_in_days: int,
-                                                                              type: str = "sum") -> TNum:
-        date_range = pd.date_range(date - pd.DateOffset(days_backwards), periods=period_in_days)
-        cases = self.loc[self.index.isin(date_range), column_name]
-        if len(cases) == period_in_days & cases.notna().sum() == period_in_days:
-            if type == "sum":
-                return cases.sum()
-            elif type == "mean":
-                return cases.mean()
-        return np.nan
 
     def upsert_cases_and_deaths_for_date(self,
                                          rki_reporting_date: datetime,
