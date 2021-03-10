@@ -65,6 +65,7 @@ class NumberPCRTestsDataFrame(CoronaBaseWeekIndexDataFrame):
                                       'Positiv getestet': 'positive tested',
                                       'Kalenderwoche': 'calendar week',
                                       'Positivenquote (%)': 'positive rate (%)',
+                                      'Positivenanteil (%)': 'positive rate (%)',
                                       'Anzahl übermittelnder Labore': 'number of transmitting laboratories'
                                       })
 
