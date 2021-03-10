@@ -324,8 +324,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         self.loc[:, 'thereof deceased (change from previous day)'] = \
             calculate_change_from_previous_day_for('thereof deceased')
 
-        self.loc[:, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
-            calculate_newly_admitted_covid19_intensive_care_patients()
+        # self.loc[:, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
+        #     calculate_newly_admitted_covid19_intensive_care_patients()
 
         logging.info("calculated changes from previous day has been added")
 
