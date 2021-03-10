@@ -50,7 +50,7 @@ class AgeDistributionDataFrame(CoronaBaseDataFrame):
             class_name = AgeDistributionDataFrame.__name__
         df = CoronaBaseDataFrame.from_csv(filename, s3_bucket, folder_path, class_name)
 
-        return AgeDistributionDataFrame(df)
+        return AgeDistributionDataFrame(df.set_index("age group"))
 
     @staticmethod
     def get_age_distribution_of_cases_and_deaths(to_csv: bool = True,
