@@ -80,22 +80,22 @@ class ClinicalAspectsDataFrame(CoronaBaseWeekIndexDataFrame):
         file_object = BytesIO(response.content)
 
         try:
-          clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name="Daten", header=2)
+          clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name="Daten", header=1)
                                                         .dropna(how="all", axis=1))
         except:
-          clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name=0, header=2)
+          clinical_aspects = ClinicalAspectsDataFrame(pd.read_excel(file_object, sheet_name=0, header=1)
                                                         .dropna(how="all", axis=1))
           
         clinical_aspects = rename_columns_german_to_english(clinical_aspects)
 
         clinical_aspects.loc[:, 'no symptoms or no symptoms significant for COVID-19 in %'] = clinical_aspects.\
-            _convert_from_float_to_percent_for("proportion of no symptoms or no symptoms significant for COVID-19")
+            _convert_to_percent_for_column("proportion of no symptoms or no symptoms significant for COVID-19")
 
         clinical_aspects.loc[:, 'hospitalized in %'] = clinical_aspects.\
-            _convert_from_float_to_percent_for("proportion hospitalized")
+            _convert_to_percent_for_column("proportion hospitalized")
 
         clinical_aspects.loc[:, 'deceased in %'] = clinical_aspects.\
-            _convert_from_float_to_percent_for("proportion deceased")
+            _convert_to_percent_for_column("proportion deceased")
 
         clinical_aspects.loc[:, 'calendar week'] = clinical_aspects.combine_columns_reporting_year_and_reporting_week()
         clinical_aspects = clinical_aspects.set_index('calendar week')
@@ -105,8 +105,10 @@ class ClinicalAspectsDataFrame(CoronaBaseWeekIndexDataFrame):
         logging.info("FINISHED UPDATE PROCESS FOR CLINICAL ASPECTS")
         return clinical_aspects
 
-    def _convert_from_float_to_percent_for(self, column_name) -> float:
-        return self.loc[:, column_name] * 100
+    def _convert_to_percent_for_column(self, column_name: str) -> float:
+        if self.loc[:, column_name].dtype == "float64":
+            return self.loc[:, column_name] * 100
+        return self.loc[:, column_name].str.replace(" %", "")
 
     def combine_columns_reporting_year_and_reporting_week(self) -> str:
         return self.loc[:, 'reporting year'].astype(str) + ' - ' + self.loc[:, 'reporting week'].astype(str)
