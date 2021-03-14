@@ -342,8 +342,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     @staticmethod
     def get_new_reported_cases_from_rki_api() -> Tuple[int, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_COVID19/FeatureServer/0/' \
-              'query?where=' \
-              'NeuerFall IN(1,-1)' \
+              'query?where=NeuerFall%20IN(1,-1)' \
               '&objectIds=' \
               '&time=' \
               '&resultType=standard' \
@@ -354,8 +353,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&returnDistinctValues=false' \
               '&cacheHint=false' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+              '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+              '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -374,7 +373,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_total_number_of_reported_cases_from_rki_api() -> Tuple[int, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,0)' \
+              'NeuerFall%20IN(1,0)' \
               '&objectIds=' \
               '&time=' \
               '&resultType=standard' \
@@ -385,8 +384,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&returnDistinctValues=false' \
               '&cacheHint=false' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -405,7 +404,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_new_reported_deaths_from_rki_api() -> Tuple[int, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,-1)' \
+              'NeuerTodesfall%20IN(1,-1)' \
               '&objectIds=' \
               '&time=' \
               '&resultType=standard' \
@@ -416,8 +415,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&returnDistinctValues=false' \
               '&cacheHint=false' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -436,7 +435,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_total_number_of_reported_deaths_from_rki_api() -> Tuple[int, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,0)' \
+              'NeuerTodesfall%20IN(1,0)' \
               '&objectIds=' \
               '&time=' \
               '&resultType=standard' \
@@ -447,8 +446,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&returnDistinctValues=false' \
               '&cacheHint=false' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"deaths"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -467,7 +466,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_total_number_of_cases_by_reference_date_from_rki_api() -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,0)' \
+              'NeuerFall%20IN(1,0)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -480,8 +479,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '%20%20{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '%20%20{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -514,7 +513,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,0) AND IstErkrankungsbeginn=1' \
+              'NeuerFall%20IN(1,0)%20AND%20IstErkrankungsbeginn=1' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -527,8 +526,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -562,7 +561,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,0) AND IstErkrankungsbeginn=0' \
+              'NeuerFall%20IN(1,0)%20AND%20IstErkrankungsbeginn=0' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -575,8 +574,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -609,7 +608,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_total_number_of_cases_by_reporting_date_from_rki_api() -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,0)' \
+              'NeuerFall%20IN(1,0)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -622,8 +621,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Meldedatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -655,7 +654,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_total_number_of_deaths_by_reference_date_from_rki_api() -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,0)' \
+              'NeuerTodesfall%20IN(1,0)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -668,8 +667,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -702,7 +701,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,0) AND IstErkrankungsbeginn=1' \
+              'NeuerTodesfall%20IN(1,0)%20AND%20IstErkrankungsbeginn=1' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -715,8 +714,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -748,7 +747,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,0) AND IstErkrankungsbeginn=0' \
+              'NeuerTodesfall%20IN(1,0)%20AND%20IstErkrankungsbeginn=0' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -761,8 +760,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -795,7 +794,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_total_number_of_deaths_by_reporting_date_from_rki_api() -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,0)' \
+              'NeuerTodesfall%20IN(1,0)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -808,8 +807,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Meldedatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -840,7 +839,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_new_reported_cases_by_reference_date_from_rki_api() -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,-1)' \
+              'NeuerFall%20IN(1,-1)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -853,8 +852,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -888,7 +887,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,-1) AND IstErkrankungsbeginn=1' \
+              'NeuerFall%20IN(1,-1)%20AND%20IstErkrankungsbeginn=1' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -901,8 +900,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -935,7 +934,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,-1) AND IstErkrankungsbeginn=0' \
+              'NeuerFall%20IN(1,-1)%20AND%20IstErkrankungsbeginn=0' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -948,8 +947,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -983,7 +982,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerFall IN(1,-1)' \
+              'NeuerFall%20IN(1,-1)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -996,8 +995,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Meldedatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlFall","outStatisticFieldName":"cases"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlFall%22,%22outStatisticFieldName%22:%22cases%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -1029,7 +1028,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,-1)' \
+              'NeuerTodesfall%20IN(1,-1)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -1042,8 +1041,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -1077,7 +1076,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,-1) AND IstErkrankungsbeginn=1' \
+              'NeuerTodesfall%20IN(1,-1)%20AND%20IstErkrankungsbeginn=1' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -1090,8 +1089,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -1124,7 +1123,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,-1) AND IstErkrankungsbeginn=0' \
+              'NeuerTodesfall%20IN(1,-1)%20AND%20IstErkrankungsbeginn=0' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -1137,8 +1136,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Refdatum' \
               '&outStatistics=[' \
-              '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-              '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
@@ -1172,7 +1171,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
     def get_new_reported_deaths_by_reporting_date_from_rki_api() -> Tuple[pd.Series, dt.datetime]:
         url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/RKI_COVID19/FeatureServer/0/' \
               'query?where=' \
-              'NeuerTodesfall IN(1,-1)' \
+              'NeuerTodesfall%20IN(1,-1)' \
               '&objectIds=&' \
               'time=' \
               '&resultType=standard' \
@@ -1185,8 +1184,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
               '&orderByFields=' \
               '&groupByFieldsForStatistics=Meldedatum' \
               '&outStatistics=[' \
-                '{"statisticType":"sum","onStatisticField":"AnzahlTodesfall","outStatisticFieldName":"deaths"},' \
-                '{"statisticType":"max","onStatisticField":"Datenstand","outStatisticFieldName":"date"}]' \
+                '{%22statisticType%22:%22sum%22,%22onStatisticField%22:%22AnzahlTodesfall%22,%22outStatisticFieldName%22:%22deaths%22},' \
+                '{%22statisticType%22:%22max%22,%22onStatisticField%22:%22Datenstand%22,%22outStatisticFieldName%22:%22date%22}]' \
               '&having=' \
               '&resultOffset=' \
               '&resultRecordCount=' \
