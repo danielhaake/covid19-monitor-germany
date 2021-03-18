@@ -154,6 +154,34 @@ class RKIAPI():
                                              group_by_field='Meldedatum',
                                              column_name='new reported deaths by reporting date')
 
+    def new_reported_cases_by_age_group(self) -> Tuple[pd.Series, datetime]:
+        return self._get_cases_by_age_group_from_rki_api(where='NeuerFall%20IN(-1,1)',
+                                                         out_fields='AnzahlFall,Altersgruppe',
+                                                         sum_statistic_field='AnzahlFall',
+                                                         group_by_field='Altersgruppe',
+                                                         column_name='new reported cases')
+
+    def total_number_of_reported_cases_by_age_group(self) -> Tuple[pd.Series, datetime]:
+        return self._get_cases_by_age_group_from_rki_api(where='NeuerFall%20IN(1,0)',
+                                                         out_fields='AnzahlFall,Altersgruppe',
+                                                         sum_statistic_field='AnzahlFall',
+                                                         group_by_field='Altersgruppe',
+                                                         column_name='total reported cases')
+
+    def new_reported_deaths_by_age_group(self) -> Tuple[pd.Series, datetime]:
+        return self._get_cases_by_age_group_from_rki_api(where='NeuerTodesfall%20IN(1,-1)',
+                                                         out_fields='AnzahlTodesfall,Altersgruppe',
+                                                         sum_statistic_field='AnzahlTodesfall',
+                                                         group_by_field='Altersgruppe',
+                                                         column_name='new reported deaths')
+
+    def total_number_of_reported_deaths_by_age_group(self) -> Tuple[pd.Series, datetime]:
+        return self._get_cases_by_age_group_from_rki_api(where='NeuerTodesfall%20IN(1,0)',
+                                                         out_fields='AnzahlTodesfall,Altersgruppe',
+                                                         sum_statistic_field='AnzahlTodesfall',
+                                                         group_by_field='Altersgruppe',
+                                                         column_name='total reported deaths')
+
     def _get_figure_from_rki_api(self,
                                  where: str,
                                  out_fields: str,
@@ -192,11 +220,45 @@ class RKIAPI():
         cases_by_date = pd.json_normalize(data["features"])
         cases_by_date = cases_by_date.rename(columns={'attributes.cases': column_name,
                                                       'attributes.Refdatum': 'reference date',
+                                                      'attributes.Meldedatum': 'reporting date',
                                                       'attributes.date': 'data status'})
-        cases_by_date.loc[:, 'reference date'] = pd.to_datetime(cases_by_date.loc[:, 'reference date'], unit='ms')
-        cases_by_date = cases_by_date.set_index("reference date")
+        date_column = 'reference date'
+        if 'reporting date' in cases_by_date.columns:
+            date_column = 'reporting date'
+        cases_by_date.loc[:, date_column] = pd.to_datetime(cases_by_date.loc[:, date_column], unit='ms')
+        cases_by_date = cases_by_date.set_index(date_column)
         cases_by_date = cases_by_date.sort_index()
         return cases_by_date
+
+    def _get_cases_by_age_group_from_rki_api(self,
+                                 where: str,
+                                 out_fields: str,
+                                 sum_statistic_field: str,
+                                 group_by_field: str,
+                                 column_name: str) -> Tuple[pd.Series, datetime]:
+        data = self._get_json_response_from_rki_api(where=where,
+                                                    out_fields=out_fields,
+                                                    sum_statistic_field=sum_statistic_field,
+                                                    group_by_field=group_by_field)
+
+        cases_by_age_group = self._get_cases_by_age_group_from_json(data, column_name)
+
+        datetime_of_data_status_str_german = cases_by_age_group.iloc[0, :]["data status"]
+        datetime_of_data_status = pd.to_datetime(datetime_of_data_status_str_german.split(",")[0], dayfirst=True)
+
+        return cases_by_age_group.loc[:, column_name], datetime_of_data_status
+
+    def _get_cases_by_age_group_from_json(self, data: dict, column_name: str) -> pd.DataFrame:
+        cases_by_age_group = pd.json_normalize(data["features"])
+        cases_by_age_group = cases_by_age_group.rename(columns={'attributes.cases': column_name,
+                                                                'attributes.Altersgruppe': 'age group',
+                                                                'attributes.date': 'data status'})
+        cases_by_age_group = cases_by_age_group.set_index("age group")
+
+        if "unbekannt" in cases_by_age_group.index:
+            cases_by_age_group = \
+                cases_by_age_group.rename(index={"unbekannt": "unknown"})
+        return cases_by_age_group.sort_index()
 
     def _get_json_response_from_rki_api(self,
                                         where: str,
@@ -244,8 +306,7 @@ class RKIAPI():
         def load_cases_and_deaths_from_excel() -> pd.DataFrame:
             url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/' \
                   'Fallzahlen_Kum_Tab.xlsx?__blob=publicationFile'
-            response = requests.get(url)
-            file_object = BytesIO(response.content)
+            file_object = self._get_bytesio_from_request(url)
             return pd.read_excel(file_object, sheet_name="Fälle-Todesfälle-gesamt", header=2) \
                      .dropna(how="all", axis='columns') \
                      .dropna(how="all", axis='index')
@@ -286,8 +347,7 @@ class RKIAPI():
         def load_nowcast_from_excel() -> pd.DataFrame:
             url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
                   'Nowcasting_Zahlen.xlsx?__blob=publicationFile'
-            response = requests.get(url)
-            file_object = BytesIO(response.content)
+            file_object = self._get_bytesio_from_request(url)
 
             dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
             return pd.read_excel(file_object,
@@ -305,8 +365,7 @@ class RKIAPI():
                             "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
                             "Punktschätzer des 7-Tage-R Wertes",
                             "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes",
-                            "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes"]
-                 ]
+                            "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes"]]
             df.loc[:, "Datum des Erkrankungsbeginns"] = pd.to_datetime(df.loc[:, "Datum des Erkrankungsbeginns"])
             return df
 
@@ -332,4 +391,99 @@ class RKIAPI():
         nowcast_rki = rename_columns_from_german_to_english_and_set_index(nowcast_rki)
         return nowcast_rki
 
+    def clinical_aspects(self) -> pd.DataFrame:
 
+        def load_clinical_aspects_from_excel() -> pd.DataFrame:
+            url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/" \
+                  "Klinische_Aspekte.xlsx?__blob=publicationFile"
+            file_object = self._get_bytesio_from_request(url)
+
+            try:
+                clinical_aspects = pd.read_excel(file_object, sheet_name="Daten", header=1)\
+                                     .dropna(how="all", axis=1)
+            except:
+                clinical_aspects = pd.read_excel(file_object, sheet_name=0, header=1)\
+                                     .dropna(how="all", axis=1)
+
+            return clinical_aspects
+
+        def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Meldejahr': 'reporting year',
+                                      'MW': 'reporting week',
+                                      'Fälle gesamt': 'reported cases',
+                                      'Mittelwert Alter (Jahre)': 'mean age',
+                                      'Männer': 'men',
+                                      'Frauen': 'women',
+                                      'Anzahl mit Angaben zu Symptomen': 'number with information on symptoms',
+                                      'Anteil keine, bzw. keine für COVID-19 bedeutsamen Symptome':
+                                          'proportion of no symptoms or no symptoms significant for COVID-19',
+                                      'Anzahl mit Angaben zur Hospitalisierung': 'number with hospitalization data',
+                                      'Anzahl hospitalisiert': 'number hospitalized',
+                                      'Anteil hospitalisiert': 'proportion hospitalized',
+                                      'Anzahl Verstorben': 'number deceased',
+                                      'Anteil Verstorben': 'proportion deceased'
+                                      })
+
+        def create_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
+            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + df.loc[:, 'reporting week'].astype(str)
+            df.loc[:, 'calendar week'] = calendar_week
+            df = df.set_index('calendar week')
+            return df
+
+        def append_proportional_columns_in_percent(df: pd.DataFrame):
+            df.loc[:, 'no symptoms or no symptoms significant for COVID-19 in %'] = \
+                convert_to_percent_for(df.loc[:, "proportion of no symptoms or no symptoms significant for COVID-19"])
+            df.loc[:, 'hospitalized in %'] = convert_to_percent_for(df.loc[:, "proportion hospitalized"])
+            df.loc[:, 'deceased in %'] = convert_to_percent_for(df.loc[:, "proportion deceased"])
+            return df
+
+        def convert_to_percent_for(series: pd.Series) -> pd.Series:
+            if series.dtype == "float64":
+                return series * 100
+            return series.str.replace(" %", "")
+
+        df = load_clinical_aspects_from_excel()
+        df = rename_columns_from_german_to_english(df)
+        df = create_calendar_week_and_set_as_index(df)
+        df = append_proportional_columns_in_percent(df)
+        return df
+
+    def number_pcr_tests(self) -> pd.DataFrame:
+        def load_number_pcr_tests_from_excel() -> pd.DataFrame:
+            url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/' \
+                  'Testzahlen-gesamt.xlsx?__blob=publicationFile'
+            file_object = self._get_bytesio_from_request(url)
+            return pd.read_excel(file_object, sheet_name="1_Testzahlerfassung")
+
+        def rename_columns_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Anzahl Testungen': 'number of tests',
+                                      'Positiv getestet': 'positive tested',
+                                      'Kalenderwoche': 'calendar week',
+                                      'Positivenquote (%)': 'positive rate (%)',
+                                      'Positivenanteil (%)': 'positive rate (%)',
+                                      'Anzahl übermittelnder Labore': 'number of transmitting laboratories'
+                                      })
+
+        def cleaning_because_of_calendar_week_column_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
+            df.loc[df.loc[:, "calendar week"] == "Bis einschließlich KW10, 2020", :"calendar week"] = "10/2020"
+
+            first_not_included_row = df.loc[df.loc[:, "calendar week"] == "Summe"].index[0]
+            df.loc[:, "calendar week"] = df.loc[:, "calendar week"].astype("str")
+            df.loc[:, "calendar week"] = df.loc[:, "calendar week"].str.replace("*", "", regex=True)
+
+            calendar_week_splitted = df.loc[:, "calendar week"].str.split("/")
+            df.loc[:, "week of year"] = calendar_week_splitted.str[0]
+            df.loc[:, "year"] = calendar_week_splitted.str[1]
+            df.loc[:, "calendar week"] = df.loc[:, "year"] + " - " + df.loc[:, "week of year"]
+            df.loc[df.loc[:, "calendar week"] == "2020 - 10", :"calendar week"] = "≤ 2020 - 10"
+            df = df.iloc[:first_not_included_row, :]
+            return df.set_index("calendar week")
+
+        number_pcr_tests = load_number_pcr_tests_from_excel()
+        number_pcr_tests = rename_columns_german_to_english(number_pcr_tests)
+        number_pcr_tests = cleaning_because_of_calendar_week_column_and_set_as_index(number_pcr_tests)
+        return number_pcr_tests
+
+    def _get_bytesio_from_request(self, excel_file_url: str) -> BytesIO:
+        response = requests.get(excel_file_url)
+        return BytesIO(response.content)
