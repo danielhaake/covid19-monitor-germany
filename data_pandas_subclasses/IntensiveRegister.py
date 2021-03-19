@@ -61,6 +61,21 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         return IntensiveRegisterDataFrame(df)
 
+    def get_last_r_value_by_mean_cases(self) -> float:
+        last_date = self.get_last_date_for_mean_values()
+        return self.loc[last_date,
+                        "R value calculated by newly admitted intensive care patients with a " \
+                        "positive COVID-19 test (mean ±3 days)"]
+
+    def get_second_last_r_value_by_mean_cases(self) -> float:
+        second_last_date = self.get_second_last_date_for_mean_values()
+        return self.loc[second_last_date,
+                        "R value calculated by newly admitted intensive care patients with a " \
+                        "positive COVID-19 test (mean ±3 days)"]
+
+    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()
+
     @staticmethod
     def update_csv_with_intensive_register_data(s3_bucket: str = None,
                                                 folder_path: str = None,
@@ -372,28 +387,3 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         logging.info("capacities from intensive register report has been added")
         return date
-
-    def _get_date_from_intensive_register_pdf(self, url_pdf: str = None) -> dt.datetime:
-        if url_pdf is None:
-            url_pdf = self._url_pdf
-        file = urllib.request.urlopen(url_pdf).read()
-        file = BytesIO(file)
-        pdf = PDF(file)
-        date_as_str_german = pdf[0].split("bundesweit am ")[1].split(" um ")[0].replace(" ", "")
-        date = pd.to_datetime(date_as_str_german, dayfirst=True)
-        return date
-
-    def get_last_r_value_by_mean_cases(self) -> float:
-        last_date = self.get_last_date_for_mean_values()
-        return self.loc[last_date,
-                        "R value calculated by newly admitted intensive care patients with a " \
-                        "positive COVID-19 test (mean ±3 days)"]
-
-    def get_second_last_r_value_by_mean_cases(self) -> float:
-        second_last_date = self.get_second_last_date_for_mean_values()
-        return self.loc[second_last_date,
-                        "R value calculated by newly admitted intensive care patients with a " \
-                        "positive COVID-19 test (mean ±3 days)"]
-
-    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
-        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()
