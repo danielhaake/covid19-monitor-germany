@@ -17,6 +17,7 @@ from pdftotext import PDF
 import urllib
 from datetime import datetime
 
+from api.IntensiveRegisterAPI import IntensiveRegisterAPI
 from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
 
 load_dotenv()
@@ -36,8 +37,7 @@ class IntensiveRegisterSeries(CoronaBaseDateIndexSeries):
 
 class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
     _filename = "intensive_register_total.csv"
-    _url_pdf = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Report.pdf"
-    _url_csv = "https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv"
+    api = IntensiveRegisterAPI()
 
     @property
     def _constructor(self):
@@ -98,15 +98,13 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         logging.info("start update with new data from RKI API")
 
-        self._get_cases_from_intensive_register_report(url_pdf)
-        self._get_capacities_intensive_register_report(url_pdf, url_csv)
+        self._get_cases_and_capacities_from_intensive_register_report(url_pdf, url_csv)
         self._calculate_changes_from_previous_day()
         self._calculate_number_of_used_and_unused_intensive_care_beds()
         self._delete_outliers()
         self._calculate_7_day_moving_means()
         self._calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients()
         self._calculate_possible_infection_date(days_from_symptoms_to_intensiv_care, days_incubation_period)
-
         self._calculate_proportional_columns()
 
         logging.info("finished update with new data from RKI API")
@@ -242,7 +240,7 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
              for i in range(len(cases_sum_3d_to_0d_before))]
         logging.info("calculated R value by moving mean newly admitted covid-19 intensive care patients has been added")
 
-    def _calculate_7_day_moving_means(self) -> List[TNum]:
+    def _calculate_7_day_moving_means(self) -> None:
 
         logging.info("calculate 7 day moving means")
 
@@ -311,16 +309,12 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         self.loc[:, 'intensive care patients with positive COVID-19 test (change from previous day)'] = \
             calculate_change_from_previous_day_for('COVID-19 cases')
-
         self.loc[:, 'with treatment completed (change from previous day)'] = \
             calculate_change_from_previous_day_for('with treatment completed')
-
         self.loc[:, 'in intensive care treatment (change from previous day)'] = \
             calculate_change_from_previous_day_for('intensive care patients with positive COVID-19 test')
-
         self.loc[:, 'invasively ventilated (change from previous day)'] = \
             calculate_change_from_previous_day_for('invasively ventilated')
-
         self.loc[:, 'thereof deceased (change from previous day)'] = \
             calculate_change_from_previous_day_for('thereof deceased')
 
@@ -329,151 +323,55 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         logging.info("calculated changes from previous day has been added")
 
-    def _get_cases_from_intensive_register_report(self, url_pdf: str = None) -> None:
+    def _get_cases_and_capacities_from_intensive_register_report(self,
+                                                                 url_pdf: str = None,
+                                                                 url_csv: str = None) -> None:
+        datetime_of_first_request = None
+        datetime_of_last_request = None
 
+        while ((datetime_of_first_request != datetime_of_last_request) |
+               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+
+            datetime_of_first_request = self._get_cases_from_intensive_register_report(url_pdf)
+            datetime_of_last_request = self._get_capacities_from_intensive_register_report(url_pdf, url_csv)
+
+    def _get_cases_from_intensive_register_report(self, url_pdf: str = None) -> datetime:
         logging.info("get cases from intensive register report")
-
-        def get_cases_table_from_pdf(url_pdf: str = None):
-            pdf_table_area_cases = (231, 34, 345, 561)
-            # pdf_table_area_cases = (262, 34, 366, 561)
-            # pdf_table_area_cases = (277, 34, 380, 561)
-            if url_pdf is None:
-                url_pdf = self._url_pdf
-            pdf = read_pdf(url_pdf,
-                           encoding='utf-8',
-                           guess=False,
-                           stream=True,
-                           multiple_tables=False,
-                           pages=1,
-                           area=pdf_table_area_cases,
-                           pandas_options={
-                               "names": ["Zeitpunkt", "Art", "Anzahl", "prozentualer Anteil", "Veränderung zum Vortag"],
-                               'decimal': ",",
-                               "thousands": "."}
-                           )
-
-            return pdf[0]
-
-        def intensive_care_patients_with_positive_covid19_test(pdf):
-            intensive_care_patients_with_positive_covid19_test = \
-                pdf.loc[pdf.loc[:, "Art"] == "in intensivmedizinischer Behandlung", "Anzahl"].values[0]
-
-            if isinstance(intensive_care_patients_with_positive_covid19_test, str):
-                intensive_care_patients_with_positive_covid19_test = \
-                    intensive_care_patients_with_positive_covid19_test.replace(".", "")
-            return int(intensive_care_patients_with_positive_covid19_test)
-
-        def invasively_ventilated(pdf):
-            invasively_ventilated = pdf.loc[pdf.loc[:, "Art"] == "davon invasiv beatmet", "Anzahl"].values[0]
-            if isinstance(invasively_ventilated, str):
-                invasively_ventilated = invasively_ventilated.replace(".", "")
-            return int(invasively_ventilated)
-
-        def new_admissions_to_intensive_care_last_day(pdf):
-            new_admissions_to_intensive_care = \
-                pdf.loc[pdf.loc[:, "Art"] == "Neuaufnahmen (inkl. Verlegungen*)", "Veränderung zum Vortag"].values[0]
-            if isinstance(new_admissions_to_intensive_care, str):
-                new_admissions_to_intensive_care = new_admissions_to_intensive_care.replace(".", "").replace("+", "")
-            return int(new_admissions_to_intensive_care)
-
-        def with_treatment_completed(pdf):
-            # with_treatment_completed = pdf.loc[pdf.loc[:, "Art"] == "mit abgeschlossener Behandlung", "Anzahl"].values[
-            #    0]
-            # if isinstance(with_treatment_completed, str):
-            #    with_treatment_completed = with_treatment_completed.replace(".", "")
-            # return int(with_treatment_completed)
-            return np.nan
-
-        def thereof_deceased_last_day(pdf):
-            thereof_deceased = pdf.loc[pdf.loc[:, "Art"] == "Verstorben auf ITS", "Veränderung zum Vortag"].values[0]
-            if isinstance(thereof_deceased, str):
-                thereof_deceased = thereof_deceased.replace(".", "").replace("+", "")
-            return int(thereof_deceased)
-
-        date = self._get_date_from_intensive_register_pdf(url_pdf)
+        cases_dict = self.api.get_cases_from_intensive_register_report(url_pdf)
+        date = cases_dict["reporting date"]
         date_day_before = date - pd.DateOffset(1)
-        pdf = get_cases_table_from_pdf(url_pdf)
 
-        self.loc[date, 'intensive care patients with positive COVID-19 test'] = \
-            intensive_care_patients_with_positive_covid19_test(pdf)
-        self.loc[date, 'invasively ventilated'] = invasively_ventilated(pdf)
-        self.loc[date, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
-            new_admissions_to_intensive_care_last_day(pdf)
-        # self.loc[date, 'with treatment completed'] = with_treatment_completed(pdf)
-        self.loc[date, 'thereof deceased (change from previous day)'] = thereof_deceased_last_day(pdf)
+        columns = ['intensive care patients with positive COVID-19 test',
+                   'invasively ventilated',
+                   'newly admitted intensive care patients with a positive COVID-19 test',
+                   'thereof deceased (change from previous day)'
+                   ]
+        for column in columns:
+            self.loc[date, column] = \
+                cases_dict[column]
+
         self.loc[date, 'thereof deceased'] = \
-            self.loc[date_day_before, 'thereof deceased'] + thereof_deceased_last_day(pdf)
+            self.loc[date_day_before, 'thereof deceased'] + cases_dict['thereof deceased (change from previous day)']
         logging.info("cases from intensive register report has been added")
+        return date
 
-    def _get_capacities_intensive_register_report(self, url_pdf: str = None, url_csv: str = None) -> None:
-
+    def _get_capacities_from_intensive_register_report(self, url_pdf: str = None, url_csv: str = None) -> datetime:
         logging.info("get capacities from intensive register report")
+        capacities_dict = self.api.get_capacities_from_intensive_register_report(url_pdf=url_pdf, url_csv=url_csv)
+        date = capacities_dict["reporting date"]
 
-        def get_capacities_table_from_pdf(url_pdf: str = None):
-            pdf_table_area_capacities = (437, 34, 481, 561)
-            # pdf_table_area_capacities = (422, 34, 465, 561)
-            # pdf_table_area_capacities = (437, 34, 481, 561)
-            if url_pdf is None:
-                url_pdf = self._url_pdf
-            pdf = read_pdf(url_pdf,
-                           encoding='utf-8',
-                           guess=False,
-                           stream=True,
-                           multiple_tables=False,
-                           pages=1,
-                           area=pdf_table_area_capacities,
-                           pandas_options={"names": ["Status", "Low-Care", "High-Care", "ECMO", "ITS-Betten gesamt",
-                                                     "ITS-Betten gesamt (nur Erwachsene)",
-                                                     "ITS-Betten Veränderung zum Vortag",
-                                                     "ITS-Betten (nur Erwachsene) Veränderung zum Vortag",
-                                                     "7-Tage-Notfallreserve", "7-Tage-Notfallreserve (nur Erwachsene)"],
-                                           'decimal': ",",
-                                           "thousands": "."}
-                           )
-            return pdf[0].set_index("Status")
+        columns = ['emergency reserve',
+                   'number of reporting areas',
+                   'COVID-19 cases',
+                   'invasively ventilated',
+                   'free intensive care beds',
+                   'occupied intensive care beds']
+        for column in columns:
+            self.loc[date, column] = \
+                capacities_dict[column]
 
-        def get_last_csv_from_intensive_register_and_date(url_csv: str = None):
-            if url_csv is None:
-                url_csv = self._url_csv
-            csv = pd.read_csv(url_csv)
-            csv.daten_stand = pd.to_datetime(csv.daten_stand)
-            csv.daten_stand = csv.daten_stand.dt.strftime('%Y-%m-%d')
-            csv.daten_stand = pd.to_datetime(csv.daten_stand)
-            date = csv.iloc[0]["daten_stand"]
-            csv = csv.groupby("daten_stand").sum()
-            return csv, date
-
-        def emergency_reserve(pdf):
-            emergency_reserve = pdf.loc["Aktuell frei", "7-Tage-Notfallreserve"]
-            if isinstance(emergency_reserve, str):
-                emergency_reserve = emergency_reserve.replace(".", "")
-            return int(emergency_reserve)
-
-        def number_of_reporting_areas(csv):
-            return csv.iloc[0]["anzahl_meldebereiche"]
-
-        def covid19_cases(csv):
-            return csv.iloc[0]["faelle_covid_aktuell"]
-
-        def invasively_ventilated(csv):
-            return csv.iloc[0]["faelle_covid_aktuell_beatmet"]
-
-        def free_intensive_care_beds(csv):
-            return csv.iloc[0]["betten_frei"]
-
-        date = self._get_date_from_intensive_register_pdf(url_pdf)
-        pdf = get_capacities_table_from_pdf(url_pdf)
-
-        self.loc[date, 'emergency reserve'] = emergency_reserve(pdf)
-
-        csv, date = get_last_csv_from_intensive_register_and_date(url_csv)
-
-        self.loc[date, 'number of reporting areas'] = number_of_reporting_areas(csv)
-        self.loc[date, 'COVID-19 cases'] = covid19_cases(csv)
-        self.loc[date, 'invasively ventilated'] = invasively_ventilated(csv)
-        self.loc[date, 'free intensive care beds'] = free_intensive_care_beds(csv)
-        self.loc[date, 'occupied intensive care beds'] = csv.iloc[0]["betten_belegt"]
         logging.info("capacities from intensive register report has been added")
+        return date
 
     def _get_date_from_intensive_register_pdf(self, url_pdf: str = None) -> dt.datetime:
         if url_pdf is None:
