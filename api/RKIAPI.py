@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 
 
-class RKIAPI():
+class RKIAPI:
 
     def new_reported_cases(self) -> Tuple[int, datetime]:
         return self._get_figure_from_rki_api(where='NeuerFall%20IN(1,-1)',
