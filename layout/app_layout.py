@@ -56,7 +56,7 @@ class Layout:
 
     def __init__(self):
         self.config = configparser.ConfigParser(interpolation=None)
-        self.config.read('graph_definitions.ini')
+        self.config.read('layout/graph_definitions.ini')
 
     def layout(self) -> html.Div:
         return html.Div(
@@ -73,7 +73,7 @@ class Layout:
                                      interval=600000,
                                      n_intervals=0),
                         dbc.Tabs(id='tabs-global-overview',
-                                 className='nav-justified',
+                                 className='nav-justified',  # bootstrap class name for justified navigation tabs
                                  children=self.tabs_with_graphs())
                     ]
                 ),
@@ -91,7 +91,7 @@ class Layout:
     def _headline(self) -> List[THtml]:
         return [
             html.A(
-                html.Img(id='logo', src='assets/logo_um.png'),
+                html.Img(id='logo', src='../assets/logo_um.png'),
                 href='https://www.unbelievable-machine.com/',
                 target='_blank'),
             html.H3(id='app-title',
@@ -287,7 +287,7 @@ class Layout:
         ]
 
     def _tab_data_sources_description(self) -> dcc.Markdown:
-        with open('./data_sources_description.md', 'r', encoding='utf-8') as input_file:
+        with open('data_sources_description.md', 'r', encoding='utf-8') as input_file:
             text = input_file.read()
         return dcc.Markdown(text,
                             id='data-sources-description-content',
