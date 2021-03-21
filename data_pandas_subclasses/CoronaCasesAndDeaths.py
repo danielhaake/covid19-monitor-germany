@@ -29,9 +29,8 @@ class CoronaCasesAndDeathsSeries(CoronaBaseDateIndexSeries):
 
 
 class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
-
     _filename = "corona_cases_and_deaths.csv"
-    _inhabitants_germany = 83166711
+    _inhabitants_germany = 83_166_711
     api = RKIAPI()
 
     @property
@@ -43,10 +42,10 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         return CoronaCasesAndDeathsSeries
 
     @staticmethod
-    def from_csv(filename: str=None,
-                 s3_bucket: str=None,
-                 folder_path: str=None,
-                 class_name: str=None) -> 'CoronaCasesAndDeathsDataFrame':
+    def from_csv(filename: str = None,
+                 s3_bucket: str = None,
+                 folder_path: str = None,
+                 class_name: str = None) -> 'CoronaCasesAndDeathsDataFrame':
 
         if filename is None:
             filename = CoronaCasesAndDeathsDataFrame._filename
@@ -57,119 +56,50 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         return CoronaCasesAndDeathsDataFrame(df)
 
     @staticmethod
-    def update_csv_with_data_from_rki_api(s3_bucket: str=None, folder_path: str = None):
+    def update_csv_with_data_from_rki_api(s3_bucket: str = None, folder_path: str = None) -> None:
         logging.info("START UPDATE PROCESS FOR CORONA CASES AND DEATHS")
         corona_cases_and_deaths = CoronaCasesAndDeathsDataFrame.from_csv(folder_path=folder_path)
         logging.info("initial loading of CSV finished")
-        corona_cases_and_deaths._update_with_new_data_from_rki_api(to_csv=True,
-                                                                   s3_bucket=s3_bucket,
-                                                                   folder_path=folder_path)
+        corona_cases_and_deaths.update_with_new_data_from_rki_api(to_csv=True,
+                                                                  s3_bucket=s3_bucket,
+                                                                  folder_path=folder_path)
         logging.info("FINISHED UPDATE PROCESS FOR CORONA CASES AND DEATHS")
 
-    def update_with_new_data_from_rki_api(self, to_csv: bool = True, s3_bucket: str=None, folder_path: str = None) \
-            -> 'CoronaCasesAndDeathsDataFrame':
-        self_copy = self.copy(deep=True)
-        self_copy._update_with_new_data_from_rki_api(to_csv=to_csv, s3_bucket=s3_bucket, folder_path=folder_path)
-        return self_copy
+    def update_with_new_data_from_rki_api(self,
+                                          to_csv: bool = True,
+                                          s3_bucket: str = None,
+                                          folder_path: str = None) -> 'CoronaCasesAndDeathsDataFrame':
 
-    def _update_with_new_data_from_rki_api(self, to_csv: bool = True, s3_bucket: str=None, folder_path: str = None) -> None:
+        def update_self_with_new_data(df: CoronaCasesAndDeathsDataFrame,
+                                      updates_df: pd.DataFrame) -> CoronaCasesAndDeathsDataFrame:
+            df = df.drop(columns=updates_df.columns)
+            df = df.merge(updates_df, how='outer', left_index=True, right_index=True)
+            return df
 
-        # it is possible that we call the methods while the dataset is updated
-        # then we could have different dates for reported cases and deaths
-        # to have the the same date we rerun the methods until we have the same dates
         logging.info("start update with new data from RKI API")
         datetime_of_first_request = None
         datetime_of_last_request = None
         while ((datetime_of_first_request != datetime_of_last_request) |
                (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+            daily_figures = self.api.daily_figures()
+            datetime_of_first_request = daily_figures["reporting date"]
+            cases_and_deaths_by_reference_and_reporting_date, datetime_of_last_request = \
+                self.api.cases_and_deaths_by_reference_and_reporting_date()
 
-            # get last reported figures
-            new_reported_cases, datetime_of_first_request = self.api.new_reported_cases()
-            cases_cumulative, _ = self.api.total_number_of_reported_cases()
-            deaths_cumulative, _ = self.api.total_number_of_reported_deaths()
-            new_reported_deaths, _ = self.api.new_reported_deaths()
-
-            # get cases and deaths by reference and reporting date
-            overall_cases_by_reference_date, _ = self.api.total_number_of_cases_by_reference_date()
-            overall_cases_by_reporting_date, _ = self.api.total_number_of_cases_by_reporting_date()
-            new_reported_cases_by_reference_date, _ = self.api.new_reported_cases_by_reference_date()
-            new_reported_cases_by_reporting_date, _ = self.api.new_reported_cases_by_reporting_date()
-
-            overall_deaths_by_reference_date, _ = self.api.total_number_of_deaths_by_reference_date()
-            overall_deaths_by_reporting_date, _ = self.api.total_number_of_deaths_by_reporting_date()
-            new_reported_deaths_by_reference_date, _ = self.api.new_reported_deaths_by_reference_date()
-            new_reported_deaths_by_reporting_date, _ = self.api.new_reported_deaths_by_reporting_date()
-
-            new_reported_cases_with_known_start_of_illness, _ = \
-                self.api.new_reported_cases_by_reference_date_with_known_start_of_illness()
-            new_reported_cases_with_unknown_start_of_illness, _ = \
-                self.api.new_reported_cases_by_reference_date_with_unknown_start_of_illness()
-            new_reported_deaths_with_known_start_of_illness, _ = \
-                self.api.new_reported_deaths_by_reference_date_with_known_start_of_illness()
-            new_reported_deaths_with_unknown_start_of_illness, _ = \
-                self.api.new_reported_deaths_by_reference_date_with_unknown_start_of_illness()
-
-            overall_cases_with_known_start_of_illness, _ = \
-                self.api.total_number_of_cases_by_reference_date_with_known_start_of_illness()
-            overall_cases_with_unknown_start_of_illness, _ = \
-                self.api.total_number_of_cases_by_reference_date_with_unknown_start_of_illness()
-            overall_deaths_with_known_start_of_illness, _ = \
-                self.api.total_number_of_deaths_by_reference_date_with_known_start_of_illness()
-            overall_deaths_with_unknown_start_of_illness, datetime_of_last_request = \
-                self.api.total_number_of_deaths_by_reference_date_with_unknown_start_of_illness()
-
-        rki_reporting_date = datetime_of_first_request
-
-        self = self.drop(columns=['cases by reference date (start of illness, alternatively reporting date)',
-                                  'cases by reporting date',
-                                  'deaths by reference date (start of illness, alternatively reporting date)',
-                                  'deaths by reporting date',
-                                  'new reported cases by reference date (start of illness, alternatively reporting date)',
-                                  'new reported cases by reporting date',
-                                  'new reported deaths by reference date (start of illness, alternatively reporting date)',
-                                  'new reported deaths by reporting date',
-                                  'cases with reported start of illness',
-                                  'cases with unknown start of illness (reporting date)',
-                                  'deaths with reported start of illness',
-                                  'deaths with unknown start of illness (reporting date)',
-                                  'new reported cases with known start of illness',
-                                  'new reported cases with unknown start of illness (reporting date)',
-                                  'new reported deaths with known start of illness',
-                                  'new reported deaths with unknown start of illness (reporting date)'
-                                  ])
-
-        self = CoronaCasesAndDeathsDataFrame(pd.concat([self,
-                                                        overall_cases_by_reference_date,
-                                                        overall_cases_by_reporting_date,
-                                                        new_reported_cases_by_reference_date,
-                                                        new_reported_cases_by_reporting_date,
-                                                        overall_deaths_by_reference_date,
-                                                        overall_deaths_by_reporting_date,
-                                                        new_reported_deaths_by_reference_date,
-                                                        new_reported_deaths_by_reporting_date,
-                                                        new_reported_cases_with_known_start_of_illness,
-                                                        new_reported_cases_with_unknown_start_of_illness,
-                                                        new_reported_deaths_with_known_start_of_illness,
-                                                        new_reported_deaths_with_unknown_start_of_illness,
-                                                        overall_cases_with_known_start_of_illness,
-                                                        overall_cases_with_unknown_start_of_illness,
-                                                        overall_deaths_with_known_start_of_illness,
-                                                        overall_deaths_with_unknown_start_of_illness],
-                                                       axis=1))
-
+        self = update_self_with_new_data(self, cases_and_deaths_by_reference_and_reporting_date)
         logging.info("new and total cases and deaths by reporting and reference date were added")
 
-        self.index = self.index.rename("date")
-
-        self._upsert_cases_and_deaths_for_date(rki_reporting_date=rki_reporting_date,
-                                               new_reported_cases=new_reported_cases,
-                                               new_reported_deaths=new_reported_deaths,
-                                               cases_cumulative=cases_cumulative,
-                                               deaths_cumulative=deaths_cumulative,
+        self._upsert_cases_and_deaths_for_date(rki_reporting_date=daily_figures["reporting date"],
+                                               new_reported_cases=daily_figures["new reported cases"],
+                                               new_reported_deaths=daily_figures["new reported deaths"],
+                                               cases_cumulative=daily_figures["cases cumulative"],
+                                               deaths_cumulative=daily_figures["deaths cumulative"],
                                                to_csv=to_csv,
                                                s3_bucket=s3_bucket,
                                                folder_path=folder_path)
+
         logging.info("finished update with new data from RKI API")
+        return self
 
     def upsert_cases_and_deaths_for_date(self,
                                          rki_reporting_date: datetime,

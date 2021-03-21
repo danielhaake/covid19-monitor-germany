@@ -1,12 +1,92 @@
 from datetime import datetime
 from io import BytesIO
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Union
 
 import pandas as pd
 import requests
 
 
 class RKIAPI:
+
+    def daily_figures(self) -> Dict[str, Union[datetime, int]]:
+
+        # it is possible that we call the methods while the dataset is updated
+        # then we could have different dates for reported cases and deaths
+        # to have the the same date we rerun the methods until we have the same dates
+        datetime_of_first_request = None
+        datetime_of_last_request = None
+
+        while ((datetime_of_first_request != datetime_of_last_request) |
+               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+            new_reported_cases, datetime_of_first_request = self.new_reported_cases()
+            cases_cumulative, _ = self.total_number_of_reported_cases()
+            deaths_cumulative, _ = self.total_number_of_reported_deaths()
+            new_reported_deaths, datetime_of_last_request = self.new_reported_deaths()
+
+        return {"reporting date": datetime_of_last_request,
+                "new reported cases": new_reported_cases,
+                "new reported deaths": new_reported_deaths,
+                "cases cumulative": cases_cumulative,
+                "deaths cumulative": deaths_cumulative}
+
+    def cases_and_deaths_by_reference_and_reporting_date(self) -> Tuple[pd.DataFrame, datetime]:
+
+        # it is possible that we call the methods while the dataset is updated
+        # then we could have different dates for reported cases and deaths
+        # to have the the same date we rerun the methods until we have the same dates
+        datetime_of_first_request = None
+        datetime_of_last_request = None
+
+        while ((datetime_of_first_request != datetime_of_last_request) |
+               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+            overall_cases_by_reference_date, datetime_of_first_request = self.total_number_of_cases_by_reference_date()
+            overall_cases_by_reporting_date, _ = self.total_number_of_cases_by_reporting_date()
+            new_reported_cases_by_reference_date, _ = self.new_reported_cases_by_reference_date()
+            new_reported_cases_by_reporting_date, _ = self.new_reported_cases_by_reporting_date()
+
+            overall_deaths_by_reference_date, _ = self.total_number_of_deaths_by_reference_date()
+            overall_deaths_by_reporting_date, _ = self.total_number_of_deaths_by_reporting_date()
+            new_reported_deaths_by_reference_date, _ = self.new_reported_deaths_by_reference_date()
+            new_reported_deaths_by_reporting_date, _ = self.new_reported_deaths_by_reporting_date()
+
+            new_reported_cases_with_known_start_of_illness, _ = \
+                self.new_reported_cases_by_reference_date_with_known_start_of_illness()
+            new_reported_cases_with_unknown_start_of_illness, _ = \
+                self.new_reported_cases_by_reference_date_with_unknown_start_of_illness()
+            new_reported_deaths_with_known_start_of_illness, _ = \
+                self.new_reported_deaths_by_reference_date_with_known_start_of_illness()
+            new_reported_deaths_with_unknown_start_of_illness, _ = \
+                self.new_reported_deaths_by_reference_date_with_unknown_start_of_illness()
+
+            overall_cases_with_known_start_of_illness, _ = \
+                self.total_number_of_cases_by_reference_date_with_known_start_of_illness()
+            overall_cases_with_unknown_start_of_illness, _ = \
+                self.total_number_of_cases_by_reference_date_with_unknown_start_of_illness()
+            overall_deaths_with_known_start_of_illness, _ = \
+                self.total_number_of_deaths_by_reference_date_with_known_start_of_illness()
+            overall_deaths_with_unknown_start_of_illness, datetime_of_last_request = \
+                self.total_number_of_deaths_by_reference_date_with_unknown_start_of_illness()
+
+        rki_reporting_date = datetime_of_first_request
+
+        df = pd.concat([overall_cases_by_reference_date,
+                        overall_cases_by_reporting_date,
+                        new_reported_cases_by_reference_date,
+                        new_reported_cases_by_reporting_date,
+                        overall_deaths_by_reference_date,
+                        overall_deaths_by_reporting_date,
+                        new_reported_deaths_by_reference_date,
+                        new_reported_deaths_by_reporting_date,
+                        new_reported_cases_with_known_start_of_illness,
+                        new_reported_cases_with_unknown_start_of_illness,
+                        new_reported_deaths_with_known_start_of_illness,
+                        new_reported_deaths_with_unknown_start_of_illness,
+                        overall_cases_with_known_start_of_illness,
+                        overall_cases_with_unknown_start_of_illness,
+                        overall_deaths_with_known_start_of_illness,
+                        overall_deaths_with_unknown_start_of_illness], axis=1)
+
+        return df, rki_reporting_date
 
     def new_reported_cases(self) -> Tuple[int, datetime]:
         return self._get_figure_from_rki_api(where='NeuerFall%20IN(1,-1)',
@@ -231,11 +311,11 @@ class RKIAPI:
         return cases_by_date
 
     def _get_cases_by_age_group_from_rki_api(self,
-                                 where: str,
-                                 out_fields: str,
-                                 sum_statistic_field: str,
-                                 group_by_field: str,
-                                 column_name: str) -> Tuple[pd.Series, datetime]:
+                                             where: str,
+                                             out_fields: str,
+                                             sum_statistic_field: str,
+                                             group_by_field: str,
+                                             column_name: str) -> Tuple[pd.Series, datetime]:
         data = self._get_json_response_from_rki_api(where=where,
                                                     out_fields=out_fields,
                                                     sum_statistic_field=sum_statistic_field,
@@ -278,12 +358,12 @@ class RKIAPI:
               '&cacheHint=false' \
               f'&groupByFieldsForStatistics={group_by_field}' \
               '&outStatistics=[' \
-                '{%22statisticType%22:%22sum%22,' \
-                f'%22onStatisticField%22:%22{sum_statistic_field}%22,' \
-                 '%22outStatisticFieldName%22:%22cases%22},' \
-                '{%22statisticType%22:%22max%22,' \
-                 '%22onStatisticField%22:%22Datenstand%22,' \
-                 '%22outStatisticFieldName%22:%22date%22}' \
+              '{%22statisticType%22:%22sum%22,' \
+              f'%22onStatisticField%22:%22{sum_statistic_field}%22,' \
+              '%22outStatisticFieldName%22:%22cases%22},' \
+              '{%22statisticType%22:%22max%22,' \
+              '%22onStatisticField%22:%22Datenstand%22,' \
+              '%22outStatisticFieldName%22:%22date%22}' \
               ']' \
               '&having=' \
               '&resultOffset=' \
@@ -303,13 +383,14 @@ class RKIAPI:
         misspellings in the data of the Excel file, which is also problematic. The normal API is stable for those
         problems, so that the API should be preferred.
         """
+
         def load_cases_and_deaths_from_excel() -> pd.DataFrame:
             url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/' \
                   'Fallzahlen_Kum_Tab.xlsx?__blob=publicationFile'
             file_object = self._get_bytesio_from_request(url)
             return pd.read_excel(file_object, sheet_name="Fälle-Todesfälle-gesamt", header=2) \
-                     .dropna(how="all", axis='columns') \
-                     .dropna(how="all", axis='index')
+                .dropna(how="all", axis='columns') \
+                .dropna(how="all", axis='index')
 
         def set_values_to_datetime(df: pd.DataFrame, column: str) -> List[datetime]:
             return [df.loc[index, column]
@@ -355,8 +436,8 @@ class RKIAPI:
                                  header=0,
                                  thousands=".",
                                  parse_dates=['Datum des Erkrankungsbeginns'],
-                                 date_parser=dateparse)\
-                     .replace(",", ".", regex=True)
+                                 date_parser=dateparse) \
+                .replace(",", ".", regex=True)
 
         def subset_of_df_with_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
             df = df.loc[:, ["Datum des Erkrankungsbeginns",
@@ -399,11 +480,11 @@ class RKIAPI:
             file_object = self._get_bytesio_from_request(url)
 
             try:
-                clinical_aspects = pd.read_excel(file_object, sheet_name="Daten", header=1)\
-                                     .dropna(how="all", axis=1)
+                clinical_aspects = pd.read_excel(file_object, sheet_name="Daten", header=1) \
+                    .dropna(how="all", axis=1)
             except:
-                clinical_aspects = pd.read_excel(file_object, sheet_name=0, header=1)\
-                                     .dropna(how="all", axis=1)
+                clinical_aspects = pd.read_excel(file_object, sheet_name=0, header=1) \
+                    .dropna(how="all", axis=1)
 
             return clinical_aspects
 
