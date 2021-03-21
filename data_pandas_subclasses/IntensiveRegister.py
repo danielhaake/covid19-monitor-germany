@@ -61,20 +61,20 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         return IntensiveRegisterDataFrame(df)
 
-    def get_last_r_value_by_mean_cases(self) -> float:
-        last_date = self.get_last_date_for_mean_values()
+    def last_r_value_by_mean_cases(self) -> float:
+        last_date = self.last_date_for_mean_values()
         return self.loc[last_date,
                         "R value calculated by newly admitted intensive care patients with a " \
                         "positive COVID-19 test (mean ±3 days)"]
 
-    def get_second_last_r_value_by_mean_cases(self) -> float:
-        second_last_date = self.get_second_last_date_for_mean_values()
+    def second_last_r_value_by_mean_cases(self) -> float:
+        second_last_date = self.second_last_date_for_mean_values()
         return self.loc[second_last_date,
                         "R value calculated by newly admitted intensive care patients with a " \
                         "positive COVID-19 test (mean ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
-        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()
+    def change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.last_r_value_by_mean_cases() - self.second_last_r_value_by_mean_cases()
 
     @staticmethod
     def update_csv_with_intensive_register_data(s3_bucket: str = None,

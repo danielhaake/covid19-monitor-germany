@@ -106,13 +106,13 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
         })
 
 
-    def get_last_r_value(self) -> float:
-        second_last_date = self.get_second_last_date()
+    def last_r_value(self) -> float:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "7 day R value (Nowcast RKI)"]
 
-    def get_second_last_r_value(self) -> float:
-        third_last_date = self.get_third_last_date()
+    def second_last_r_value(self) -> float:
+        third_last_date = self.third_last_date()
         return self.loc[third_last_date, "7 day R value (Nowcast RKI)"]
 
-    def get_change_from_second_last_to_last_date_for_r_value(self) -> float:
-        return self.get_last_r_value() - self.get_second_last_r_value()
+    def change_from_second_last_to_last_date_for_r_value(self) -> float:
+        return self.last_r_value() - self.second_last_r_value()

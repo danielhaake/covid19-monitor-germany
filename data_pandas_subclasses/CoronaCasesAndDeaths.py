@@ -229,143 +229,143 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             per_n_inhabitants = 1_000_000
         return list(np.array(self.calculate_sum_last_7_days_for_column(column_name)) / inhabitants * per_n_inhabitants)
 
-    def get_last_rki_reporting_date(self) -> dt.datetime:
+    def last_rki_reporting_date(self) -> dt.datetime:
         return self.loc[:, "RKI reporting date"].max()
 
-    def get_last_reported_cases(self) -> int:
-        last_date = self.get_last_date()
+    def last_reported_cases(self) -> int:
+        last_date = self.last_date()
         return self.loc[last_date, "cases"]
 
-    def get_second_last_reported_cases(self) -> int:
-        second_last_date = self.get_second_last_date()
+    def second_last_reported_cases(self) -> int:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "cases"]
 
-    def get_change_from_second_last_to_last_date_for_reported_cases(self) -> int:
-        return self.get_last_reported_cases() - self.get_second_last_reported_cases()
+    def change_from_second_last_to_last_date_for_reported_cases(self) -> int:
+        return self.last_reported_cases() - self.second_last_reported_cases()
 
-    def get_last_mean_cases(self) -> float:
-        last_date_for_mean_values = self.get_last_date_for_mean_values()
+    def last_mean_cases(self) -> float:
+        last_date_for_mean_values = self.last_date_for_mean_values()
         return self.loc[last_date_for_mean_values, "cases (mean of ±3 days)"]
 
-    def get_second_last_mean_cases(self) -> float:
-        second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
+    def second_last_mean_cases(self) -> float:
+        second_last_date_for_mean_values = self.second_last_date_for_mean_values()
         return self.loc[second_last_date_for_mean_values, "cases (mean of ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_mean_cases(self) -> float:
-        return self.get_last_mean_cases() - self.get_second_last_mean_cases()
+    def change_from_second_last_to_last_date_for_mean_cases(self) -> float:
+        return self.last_mean_cases() - self.second_last_mean_cases()
 
-    def get_last_cases_cumulative(self) -> int:
-        last_date = self.get_last_date()
+    def last_cases_cumulative(self) -> int:
+        last_date = self.last_date()
         return self.loc[last_date, "cases cumulative"]
 
-    def get_last_reported_deaths(self) -> int:
-        last_date = self.get_last_date()
+    def last_reported_deaths(self) -> int:
+        last_date = self.last_date()
         return self.loc[last_date, "deaths"]
 
-    def get_second_last_reported_deaths(self) -> int:
-        second_last_date = self.get_second_last_date()
+    def second_last_reported_deaths(self) -> int:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "deaths"]
 
-    def get_change_from_second_last_to_last_date_for_reported_deaths(self) -> int:
-        return self.get_last_reported_deaths() - self.get_second_last_reported_deaths()
+    def change_from_second_last_to_last_date_for_reported_deaths(self) -> int:
+        return self.last_reported_deaths() - self.second_last_reported_deaths()
 
-    def get_last_mean_deaths(self) -> float:
-        last_date_for_mean_values = self.get_last_date_for_mean_values()
+    def last_mean_deaths(self) -> float:
+        last_date_for_mean_values = self.last_date_for_mean_values()
         return self.loc[last_date_for_mean_values, "deaths (mean of ±3 days)"]
 
-    def get_second_last_mean_deaths(self) -> float:
-        second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
+    def second_last_mean_deaths(self) -> float:
+        second_last_date_for_mean_values = self.second_last_date_for_mean_values()
         return self.loc[second_last_date_for_mean_values, "deaths (mean of ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_mean_deaths(self) -> float:
-        return self.get_last_mean_deaths() - self.get_second_last_mean_deaths()
+    def change_from_second_last_to_last_date_for_mean_deaths(self) -> float:
+        return self.last_mean_deaths() - self.second_last_mean_deaths()
 
-    def get_last_deaths_cumulative(self) -> int:
-        last_date = self.get_last_date()
+    def last_deaths_cumulative(self) -> int:
+        last_date = self.last_date()
         return self.loc[last_date, "deaths cumulative"]
 
-    def get_last_r_value_by_mean_cases(self) -> float:
-        last_date_for_mean_values = self.get_last_date_for_mean_values()
+    def last_r_value_by_mean_cases(self) -> float:
+        last_date_for_mean_values = self.last_date_for_mean_values()
         return self.loc[last_date_for_mean_values, "R value by cases (mean of ±3 days)"]
 
-    def get_second_last_r_value_by_mean_cases(self) -> float:
-        second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
+    def second_last_r_value_by_mean_cases(self) -> float:
+        second_last_date_for_mean_values = self.second_last_date_for_mean_values()
         return self.loc[second_last_date_for_mean_values, "R value by cases (mean of ±3 days)"]
 
-    def get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
-        return self.get_last_r_value_by_mean_cases() - self.get_second_last_r_value_by_mean_cases()
+    def change_from_second_last_to_last_date_for_r_value_by_mean_cases(self) -> float:
+        return self.last_r_value_by_mean_cases() - self.second_last_r_value_by_mean_cases()
 
-    def get_cases_last_7_days(self) -> int:
-        last_date = self.get_last_date()
+    def cases_last_7_days(self) -> int:
+        last_date = self.last_date()
         return self.loc[last_date, "cases last 7 days"]
 
-    def get_deaths_last_7_days(self) -> int:
-        last_date = self.get_last_date()
+    def deaths_last_7_days(self) -> int:
+        last_date = self.last_date()
         return self.loc[last_date, "deaths last 7 days"]
 
-    def get_last_7_day_incidence_per_100_000_inhabitants(self) -> float:
-        last_date = self.get_last_date()
+    def last_7_day_incidence_per_100_000_inhabitants(self) -> float:
+        last_date = self.last_date()
         return self.loc[last_date, "7 day incidence per 100,000 inhabitants"]
 
-    def get_second_last_7_day_incidence_per_100_000_inhabitants(self) -> float:
-        second_last_date = self.get_second_last_date()
+    def second_last_7_day_incidence_per_100_000_inhabitants(self) -> float:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "7 day incidence per 100,000 inhabitants"]
 
-    def get_change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants(self) -> float:
-        return self.get_last_7_day_incidence_per_100_000_inhabitants() - \
-               self.get_second_last_7_day_incidence_per_100_000_inhabitants()
+    def change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants(self) -> float:
+        return self.last_7_day_incidence_per_100_000_inhabitants() - \
+               self.second_last_7_day_incidence_per_100_000_inhabitants()
 
-    def get_last_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) -> float:
-        last_date = self.get_last_date()
+    def last_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) -> float:
+        last_date = self.last_date()
         return self.loc[last_date, "7 day incidence per 100,000 inhabitants by reporting date (RKI version)"]
 
-    def get_second_last_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) -> float:
-        second_last_date = self.get_second_last_date()
+    def second_last_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) -> float:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "7 day incidence per 100,000 inhabitants by reporting date (RKI version)"]
 
-    def get_change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) \
+    def change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) \
             -> float:
-        return self.get_last_7_day_incidence_per_100_000_inhabitants() - \
-               self.get_second_last_7_day_incidence_per_100_000_inhabitants()
+        return self.last_7_day_incidence_per_100_000_inhabitants() - \
+               self.second_last_7_day_incidence_per_100_000_inhabitants()
 
-    def get_last_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
-        last_date = self.get_last_date()
+    def last_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
+        last_date = self.last_date()
         return self.loc[last_date, "7 day deaths per 1,000,000 inhabitants"]
 
-    def get_second_last_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
-        second_last_date = self.get_second_last_date()
+    def second_last_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "7 day deaths per 1,000,000 inhabitants"]
 
-    def get_change_from_second_last_to_last_date_for_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
-        return self.get_last_7_day_deaths_per_1_000_000_inhabitants() - \
-               self.get_second_last_7_day_deaths_per_1_000_000_inhabitants()
+    def change_from_second_last_to_last_date_for_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
+        return self.last_7_day_deaths_per_1_000_000_inhabitants() - \
+               self.second_last_7_day_deaths_per_1_000_000_inhabitants()
 
-    def get_last_7_day_incidence_by_mean_cases_per_100_000_inhabitants(self) -> float:
-        last_date_for_mean_values = self.get_last_date_for_mean_values()
+    def last_7_day_incidence_by_mean_cases_per_100_000_inhabitants(self) -> float:
+        last_date_for_mean_values = self.last_date_for_mean_values()
         return self.loc[last_date_for_mean_values,
                         "7 day incidence (by cases (mean of ±3 days)) per 100,000 inhabitants"]
 
-    def get_second_last_7_day_incidence_by_mean_cases_per_100_000_inhabitants(self) -> float:
-        second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
+    def second_last_7_day_incidence_by_mean_cases_per_100_000_inhabitants(self) -> float:
+        second_last_date_for_mean_values = self.second_last_date_for_mean_values()
         return self.loc[second_last_date_for_mean_values,
                         "7 day incidence (by cases (mean of ±3 days)) per 100,000 inhabitants"]
 
-    def get_change_from_second_last_to_last_date_for_7_day_incidence_by_mean_cases_per_100_000_inhabitants(self) \
+    def change_from_second_last_to_last_date_for_7_day_incidence_by_mean_cases_per_100_000_inhabitants(self) \
             -> float:
-        return self.get_last_7_day_incidence_by_mean_cases_per_100_000_inhabitants() - \
-               self.get_second_last_7_day_incidence_by_mean_cases_per_100_000_inhabitants()
+        return self.last_7_day_incidence_by_mean_cases_per_100_000_inhabitants() - \
+               self.second_last_7_day_incidence_by_mean_cases_per_100_000_inhabitants()
 
-    def get_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants(self) -> float:
-        last_date_for_mean_values = self.get_last_date_for_mean_values()
+    def last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants(self) -> float:
+        last_date_for_mean_values = self.last_date_for_mean_values()
         return self.loc[last_date_for_mean_values,
                         "7 day deaths (by cases (mean of ±3 days)) per 1,000,000 inhabitants"]
 
-    def get_second_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants(self) -> float:
-        second_last_date_for_mean_values = self.get_second_last_date_for_mean_values()
+    def second_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants(self) -> float:
+        second_last_date_for_mean_values = self.second_last_date_for_mean_values()
         return self.loc[second_last_date_for_mean_values,
                         "7 day deaths (by cases (mean of ±3 days)) per 1,000,000 inhabitants"]
 
-    def get_change_from_second_last_to_last_date_for_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants(self) \
+    def change_from_second_last_to_last_date_for_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants(self) \
             -> float:
-        return self.get_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants() - \
-               self.get_second_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
+        return self.last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants() - \
+               self.second_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
