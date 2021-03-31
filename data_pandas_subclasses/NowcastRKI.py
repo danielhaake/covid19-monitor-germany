@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import requests
 
+from api.RKIAPI import RKIAPI
 from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
 
 load_dotenv()
@@ -35,6 +36,7 @@ class NowcastRKISeries(CoronaBaseDateIndexSeries):
 class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
 
     _filename = "nowcast_rki.csv"
+    api = RKIAPI()
 
     @property
     def _constructor(self):
@@ -64,65 +66,19 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
                                       folder_path: str = None) -> 'NowcastRKIDataFrame':
 
         logging.info("START UPDATE PROCESS FOR NOWCAST RKI")
-
-        def select_and_rename_german_columns_and_set_index_after_download_from_rki(df):
-
-            logging.info("select and rename german columns into english of downloaded file")
-
-            df = df.loc[:, ["Datum des Erkrankungsbeginns",
-                            "Punktschätzer der Anzahl Neuerkrankungen",
-                            "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
-                            "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
-                            "Punktschätzer des 7-Tage-R Wertes",
-                            "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes",
-                            "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes"]
-                 ]
-            df.loc[:, "Datum des Erkrankungsbeginns"] = pd.to_datetime(df.loc[:, "Datum des Erkrankungsbeginns"])
-            return df.rename(columns={"Datum des Erkrankungsbeginns": "date",
-                                      "Punktschätzer der Anzahl Neuerkrankungen":
-                                          "cases (Nowcast RKI)",
-                                      "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
-                                          "min cases (Nowcast RKI)",
-                                      "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
-                                          "max cases (Nowcast RKI)",
-                                      "Punktschätzer des 7-Tage-R Wertes":
-                                          "7 day R value (Nowcast RKI)",
-                                      "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
-                                          "min 7 day R value (Nowcast RKI)",
-                                      "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
-                                          "max 7 day R value (Nowcast RKI)"
-                                      }
-                             ).set_index("date")
-
-        logging.info("start download of new file from RKI")
-
-        url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting_Zahlen.xlsx?__blob=publicationFile'
-        response = requests.get(url)
-        file_object = BytesIO(response.content)
-
-        dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
-
-        nowcast_rki = NowcastRKIDataFrame(pd.read_excel(file_object,
-                                                        sheet_name=1,
-                                                        header=0,
-                                                        thousands=".",
-                                                        parse_dates=['Datum des Erkrankungsbeginns'],
-                                                        date_parser=dateparse).replace(",", ".", regex=True))
-
-        nowcast_rki = select_and_rename_german_columns_and_set_index_after_download_from_rki(nowcast_rki)
+        nowcast_rki = NowcastRKIDataFrame(NowcastRKIDataFrame.api.nowcast())
 
         logging.info("calculate 7 day moving mean for cases from Nowcast RKI")
         nowcast_rki.loc[:, "cases (mean of ±3 days of Nowcast RKI)"] = \
             nowcast_rki.calculate_7d_moving_mean_for_column("cases (Nowcast RKI)")
 
         nowcast_rki_infections = nowcast_rki.calculate_df_with_shifted_date_because_of_incubation_period()
-        nowcast_rki = pd.concat([nowcast_rki, nowcast_rki_infections], axis=1)
+        nowcast_rki = nowcast_rki.merge(nowcast_rki_infections, how='outer', left_index=True, right_index=True)
 
         if to_csv:
             nowcast_rki.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
         logging.info("FINISHED UPDATE PROCESS FOR NOWCAST RKI")
-
         return nowcast_rki
 
     def calculate_df_with_shifted_date_because_of_incubation_period(self, incubation_period_in_days=5) \
@@ -131,7 +87,6 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
         logging.info("calculate DF with shifted date because of incubation period")
 
         self_copy = self.copy(deep=True)
-
         self_copy = self_copy.set_index(self_copy.index - pd.DateOffset(incubation_period_in_days))
         return self_copy.rename(columns={
             "cases (Nowcast RKI)":
@@ -151,13 +106,13 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
         })
 
 
-    def get_last_r_value(self) -> float:
-        second_last_date = self.get_second_last_date()
+    def last_r_value(self) -> float:
+        second_last_date = self.second_last_date()
         return self.loc[second_last_date, "7 day R value (Nowcast RKI)"]
 
-    def get_second_last_r_value(self) -> float:
-        third_last_date = self.get_third_last_date()
+    def second_last_r_value(self) -> float:
+        third_last_date = self.third_last_date()
         return self.loc[third_last_date, "7 day R value (Nowcast RKI)"]
 
-    def get_change_from_second_last_to_last_date_for_r_value(self) -> float:
-        return self.get_last_r_value() - self.get_second_last_r_value()
+    def change_from_second_last_to_last_date_for_r_value(self) -> float:
+        return self.last_r_value() - self.second_last_r_value()

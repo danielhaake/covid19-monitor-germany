@@ -56,7 +56,7 @@ class Layout:
 
     def __init__(self):
         self.config = configparser.ConfigParser(interpolation=None)
-        self.config.read('graph_definitions.ini')
+        self.config.read('layout/graph_definitions.ini')
 
     def layout(self) -> html.Div:
         return html.Div(
@@ -73,7 +73,7 @@ class Layout:
                                      interval=600000,
                                      n_intervals=0),
                         dbc.Tabs(id='tabs-global-overview',
-                                 className='nav-justified',
+                                 className='nav-justified',  # bootstrap class name for justified navigation tabs
                                  children=self.tabs_with_graphs())
                     ]
                 ),
@@ -91,7 +91,7 @@ class Layout:
     def _headline(self) -> List[THtml]:
         return [
             html.A(
-                html.Img(id='logo', src='assets/logo_um.png'),
+                html.Img(id='logo', src='../assets/logo_um.png'),
                 href='https://www.unbelievable-machine.com/',
                 target='_blank'),
             html.H3(id='app-title',
@@ -287,7 +287,7 @@ class Layout:
         ]
 
     def _tab_data_sources_description(self) -> dcc.Markdown:
-        with open('./data_sources_description.md', 'r', encoding='utf-8') as input_file:
+        with open('data_sources_description.md', 'r', encoding='utf-8') as input_file:
             text = input_file.read()
         return dcc.Markdown(text,
                             id='data-sources-description-content',
@@ -416,52 +416,52 @@ class Layout:
                            nowcast_rki: NowcastRKIDataFrame,
                            intensive_register: IntensiveRegisterDataFrame) -> DailyFiguresDict:
 
-        cases_cumulative = int(corona_cases_and_deaths.get_last_cases_cumulative())
-        last_rki_reported_cases = int(corona_cases_and_deaths.get_last_reported_cases())
-        last_mean_cases = int(np.round(corona_cases_and_deaths.get_last_mean_cases()))
+        cases_cumulative = int(corona_cases_and_deaths.last_cases_cumulative())
+        last_rki_reported_cases = int(corona_cases_and_deaths.last_reported_cases())
+        last_mean_cases = int(np.round(corona_cases_and_deaths.last_mean_cases()))
 
         last_mean_cases_change_day_before = \
-            corona_cases_and_deaths.get_change_from_second_last_to_last_date_for_mean_cases()
+            corona_cases_and_deaths.change_from_second_last_to_last_date_for_mean_cases()
         last_mean_cases_change_day_before = int(np.round(last_mean_cases_change_day_before))
 
-        incidence_cases = int(np.round(corona_cases_and_deaths.get_last_7_day_incidence_per_100_000_inhabitants()))
+        incidence_cases = int(np.round(corona_cases_and_deaths.last_7_day_incidence_per_100_000_inhabitants()))
 
         incidence_cases_change = \
-            corona_cases_and_deaths.get_change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants()
+            corona_cases_and_deaths.change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants()
         incidence_cases_change = int(np.round(incidence_cases_change))
 
         incidence_cases_by_reporting_date = \
-            corona_cases_and_deaths.get_last_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
+            corona_cases_and_deaths.last_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
         incidence_cases_by_reporting_date = int(np.round(incidence_cases_by_reporting_date))
 
         incidence_cases_change_by_reporting_date = \
             corona_cases_and_deaths. \
-                get_change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
+                change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
         incidence_cases_change_by_reporting_date = int(np.round(incidence_cases_change_by_reporting_date))
 
-        deaths_cumulative = int(corona_cases_and_deaths.get_last_deaths_cumulative())
-        last_rki_reported_deaths = int(corona_cases_and_deaths.get_last_reported_deaths())
-        last_mean_deaths = int(np.round(corona_cases_and_deaths.get_last_mean_deaths()))
+        deaths_cumulative = int(corona_cases_and_deaths.last_deaths_cumulative())
+        last_rki_reported_deaths = int(corona_cases_and_deaths.last_reported_deaths())
+        last_mean_deaths = int(np.round(corona_cases_and_deaths.last_mean_deaths()))
 
         last_mean_deaths_change_day_before = \
-            corona_cases_and_deaths.get_change_from_second_last_to_last_date_for_mean_deaths()
+            corona_cases_and_deaths.change_from_second_last_to_last_date_for_mean_deaths()
         last_mean_deaths_change_day_before = int(np.round(last_mean_deaths_change_day_before))
 
-        incidence_deaths = corona_cases_and_deaths.get_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
+        incidence_deaths = corona_cases_and_deaths.last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
         incidence_deaths = int(np.round(incidence_deaths))
 
         incidence_deaths_change = \
             corona_cases_and_deaths. \
-                get_change_from_second_last_to_last_date_for_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
+                change_from_second_last_to_last_date_for_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
         incidence_deaths_change = int(np.round(incidence_deaths_change))
 
-        last_r_value = np.round(corona_cases_and_deaths.get_last_r_value_by_mean_cases(), 2)
-        r_value_change = np.round(corona_cases_and_deaths.get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
-        last_r_value_nowcast = np.round(nowcast_rki.get_last_r_value(), 2)
-        r_value_nowcast_change = np.round(nowcast_rki.get_change_from_second_last_to_last_date_for_r_value(), 2)
-        last_r_value_intensive_register = np.round(intensive_register.get_last_r_value_by_mean_cases(), 2)
+        last_r_value = np.round(corona_cases_and_deaths.last_r_value_by_mean_cases(), 2)
+        r_value_change = np.round(corona_cases_and_deaths.change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
+        last_r_value_nowcast = np.round(nowcast_rki.last_r_value(), 2)
+        r_value_nowcast_change = np.round(nowcast_rki.change_from_second_last_to_last_date_for_r_value(), 2)
+        last_r_value_intensive_register = np.round(intensive_register.last_r_value_by_mean_cases(), 2)
         r_value_intensive_register_change = np.round(
-            intensive_register.get_change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
+            intensive_register.change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
 
         daily_figures: Layout.DailyFiguresDict = \
             {"cases_cumulative": cases_cumulative,

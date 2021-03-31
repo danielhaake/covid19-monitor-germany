@@ -97,20 +97,20 @@ class CoronaBaseDateIndexDataFrame(CoronaBaseDataFrame):
                 for date
                 in self.index]
 
-    def get_last_date(self) -> dt.datetime:
+    def last_date(self) -> dt.datetime:
         return self.index.max()
 
-    def get_second_last_date(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(1)
+    def second_last_date(self) -> dt.datetime:
+        return self.last_date() - pd.DateOffset(1)
 
-    def get_third_last_date(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(2)
+    def third_last_date(self) -> dt.datetime:
+        return self.last_date() - pd.DateOffset(2)
 
-    def get_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date() - pd.DateOffset(3)
+    def last_date_for_mean_values(self) -> dt.datetime:
+        return self.last_date() - pd.DateOffset(3)
 
-    def get_second_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date_for_mean_values() - pd.DateOffset(1)
+    def second_last_date_for_mean_values(self) -> dt.datetime:
+        return self.last_date_for_mean_values() - pd.DateOffset(1)
 
-    def get_third_last_date_for_mean_values(self) -> dt.datetime:
-        return self.get_last_date_for_mean_values() - pd.DateOffset(2)
+    def third_last_date_for_mean_values(self) -> dt.datetime:
+        return self.last_date_for_mean_values() - pd.DateOffset(2)
