@@ -8,7 +8,11 @@ import requests
 
 class RKIAPI:
 
-    def daily_figures(self) -> Dict[str, Union[datetime, int]]:
+    def figures_of_last_day(self) -> Dict[str, Union[datetime, int]]:
+        """
+        This method delivers a Dictionary of the latest reported corona cases and deaths of a day and also the
+        cumulative numbers of cases and deaths.
+        """
 
         # it is possible that we call the methods while the dataset is updated
         # then we could have different dates for reported cases and deaths
@@ -30,6 +34,13 @@ class RKIAPI:
                 "deaths cumulative": deaths_cumulative}
 
     def cases_and_deaths_by_reference_and_reporting_date(self) -> Tuple[pd.DataFrame, datetime]:
+        """
+        This method delivers a Pandas Dataframe and the datetime of the reporting date for cases and deaths by reference
+        and reporting date. For example, we can get the total number of reported corona cases by reference date. The
+        reference date is the date, when the illness of a case started and if we don't know this date, the reference
+        date is the reporting date (date, when the health department was informed for this specific case). This method
+        also delivers the reference and reporting date of cases ande deaths which where reported for the last date.
+        """
 
         # it is possible that we call the methods while the dataset is updated
         # then we could have different dates for reported cases and deaths
