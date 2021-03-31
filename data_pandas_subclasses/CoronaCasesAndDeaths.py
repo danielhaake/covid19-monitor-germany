@@ -81,7 +81,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         datetime_of_last_request = None
         while ((datetime_of_first_request != datetime_of_last_request) |
                (datetime_of_first_request is None) | (datetime_of_last_request is None)):
-            daily_figures = self.api.daily_figures()
+            daily_figures = self.api.figures_of_last_day()
             datetime_of_first_request = daily_figures["reporting date"]
             cases_and_deaths_by_reference_and_reporting_date, datetime_of_last_request = \
                 self.api.cases_and_deaths_by_reference_and_reporting_date()
