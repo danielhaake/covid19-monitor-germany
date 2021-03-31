@@ -113,7 +113,11 @@ class IntensiveRegisterAPI:
             return csv.iloc[0]["faelle_covid_aktuell"]
 
         def invasively_ventilated(csv):
-            return csv.iloc[0]["faelle_covid_aktuell_beatmet"]
+            # till 30.03.2021
+            # return csv.iloc[0]["faelle_covid_aktuell_beatmet"]
+
+            # since 31.03.2021
+            return csv.iloc[0]["faelle_covid_aktuell_invasiv_beatmet"]
 
         def free_intensive_care_beds(csv):
             return csv.iloc[0]["betten_frei"]
