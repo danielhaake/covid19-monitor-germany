@@ -1,3 +1,6 @@
+#### Source Code
+The source code is open and can be found [here](https://github.com/danielhaake/covid19-monitor-germany).
+
 #### Data Sources
 The data used for the monitor comes from official sources in Germany. Data relating to intensive care units comes from the 
 "DIVI-Intensivregister" [(www.intensivregister.de)](http://www.intensivregister.de). All other data comes from the 
