@@ -97,6 +97,7 @@ class RKIAPI:
                         overall_deaths_with_known_start_of_illness,
                         overall_deaths_with_unknown_start_of_illness], axis=1)
 
+        df.index.name = "date"
         return df, rki_reporting_date
 
     def new_reported_cases(self) -> Tuple[int, datetime]:
