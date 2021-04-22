@@ -588,6 +588,68 @@ class RKIAPI:
         number_pcr_tests = cleaning_because_of_calendar_week_column_and_set_as_index(number_pcr_tests)
         return number_pcr_tests
 
+    def cases_attributed_to_an_outbreak_per_week(self) -> pd.DataFrame:
+        def load_cases_attributed_to_an_outbreak_per_week_from_excel() -> pd.DataFrame:
+            url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/' \
+                  'Ausbruchsdaten.xlsx?__blob=publicationFile'
+            file_object = self._get_bytesio_from_request(url)
+            return pd.read_excel(file_object, sheet_name="Ausbrüche_Meldewoche")
+
+        def delete_unneeded_columns(df: pd.DataFrame) -> pd.DataFrame:
+            return df.drop(columns=['sett_f'])
+
+        def rename_columns_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Meldejahr': 'reporting year',
+                                      'Meldewoche': 'reporting week',
+                                      'sett_engl': 'outbreak category',
+                                      'n': 'cases'
+                                      })
+
+        def create_calendar_week(df: pd.DataFrame) -> pd.DataFrame:
+            reporting_week = ['0' + week if len(week) == 1 else week for week in
+                              df.loc[:, 'reporting week'].astype(str)]
+            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + reporting_week
+            df.loc[:, 'calendar week'] = calendar_week
+            return df
+
+        def create_df_with_outbreak_types_as_columns(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
+            calendar_weeks = df.loc[:, 'calendar week'].unique()
+            categories = df.loc[:, 'outbreak category'].unique()
+
+            df_with_outbreak_types_as_columns = pd.DataFrame(index=calendar_weeks)
+            df_with_outbreak_types_as_columns.index = df_with_outbreak_types_as_columns.index.rename('calendar week')
+
+            for category in categories:
+                df_with_outbreak_types_as_columns = df_with_outbreak_types_as_columns \
+                    .merge(df.loc[df.loc[:, 'outbreak category'] == category, :]
+                             .set_index('calendar week')
+                             .rename(columns={'cases': category})
+                             .loc[:, category],
+                           how='outer',
+                           left_index=True,
+                           right_index=True)
+            return df_with_outbreak_types_as_columns.sort_index(), categories
+
+        def append_column_sum_cases_per_week(df: pd.DataFrame) -> pd.DataFrame:
+            df.loc[:, "sum of cases"] = df.sum(axis=1).astype(int)
+            return df
+
+        def append_columns_percentage_of_categories(df: pd.DataFrame, categories: List[str]) -> pd.DataFrame:
+            for category in categories:
+                new_column_name = category + " (%)"
+                cases_in_percent_per_week = df.loc[:, category] / df.loc[:, "sum of cases"] * 100
+                df.loc[:, new_column_name] = cases_in_percent_per_week
+            return df
+
+        df = load_cases_attributed_to_an_outbreak_per_week_from_excel()
+        df = delete_unneeded_columns(df)
+        df = rename_columns_german_to_english(df)
+        df = create_calendar_week(df)
+        df, categories = create_df_with_outbreak_types_as_columns(df)
+        df = append_column_sum_cases_per_week(df)
+        df = append_columns_percentage_of_categories(df, categories)
+        return df
+
     def _get_bytesio_from_request(self, excel_file_url: str) -> BytesIO:
         response = requests.get(excel_file_url)
         return BytesIO(response.content)
