@@ -79,12 +79,18 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         logging.info("start update with new data from RKI API")
         datetime_of_first_request = None
         datetime_of_last_request = None
-        while ((datetime_of_first_request != datetime_of_last_request) |
+
+        retries = 0
+        max_retries = 5
+
+        while (retries < max_retries) & \
+              ((datetime_of_first_request != datetime_of_last_request) |
                (datetime_of_first_request is None) | (datetime_of_last_request is None)):
             daily_figures = self.api.figures_of_last_day()
             datetime_of_first_request = daily_figures["reporting date"]
             cases_and_deaths_by_reference_and_reporting_date, datetime_of_last_request = \
                 self.api.cases_and_deaths_by_reference_and_reporting_date()
+            retries += 1
 
         self = update_self_with_new_data(self, cases_and_deaths_by_reference_and_reporting_date)
         logging.info("new and total cases and deaths by reporting and reference date were added")
