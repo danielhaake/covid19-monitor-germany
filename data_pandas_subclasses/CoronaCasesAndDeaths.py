@@ -172,6 +172,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         self._calculate_r_value_and_daily_increase_columns()
         self._calculate_last_7_day_columns()
         self._calculate_7_day_incidence_and_deaths_columns()
+        self._calculate_last_365_day_columns()
 
     def _calculate_7d_moving_mean_columns(self) -> None:
         self.loc[:, "cases (mean of ±3 days)"] = self.calculate_7d_moving_mean_for_column("cases")
@@ -379,3 +380,25 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> float:
         return self.last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants() - \
                self.second_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
+
+    def cases_last_365_days(self) -> int:
+        last_date = self.last_date()
+        return self.loc[last_date, "cases last 365 days"]
+
+    def cases_last_365_days_of_second_last_date(self) -> int:
+        second_last_date = self.second_last_date()
+        return self.loc[second_last_date, "cases last 365 days"]
+
+    def change_from_second_last_to_last_date_for_cases_last_365_days(self) -> int:
+        return self.cases_last_365_days() - self.cases_last_365_days_of_second_last_date()
+
+    def deaths_last_365_days(self) -> int:
+        last_date = self.last_date()
+        return self.loc[last_date, "deaths last 365 days"]
+
+    def deaths_last_365_days_of_second_last_date(self) -> int:
+        second_last_date = self.second_last_date()
+        return self.loc[second_last_date, "deaths last 365 days"]
+
+    def change_from_second_last_to_last_date_for_deaths_last_365_days(self) -> int:
+        return self.deaths_last_365_days() - self.deaths_last_365_days_of_second_last_date()
