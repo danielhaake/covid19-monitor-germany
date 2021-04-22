@@ -194,8 +194,12 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             calculate_daily_proportionate_increase_for("cases (mean of ±3 days)")
 
     def _calculate_last_7_day_columns(self) -> None:
-        self.loc[:, "cases last 7 days"] = self.calculate_sum_last_7_days_for_column("cases")
-        self.loc[:, "deaths last 7 days"] = self.calculate_sum_last_7_days_for_column("deaths")
+        self.loc[:, "cases last 7 days"] = self.calculate_sum_last_7_days_for("cases")
+        self.loc[:, "deaths last 7 days"] = self.calculate_sum_last_7_days_for("deaths")
+
+    def _calculate_last_365_day_columns(self) -> None:
+        self.loc[:, "cases last 365 days"] = self.calculate_sum_last_365_days_for("cases")
+        self.loc[:, "deaths last 365 days"] = self.calculate_sum_last_365_days_for("deaths")
 
     def _calculate_7_day_incidence_and_deaths_columns(self) -> None:
         self.loc[:, "7 day incidence per 100,000 inhabitants"] = self.calculate_7_day_incidence_for_column("cases")
@@ -233,7 +237,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         per_n_inhabitants = 100_000
         if "deaths" in column_name:
             per_n_inhabitants = 1_000_000
-        return list(np.array(self.calculate_sum_last_7_days_for_column(column_name)) / inhabitants * per_n_inhabitants)
+        return list(np.array(self.calculate_sum_last_7_days_for(column_name)) / inhabitants * per_n_inhabitants)
 
     def last_rki_reporting_date(self) -> dt.datetime:
         return self.loc[:, "RKI reporting date"].max()
