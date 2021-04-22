@@ -20,12 +20,17 @@ class RKIAPI:
         datetime_of_first_request = None
         datetime_of_last_request = None
 
-        while ((datetime_of_first_request != datetime_of_last_request) |
-               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+        retries = 0
+        max_retries = 5
+
+        while (retries < max_retries) & \
+                ((datetime_of_first_request != datetime_of_last_request) |
+                 (datetime_of_first_request is None) | (datetime_of_last_request is None)):
             new_reported_cases, datetime_of_first_request = self.new_reported_cases()
             cases_cumulative, _ = self.total_number_of_reported_cases()
             deaths_cumulative, _ = self.total_number_of_reported_deaths()
             new_reported_deaths, datetime_of_last_request = self.new_reported_deaths()
+            retries += 1
 
         return {"reporting date": datetime_of_last_request,
                 "new reported cases": new_reported_cases,
@@ -48,8 +53,12 @@ class RKIAPI:
         datetime_of_first_request = None
         datetime_of_last_request = None
 
-        while ((datetime_of_first_request != datetime_of_last_request) |
-               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+        retries = 0
+        max_retries = 5
+
+        while (retries < max_retries) & \
+                ((datetime_of_first_request != datetime_of_last_request) |
+                 (datetime_of_first_request is None) | (datetime_of_last_request is None)):
             overall_cases_by_reference_date, datetime_of_first_request = self.total_number_of_cases_by_reference_date()
             overall_cases_by_reporting_date, _ = self.total_number_of_cases_by_reporting_date()
             new_reported_cases_by_reference_date, _ = self.new_reported_cases_by_reference_date()
@@ -77,6 +86,8 @@ class RKIAPI:
                 self.total_number_of_deaths_by_reference_date_with_known_start_of_illness()
             overall_deaths_with_unknown_start_of_illness, datetime_of_last_request = \
                 self.total_number_of_deaths_by_reference_date_with_unknown_start_of_illness()
+
+            retries += 1
 
         rki_reporting_date = datetime_of_first_request
 
