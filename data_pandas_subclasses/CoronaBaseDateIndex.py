@@ -99,6 +99,15 @@ class CoronaBaseDateIndexDataFrame(CoronaBaseDataFrame):
                 for date
                 in self.index]
 
+    def calculate_sum_last_365_days_for(self, column_name: str) -> List[TNum]:
+        return [self._calculate_sum_or_mean_for(column_name,
+                                                date,
+                                                days_backwards=364,
+                                                period_in_days=365,
+                                                data_for_all_days_needed=False)
+                for date
+                in self.index]
+
     def last_date(self) -> dt.datetime:
         return self.index.max()
 
