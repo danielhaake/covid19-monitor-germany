@@ -34,6 +34,7 @@ class Layout:
 
     class DailyFiguresDict(TypedDict):
         cases_cumulative: int
+        cases_last_365_days: int
         last_cases_reported_by_rki: int
         last_mean_cases: int
         last_mean_cases_change_since_day_before: int
@@ -42,6 +43,7 @@ class Layout:
         cases_last_7_days_by_reporting_date: int
         cases_last_7_days_by_reporting_date_change_since_day_before: int
         deaths_cumulative: int
+        deaths_last_365_days: int
         last_deaths_reported_by_rki: int
         last_mean_deaths: int
         last_mean_deaths_change_since_day_before: int
@@ -296,9 +298,9 @@ class Layout:
     def _block_daily_overview_cases(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_cases_change = self._get_prefix(daily_figures["last_mean_cases_change_since_day_before"])
 
-        return [html.H2(children=["cases"]),
+        return [html.H2("cases"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["last_mean_cases"]:,}']),
+                html.H3(f'{daily_figures["last_mean_cases"]:,}'),
                 'calculated mean cases',
                 html.Br(),
                 html.Br(),
@@ -307,9 +309,9 @@ class Layout:
                 'mean cases since day before',
                 html.Br(),
                 html.Br(),
-                f'{daily_figures["cases_cumulative"]:,}',
+                f'{daily_figures["cases_last_365_days"]:,}',
                 html.Br(),
-                'total number of cases',
+                'cases last 365 days',
                 html.Br(),
                 html.Br(),
                 f'{daily_figures["last_cases_reported_by_rki"]:,}',
@@ -320,9 +322,9 @@ class Layout:
     def _block_daily_overview_deaths(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_deaths_change = self._get_prefix(daily_figures["last_mean_deaths_change_since_day_before"])
 
-        return [html.H2(children=["deaths"]),
+        return [html.H2("deaths"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["last_mean_deaths"]:,}']),
+                html.H3(f'{daily_figures["last_mean_deaths"]:,}'),
                 'calculated mean deaths',
                 html.Br(),
                 html.Br(),
@@ -331,9 +333,9 @@ class Layout:
                 'mean deaths since day before',
                 html.Br(),
                 html.Br(),
-                f'{daily_figures["deaths_cumulative"]:,}',
+                f'{daily_figures["deaths_last_365_days"]:,}',
                 html.Br(),
-                'total number of deaths',
+                'deaths last 365 days',
                 html.Br(),
                 html.Br(),
                 f'{daily_figures["last_deaths_reported_by_rki"]:,}',
@@ -377,9 +379,9 @@ class Layout:
             self._get_prefix(daily_figures["cases_last_7_days_by_reporting_date_change_since_day_before"])
         prefix_deaths_7_days_change = self._get_prefix(daily_figures["deaths_last_7_days_change_since_day_before"])
 
-        return [html.H2(children=["last 7 days"]),
+        return [html.H2("last 7 days"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["cases_last_7_days"]:,}']),
+                html.H3(f'{daily_figures["cases_last_7_days"]:,}'),
                 'cases per 100,000 inhabitants',
                 html.Br(),
                 html.Br(),
@@ -417,6 +419,7 @@ class Layout:
                            intensive_register: IntensiveRegisterDataFrame) -> DailyFiguresDict:
 
         cases_cumulative = int(corona_cases_and_deaths.last_cases_cumulative())
+        cases_last_365_days = int(corona_cases_and_deaths.cases_last_365_days())
         last_rki_reported_cases = int(corona_cases_and_deaths.last_reported_cases())
         last_mean_cases = int(np.round(corona_cases_and_deaths.last_mean_cases()))
 
@@ -440,6 +443,7 @@ class Layout:
         incidence_cases_change_by_reporting_date = int(np.round(incidence_cases_change_by_reporting_date))
 
         deaths_cumulative = int(corona_cases_and_deaths.last_deaths_cumulative())
+        deaths_last_365_days = int(corona_cases_and_deaths.deaths_last_365_days())
         last_rki_reported_deaths = int(corona_cases_and_deaths.last_reported_deaths())
         last_mean_deaths = int(np.round(corona_cases_and_deaths.last_mean_deaths()))
 
@@ -465,6 +469,7 @@ class Layout:
 
         daily_figures: Layout.DailyFiguresDict = \
             {"cases_cumulative": cases_cumulative,
+             "cases_last_365_days": cases_last_365_days,
              "last_cases_reported_by_rki": last_rki_reported_cases,
              "last_mean_cases": last_mean_cases,
              "last_mean_cases_change_since_day_before": last_mean_cases_change_day_before,
@@ -473,6 +478,7 @@ class Layout:
              "cases_last_7_days_by_reporting_date": incidence_cases_by_reporting_date,
              "cases_last_7_days_by_reporting_date_change_since_day_before": incidence_cases_change_by_reporting_date,
              "deaths_cumulative": deaths_cumulative,
+             "deaths_last_365_days": deaths_last_365_days,
              "last_deaths_reported_by_rki": last_rki_reported_deaths,
              "last_mean_deaths": last_mean_deaths,
              "last_mean_deaths_change_since_day_before": last_mean_deaths_change_day_before,
@@ -971,7 +977,7 @@ class Layout:
 
         y = json.loads(self.config["FIG_NEW_DEATHS_PER_REFDATE"]["y"])
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
-        corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.loc[:, y].dropna(how='all', axis=0)
+        corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast, y)
         corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.reset_index()
 
         fig = px.bar(corona_cases_and_deaths_with_nowcast,
@@ -991,6 +997,11 @@ class Layout:
                           yaxis_tickformat=self.config["FIG_NEW_DEATHS_PER_REFDATE"]["yaxis_tickformat"])
 
         return fig
+
+    def _delete_rows_without_data_of(self, df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+        if len(df.loc[:, column_name].dropna(how='all', axis=0)) > 0:
+            return df.loc[:, column_name].dropna(how='all', axis=0)
+        return df
 
     def _figure_total_cases_by_refdate(self,
                                        corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
@@ -1023,7 +1034,7 @@ class Layout:
         y = json.loads(self.config["FIG_NEW_CASES_BY_REPORTING_DATE"]["y"])
 
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
-        corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.loc[:, y].dropna(how='all', axis=0)
+        corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast, y)
         corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.reset_index()
 
         fig = px.bar(corona_cases_and_deaths_with_nowcast,
