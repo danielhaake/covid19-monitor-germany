@@ -449,50 +449,66 @@ class RKIAPI:
 
     def nowcast(self) -> pd.DataFrame:
         def load_nowcast_from_excel() -> pd.DataFrame:
-            url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
-                  'Nowcasting_Zahlen.xlsx?__blob=publicationFile'
-            file_object = self._get_bytesio_from_request(url)
+            def read_excel(date_column_name: str) -> pd.DataFrame:
+                url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
+                      'Nowcasting_Zahlen.xlsx?__blob=publicationFile'
+                file_object = self._get_bytesio_from_request(url)
+                dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
 
-            dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
-            return pd.read_excel(file_object,
-                                 sheet_name=1,
-                                 header=0,
-                                 thousands=".",
-                                 parse_dates=['Datum des Erkrankungsbeginns'],
-                                 date_parser=dateparse) \
-                .replace(",", ".", regex=True)
+                return pd.read_excel(file_object,
+                                     sheet_name=1,
+                                     header=0,
+                                     thousands=".",
+                                     parse_dates=[date_column_name],
+                                     date_parser=dateparse
+                                     ) \
+                    .replace(",", ".", regex=True)
 
-        def subset_of_df_with_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
-            df = df.loc[:, ["Datum des Erkrankungsbeginns",
-                            "Punktschätzer der Anzahl Neuerkrankungen",
-                            "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
-                            "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
-                            "Punktschätzer des 7-Tage-R Wertes",
-                            "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes",
-                            "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes"]]
-            df.loc[:, "Datum des Erkrankungsbeginns"] = pd.to_datetime(df.loc[:, "Datum des Erkrankungsbeginns"])
-            return df
+            try:
+                return read_excel('Datum des Erkrankungsbeginns')
+            except:
+                return read_excel('Datum des Erkrankungs-beginns')
 
-        def rename_columns_from_german_to_english_and_set_index(df: pd.DataFrame) -> pd.DataFrame:
+        def subset_of_df_with_datetime_columns_and_set_index(df: pd.DataFrame) -> pd.DataFrame:
+            df = df.loc[:, ["date",
+                            "cases (Nowcast RKI)",
+                            "min cases (Nowcast RKI)",
+                            "max cases (Nowcast RKI)",
+                            "7 day R value (Nowcast RKI)",
+                            "min 7 day R value (Nowcast RKI)",
+                            "max 7 day R value (Nowcast RKI)"]]
+            df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
+            return df.set_index("date")
+
+        def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
             return df.rename(columns={"Datum des Erkrankungsbeginns": "date",
+                                      "Datum des Erkrankungs-beginns": "date",
                                       "Punktschätzer der Anzahl Neuerkrankungen":
                                           "cases (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
                                           "min cases (Nowcast RKI)",
+                                      "Untere Grenze des 95%-Prädiktions-intervalls der Anzahl Neuerkrankungen":
+                                          "min cases (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
+                                          "max cases (Nowcast RKI)",
+                                      "Obere Grenze des 95%-Prädiktions-intervalls der Anzahl Neuerkrankungen":
                                           "max cases (Nowcast RKI)",
                                       "Punktschätzer des 7-Tage-R Wertes":
                                           "7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
                                           "min 7 day R value (Nowcast RKI)",
+                                      "Untere Grenze des 95%-Prädiktions-intervalls des 7-Tage-R Wertes":
+                                          "min 7 day R value (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
+                                          "max 7 day R value (Nowcast RKI)",
+                                      "Obere Grenze des 95%-Prädiktions-intervalls des 7-Tage-R Wertes":
                                           "max 7 day R value (Nowcast RKI)"
                                       }
-                             ).set_index("date")
+                             )
 
         nowcast_rki = load_nowcast_from_excel()
-        nowcast_rki = subset_of_df_with_datetime_columns(nowcast_rki)
-        nowcast_rki = rename_columns_from_german_to_english_and_set_index(nowcast_rki)
+        nowcast_rki = rename_columns_from_german_to_english(nowcast_rki)
+        nowcast_rki = subset_of_df_with_datetime_columns_and_set_index(nowcast_rki)
         return nowcast_rki
 
     def clinical_aspects(self) -> pd.DataFrame:
@@ -612,7 +628,7 @@ class RKIAPI:
             df.loc[:, 'calendar week'] = calendar_week
             return df
 
-        def create_df_with_outbreak_types_as_columns(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
+        def create_df_with_outbreak_categories_as_columns(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
             calendar_weeks = df.loc[:, 'calendar week'].unique()
             categories = df.loc[:, 'outbreak category'].unique()
 
@@ -622,9 +638,9 @@ class RKIAPI:
             for category in categories:
                 df_with_outbreak_types_as_columns = df_with_outbreak_types_as_columns \
                     .merge(df.loc[df.loc[:, 'outbreak category'] == category, :]
-                             .set_index('calendar week')
-                             .rename(columns={'cases': category})
-                             .loc[:, category],
+                           .set_index('calendar week')
+                           .rename(columns={'cases': category})
+                           .loc[:, category],
                            how='outer',
                            left_index=True,
                            right_index=True)
@@ -645,7 +661,7 @@ class RKIAPI:
         df = delete_unneeded_columns(df)
         df = rename_columns_german_to_english(df)
         df = create_calendar_week(df)
-        df, categories = create_df_with_outbreak_types_as_columns(df)
+        df, categories = create_df_with_outbreak_categories_as_columns(df)
         df = append_column_sum_cases_per_week(df)
         df = append_columns_percentage_of_categories(df, categories)
         return df
