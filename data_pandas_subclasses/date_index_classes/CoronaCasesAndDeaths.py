@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 from api.RKIAPI import RKIAPI
-from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+from data_pandas_subclasses.date_index_classes.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

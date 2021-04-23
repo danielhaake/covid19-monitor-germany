@@ -1,22 +1,15 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
-import boto3
-from datetime import datetime
 import logging
-import os
 
 from dotenv import load_dotenv
-from io import BytesIO, StringIO
 
-import datetime as dt
-from typing import TypeVar, List
+from typing import TypeVar
 
 import pandas as pd
-import numpy as np
-import requests
 
 from api.RKIAPI import RKIAPI
-from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+from data_pandas_subclasses.date_index_classes.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

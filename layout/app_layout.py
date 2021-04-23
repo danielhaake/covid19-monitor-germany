@@ -18,12 +18,12 @@ from plotly.graph_objects import Figure
 import pandas as pd
 import numpy as np
 
-from data_pandas_subclasses.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame, CoronaCasesAndDeathsSeries
-from data_pandas_subclasses.NowcastRKI import NowcastRKIDataFrame
+from data_pandas_subclasses.date_index_classes.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame, CoronaCasesAndDeathsSeries
+from data_pandas_subclasses.date_index_classes.NowcastRKI import NowcastRKIDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
-from data_pandas_subclasses.ClinicalAspects import ClinicalAspectsDataFrame
-from data_pandas_subclasses.IntensiveRegister import IntensiveRegisterDataFrame
-from data_pandas_subclasses.NumberPCRTests import NumberPCRTestsDataFrame
+from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAspectsDataFrame
+from data_pandas_subclasses.date_index_classes.IntensiveRegister import IntensiveRegisterDataFrame
+from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
 
 logging.basicConfig(level=logging.INFO)
 THtml = TypeVar('THtml', html.H1, html.H2, html.H3, html.H4, html.H5, html.H6, html.Br, html.A, html.Hr, str)

@@ -1,17 +1,11 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
-import boto3
 import logging
-import os
 
 from dotenv import load_dotenv
-from io import BytesIO, StringIO
-
-import pandas as pd
-import requests
 
 from api.RKIAPI import RKIAPI
-from data_pandas_subclasses.CoronaBaseWeekIndex import CoronaBaseWeekIndexDataFrame, CoronaBaseWeekIndexSeries
+from data_pandas_subclasses.week_index_classes.CoronaBaseWeekIndex import CoronaBaseWeekIndexDataFrame, CoronaBaseWeekIndexSeries
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
