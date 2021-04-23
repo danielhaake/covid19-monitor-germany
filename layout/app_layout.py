@@ -22,6 +22,7 @@ from data_pandas_subclasses.date_index_classes.CoronaCasesAndDeaths import Coron
 from data_pandas_subclasses.date_index_classes.NowcastRKI import NowcastRKIDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
 from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAspectsDataFrame
+from data_pandas_subclasses.week_index_classes.CasesPerOutbreak import CasesPerOutbreakDataFrame
 from data_pandas_subclasses.date_index_classes.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
 
@@ -141,6 +142,7 @@ class Layout:
         intensive_register = IntensiveRegisterDataFrame.from_csv()
         clinical_aspects = ClinicalAspectsDataFrame.from_csv()
         age_distribution = AgeDistributionDataFrame.from_csv()
+        cases_per_outbreak = CasesPerOutbreakDataFrame.from_csv()
         end_time = time.time()
         logging.info(f"FINISHED LOADING OF DATAFRAMES IN {end_time - start_time} SECONDS")
 
@@ -168,7 +170,8 @@ class Layout:
                                                         nowcast_rki,
                                                         number_pcr_tests,
                                                         clinical_aspects,
-                                                        age_distribution)
+                                                        age_distribution,
+                                                        cases_per_outbreak)
                         ),
 
                 dbc.Tab(label='Intensive care',
@@ -232,7 +235,8 @@ class Layout:
                           nowcast_rki: NowcastRKIDataFrame,
                           number_pcr_tests: NumberPCRTestsDataFrame,
                           clinical_aspects: ClinicalAspectsDataFrame,
-                          age_distribution: AgeDistributionDataFrame) -> List[dcc.Graph]:
+                          age_distribution: AgeDistributionDataFrame,
+                          cases_per_outbreak: CasesPerOutbreakDataFrame) -> List[dcc.Graph]:
         return [
             dcc.Graph(
                 id='graph-cases-mean-3',
@@ -263,7 +267,13 @@ class Layout:
                 figure=self._figure_distribution_of_inhabitants_and_deaths(age_distribution)),
             dcc.Graph(
                 id='graph-fig-distribution-of-cases-and-deaths-per-n-inhabitants',
-                figure=self._figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution))
+                figure=self._figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution)),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak',
+                figure=self._figure_cases_per_outbreak(cases_per_outbreak)),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-in-percent',
+                figure=self._figure_cases_per_outbreak_in_percent(cases_per_outbreak))
         ]
 
     def _tab_corona_intensive_care(self, intensive_register: IntensiveRegisterDataFrame) -> List[dcc.Graph]:
@@ -968,6 +978,48 @@ class Layout:
                           plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
                           paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
                           yaxis_tickformat=self.config["FIG_CLINICAL_ASPECTS"]["yaxis_tickformat"])
+
+        return fig
+
+    def _figure_cases_per_outbreak(self, cases_per_outbreak: CasesPerOutbreakDataFrame) -> Figure:
+
+        cases_per_outbreak = cases_per_outbreak.reset_index()
+
+        fig = px.bar(cases_per_outbreak,
+                     x=self.config["FIG_CASES_PER_OUTBREAK"]["x"],
+                     y=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["y"]),
+                     color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["color_discrete_map"]))
+
+        fig.update_layout(title=self.config["FIG_CASES_PER_OUTBREAK"]["title"],
+                          barmode=self.config["FIG_CASES_PER_OUTBREAK"]["barmode"],
+                          xaxis_title=self.config["FIG_CASES_PER_OUTBREAK"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_CASES_PER_OUTBREAK"]["yaxis_title"],
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_CASES_PER_OUTBREAK"]["yaxis_tickformat"])
+
+        return fig
+
+    def _figure_cases_per_outbreak_in_percent(self, cases_per_outbreak: CasesPerOutbreakDataFrame) -> Figure:
+
+        cases_per_outbreak = cases_per_outbreak.reset_index()
+
+        fig = px.bar(cases_per_outbreak,
+                     x=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["x"],
+                     y=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["y"]),
+                     color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["color_discrete_map"]))
+
+        fig.update_layout(title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["title"],
+                          barmode=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["barmode"],
+                          xaxis_title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["yaxis_title"],
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["yaxis_tickformat"])
 
         return fig
 
