@@ -2,7 +2,7 @@
 import time
 
 import logging
-from typing import List, TypeVar, TypedDict
+from typing import List, TypeVar
 
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
@@ -25,6 +25,7 @@ from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAs
 from data_pandas_subclasses.week_index_classes.CasesPerOutbreak import CasesPerOutbreakDataFrame
 from data_pandas_subclasses.date_index_classes.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
+from layout.DailyFiguresDict import DailyFiguresDict
 
 logging.basicConfig(level=logging.INFO)
 THtml = TypeVar('THtml', html.H1, html.H2, html.H3, html.H4, html.H5, html.H6, html.Br, html.A, html.Hr, str)
@@ -32,30 +33,6 @@ TNum = TypeVar('TNum', int, float)
 
 
 class Layout:
-
-    class DailyFiguresDict(TypedDict):
-        cases_cumulative: int
-        cases_last_365_days: int
-        last_cases_reported_by_rki: int
-        last_mean_cases: int
-        last_mean_cases_change_since_day_before: int
-        cases_last_7_days: int
-        cases_last_7_days_change_since_day_before: int
-        cases_last_7_days_by_reporting_date: int
-        cases_last_7_days_by_reporting_date_change_since_day_before: int
-        deaths_cumulative: int
-        deaths_last_365_days: int
-        last_deaths_reported_by_rki: int
-        last_mean_deaths: int
-        last_mean_deaths_change_since_day_before: int
-        deaths_last_7_days: int
-        deaths_last_7_days_change_since_day_before: int
-        last_r_value: float
-        last_r_value_change_since_day_before: float
-        last_r_value_by_nowcast_rki: float
-        last_r_value_by_nowcast_rki_change_since_day_before: float
-        last_r_value_by_new_admissions_to_intensive_care: float
-        last_r_value_by_new_admissions_to_intensive_care_change_since_day_before: float
 
     def __init__(self):
         self.config = configparser.ConfigParser(interpolation=None)
@@ -477,7 +454,7 @@ class Layout:
         r_value_intensive_register_change = np.round(
             intensive_register.change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
 
-        daily_figures: Layout.DailyFiguresDict = \
+        daily_figures: DailyFiguresDict = \
             {"cases_cumulative": cases_cumulative,
              "cases_last_365_days": cases_last_365_days,
              "last_cases_reported_by_rki": last_rki_reported_cases,
