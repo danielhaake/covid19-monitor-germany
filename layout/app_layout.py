@@ -596,10 +596,10 @@ class Layout:
         return fig
 
     def _format_hover_data_column(self,
-                                  corona_cases_and_deaths_with_nowcast: CoronaCasesAndDeathsDataFrame,
-                                  config_section: str) -> CoronaCasesAndDeathsSeries:
+                                  df: pd.DataFrame,
+                                  config_section: str) -> pd.Series:
         str_format = "{:" + self.config[config_section]["hover_data_format"] + "}"
-        return corona_cases_and_deaths_with_nowcast.loc[:, self.config[config_section]["hover_data_format_column"]] \
+        return df.loc[:, self.config[config_section]["hover_data_format_column"]] \
                 .map(str_format.format)
 
     def _format_column_strftime(self,
