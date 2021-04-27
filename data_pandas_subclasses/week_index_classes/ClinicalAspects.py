@@ -57,8 +57,24 @@ class ClinicalAspectsDataFrame(CoronaBaseWeekIndexDataFrame):
         logging.info("start downloading file from RKI")
 
         clinical_aspects = ClinicalAspectsDataFrame(ClinicalAspectsDataFrame.api.clinical_aspects())
+        hospitalized_per_age_group = ClinicalAspectsDataFrame(ClinicalAspectsDataFrame.api.hospitalized_per_age_group())
+        clinical_aspects = clinical_aspects.merge(hospitalized_per_age_group,
+                                                  how='outer',
+                                                  left_index=True,
+                                                  right_index=True)
+        clinical_aspects._add_statistical_columns()
         if to_csv:
             clinical_aspects.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
         logging.info("FINISHED UPDATE PROCESS FOR CLINICAL ASPECTS")
         return clinical_aspects
+
+    def _add_statistical_columns(self) -> 'ClinicalAspectsDataFrame':
+        self.loc[:, 'cases not hospitalized'] = self._calculate_cases_not_hospitalized()
+        self.loc[:, 'cases not known if hospitalized'] = self._calculate_cases_not_known_if_hospitalized()
+
+    def _calculate_cases_not_hospitalized(self) -> ClinicalAspectsSeries:
+        return self.loc[:, 'number with hospitalization data'] - self.loc[:, 'number hospitalized']
+
+    def _calculate_cases_not_known_if_hospitalized(self) -> ClinicalAspectsSeries:
+        return self.loc[:, 'reported cases'] - self.loc[:, 'number with hospitalization data']

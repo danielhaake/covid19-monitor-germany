@@ -30,6 +30,7 @@ cache = Cache(app.server, config={
 
 timeout = 600  # seconds
 
+
 # Reloading graphs to get graphs with new data
 @app.callback(
     dash.dependencies.Output('tabs-global-overview', 'children'),
@@ -38,6 +39,66 @@ timeout = 600  # seconds
 def update_tabs_with_graphs(n):
     return layout.tabs_with_graphs()
 
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-hospitalizations-per-age-group-bar-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-hospitalizations-per-age-group', component_property='value')])
+def build_graph(value):
+    if value == 'hospitalizations-per-age-group-stacked-bar':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-hospitalizations-per-age-group-line-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-hospitalizations-per-age-group', component_property='value')])
+def build_graph(value):
+    if value == 'hospitalizations-per-age-group-line-plot':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-cases-per-outbreak-bar-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-cases-per-outbreak', component_property='value')])
+def build_graph(value):
+    if value == 'cases-per-outbreak-stacked-bar':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-cases-per-outbreak-in-percent-bar-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-cases-per-outbreak', component_property='value')])
+def build_graph(value):
+    if value == 'cases-in-percent-per-outbreak-stacked-bar':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-cases-per-outbreak-line-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-cases-per-outbreak', component_property='value')])
+def build_graph(value):
+    if value == 'cases-per-outbreak-line-plot':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-cases-per-outbreak-in-percent-line-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-cases-per-outbreak', component_property='value')])
+def build_graph(value):
+    if value == 'cases-in-percent-per-outbreak-line-plot':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+#'hospitalizations-per-age-group-stacked-bar'
 
 # Path for health check
 @app.server.route("/ping")
