@@ -1,7 +1,9 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
 import logging
+from typing import List
 
+import numpy as np
 from dotenv import load_dotenv
 
 from api.RKIAPI import RKIAPI
@@ -72,9 +74,22 @@ class ClinicalAspectsDataFrame(CoronaBaseWeekIndexDataFrame):
     def _add_statistical_columns(self) -> 'ClinicalAspectsDataFrame':
         self.loc[:, 'cases not hospitalized'] = self._calculate_cases_not_hospitalized()
         self.loc[:, 'cases not known if hospitalized'] = self._calculate_cases_not_known_if_hospitalized()
+        self.loc[:, 'cases hospitalized unknown age group'] = self._calculate_cases_hospitalized_unknown_age_group()
 
     def _calculate_cases_not_hospitalized(self) -> ClinicalAspectsSeries:
         return self.loc[:, 'number with hospitalization data'] - self.loc[:, 'number hospitalized']
 
     def _calculate_cases_not_known_if_hospitalized(self) -> ClinicalAspectsSeries:
         return self.loc[:, 'reported cases'] - self.loc[:, 'number with hospitalization data']
+
+    def _calculate_cases_hospitalized_unknown_age_group(self) -> List[float]:
+        columns = ['cases hospitalized age group 00 - 04',
+                   'cases hospitalized age group 05 - 14',
+                   'cases hospitalized age group 15 - 34',
+                   'cases hospitalized age group 35 - 59',
+                   'cases hospitalized age group 60 - 79',
+                   'cases hospitalized age group 80+']
+        return [self.loc[i, 'number hospitalized']
+                if self.loc[i, columns].isnull().all()
+                else np.nan
+                for i in self.index]
