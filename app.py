@@ -98,8 +98,6 @@ def build_graph(value):
     else:
         return {'display': 'none'}
 
-#'hospitalizations-per-age-group-stacked-bar'
-
 # Path for health check
 @app.server.route("/ping")
 def ping():
