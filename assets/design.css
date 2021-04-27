@@ -195,3 +195,9 @@ h6 {
         display: none;
     }
 }
+
+.radio-items {
+    margin-left: 10px;
+    display: block;
+    max-width: 500px;
+}

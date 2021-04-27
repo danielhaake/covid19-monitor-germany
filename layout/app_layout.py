@@ -239,18 +239,32 @@ class Layout:
             dcc.Graph(
                 id='graph-fig-clinical-aspects',
                 figure=self._figure_clinical_aspects(clinical_aspects)),
+            self._dropdown_for_hospitalizations_per_age_group(),
+            dcc.Graph(
+                id='graph-fig-hospitalizations-per-age-group-bar-plot',
+                figure=self._figure_hospitalizations_per_age_group(clinical_aspects, type='bar')),
+            dcc.Graph(
+                id='graph-fig-hospitalizations-per-age-group-line-plot',
+                figure=self._figure_hospitalizations_per_age_group(clinical_aspects, type='line')),
             dcc.Graph(
                 id='graph-fig-distribution-of-inhabitants-and-deaths',
                 figure=self._figure_distribution_of_inhabitants_and_deaths(age_distribution)),
             dcc.Graph(
                 id='graph-fig-distribution-of-cases-and-deaths-per-n-inhabitants',
                 figure=self._figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution)),
+            self._dropdown_for_cases_per_outbreak(),
             dcc.Graph(
-                id='graph-fig-cases-per-outbreak',
-                figure=self._figure_cases_per_outbreak(cases_per_outbreak)),
+                id='graph-fig-cases-per-outbreak-bar-plot',
+                figure=self._figure_cases_per_outbreak(cases_per_outbreak, type='bar')),
             dcc.Graph(
-                id='graph-fig-cases-per-outbreak-in-percent',
-                figure=self._figure_cases_per_outbreak_in_percent(cases_per_outbreak))
+                id='graph-fig-cases-per-outbreak-in-percent-bar-plot',
+                figure=self._figure_cases_per_outbreak_in_percent(cases_per_outbreak, type='bar')),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-line-plot',
+                figure=self._figure_cases_per_outbreak(cases_per_outbreak, type='line')),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-in-percent-line-plot',
+                figure=self._figure_cases_per_outbreak_in_percent(cases_per_outbreak, type='line'))
         ]
 
     def _tab_corona_intensive_care(self, intensive_register: IntensiveRegisterDataFrame) -> List[dcc.Graph]:
@@ -937,9 +951,9 @@ class Layout:
 
     def _figure_clinical_aspects(self, clinical_aspects: ClinicalAspectsDataFrame) -> Figure:
 
-        clinical_aspects = clinical_aspects.reset_index()
+        df = clinical_aspects.reset_index()
 
-        fig = px.line(clinical_aspects,
+        fig = px.line(df,
                       x=self.config["FIG_CLINICAL_ASPECTS"]["x"],
                       y=json.loads(self.config["FIG_CLINICAL_ASPECTS"]["y"]),
                       color_discrete_map=json.loads(self.config["FIG_CLINICAL_ASPECTS"]["color_discrete_map"]),
@@ -958,17 +972,36 @@ class Layout:
 
         return fig
 
-    def _figure_cases_per_outbreak(self, cases_per_outbreak: CasesPerOutbreakDataFrame) -> Figure:
+    def _dropdown_for_cases_per_outbreak(self) -> dcc.Dropdown:
+        return dcc.Dropdown(
+                id='radio-items-for-cases-per-outbreak',
+                className='radio-items',
+                options=[
+                    {'label': 'Cases per Outbreak and Week as Bar Plot', 'value': 'cases-per-outbreak-stacked-bar'},
+                    {'label': 'Cases in Percent per Outbreak and Week as Bar Plot',
+                     'value': 'cases-in-percent-per-outbreak-stacked-bar'},
+                    {'label': 'Cases per Outbreak and Week as Line Plot', 'value': 'cases-per-outbreak-line-plot'},
+                    {'label': 'Cases in Percent per Outbreak and Week as Line Plot',
+                     'value': 'cases-in-percent-per-outbreak-line-plot'},
+                ],
+                value='cases-per-outbreak-stacked-bar')
+
+    def _figure_cases_per_outbreak(self, cases_per_outbreak: CasesPerOutbreakDataFrame, type: str) -> Figure:
 
         cases_per_outbreak = cases_per_outbreak.reset_index()
 
-        fig = px.bar(cases_per_outbreak,
-                     x=self.config["FIG_CASES_PER_OUTBREAK"]["x"],
-                     y=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["y"]),
-                     color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["color_discrete_map"]))
+        fig = px.line(cases_per_outbreak,
+                      x=self.config["FIG_CASES_PER_OUTBREAK"]["x"],
+                      y=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["y"]),
+                      color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["color_discrete_map"]))
+
+        if type == 'bar':
+            fig = px.bar(cases_per_outbreak,
+                         x=self.config["FIG_CASES_PER_OUTBREAK"]["x"],
+                         y=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["color_discrete_map"]))
 
         fig.update_layout(title=self.config["FIG_CASES_PER_OUTBREAK"]["title"],
-                          barmode=self.config["FIG_CASES_PER_OUTBREAK"]["barmode"],
                           xaxis_title=self.config["FIG_CASES_PER_OUTBREAK"]["xaxis_title"],
                           yaxis_title=self.config["FIG_CASES_PER_OUTBREAK"]["yaxis_title"],
                           font_family=self.config["ALL_FIGS"]["font_family"],
@@ -977,19 +1010,30 @@ class Layout:
                           paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
                           yaxis_tickformat=self.config["FIG_CASES_PER_OUTBREAK"]["yaxis_tickformat"])
 
+        if type == 'bar':
+            fig.update_layout(barmode=self.config["FIG_CASES_PER_OUTBREAK"]["barmode"])
+
         return fig
 
-    def _figure_cases_per_outbreak_in_percent(self, cases_per_outbreak: CasesPerOutbreakDataFrame) -> Figure:
+    def _figure_cases_per_outbreak_in_percent(self, cases_per_outbreak: CasesPerOutbreakDataFrame, type: str) \
+            -> Figure:
 
         cases_per_outbreak = cases_per_outbreak.reset_index()
 
-        fig = px.bar(cases_per_outbreak,
-                     x=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["x"],
-                     y=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["y"]),
-                     color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["color_discrete_map"]))
+        fig = px.line(cases_per_outbreak,
+                      x=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["x"],
+                      y=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["y"]),
+                      color_discrete_map=json.loads(
+                          self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["color_discrete_map"]))
+
+        if type == 'bar':
+            fig = px.bar(cases_per_outbreak,
+                         x=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["x"],
+                         y=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["y"]),
+                         color_discrete_map=json.loads(
+                             self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["color_discrete_map"]))
 
         fig.update_layout(title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["title"],
-                          barmode=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["barmode"],
                           xaxis_title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["xaxis_title"],
                           yaxis_title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["yaxis_title"],
                           font_family=self.config["ALL_FIGS"]["font_family"],
@@ -997,6 +1041,50 @@ class Layout:
                           plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
                           paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
                           yaxis_tickformat=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["yaxis_tickformat"])
+
+        if type == 'bar':
+            fig.update_layout(barmode=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["barmode"])
+
+        return fig
+
+    def _dropdown_for_hospitalizations_per_age_group(self) -> dcc.Dropdown:
+        return dcc.Dropdown(
+                id='radio-items-for-hospitalizations-per-age-group',
+                className='radio-items',
+                options=[
+                    {'label': 'Hospitalizations per Age Group as Bar Plot',
+                     'value': 'hospitalizations-per-age-group-stacked-bar'},
+                    {'label': 'Hospitalizations per Age Group as Line Plot',
+                     'value': 'hospitalizations-per-age-group-line-plot'}
+                ],
+                value='hospitalizations-per-age-group-stacked-bar')
+
+    def _figure_hospitalizations_per_age_group(self, clinical_aspects: ClinicalAspectsDataFrame, type: str) -> Figure:
+
+        clinical_aspects = clinical_aspects.reset_index()
+
+        fig = px.line(clinical_aspects,
+                      x=self.config["FIG_HOSPITALIZATIONS"]["x"],
+                      y=json.loads(self.config["FIG_HOSPITALIZATIONS"]["y"]),
+                      color_discrete_map=json.loads(self.config["FIG_HOSPITALIZATIONS"]["color_discrete_map"]))
+
+        if type == 'bar':
+            fig = px.bar(clinical_aspects,
+                         x=self.config["FIG_HOSPITALIZATIONS"]["x"],
+                         y=json.loads(self.config["FIG_HOSPITALIZATIONS"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_HOSPITALIZATIONS"]["color_discrete_map"]))
+
+        fig.update_layout(title=self.config["FIG_HOSPITALIZATIONS"]["title"],
+                          xaxis_title=self.config["FIG_HOSPITALIZATIONS"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_HOSPITALIZATIONS"]["yaxis_title"],
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_HOSPITALIZATIONS"]["yaxis_tickformat"])
+
+        if type == 'bar':
+            fig.update_layout(barmode=self.config["FIG_HOSPITALIZATIONS"]["barmode"])
 
         return fig
 
