@@ -977,11 +977,13 @@ class Layout:
                 id='radio-items-for-cases-per-outbreak',
                 className='radio-items',
                 options=[
-                    {'label': 'Cases per Outbreak and Week as Bar Plot', 'value': 'cases-per-outbreak-stacked-bar'},
-                    {'label': 'Cases in Percent per Outbreak and Week as Bar Plot',
+                    {'label': 'Cases per Outbreak Category and Week as Bar Plot',
+                     'value': 'cases-per-outbreak-stacked-bar'},
+                    {'label': 'Cases in Percent per Outbreak Category and Week as Bar Plot',
                      'value': 'cases-in-percent-per-outbreak-stacked-bar'},
-                    {'label': 'Cases per Outbreak and Week as Line Plot', 'value': 'cases-per-outbreak-line-plot'},
-                    {'label': 'Cases in Percent per Outbreak and Week as Line Plot',
+                    {'label': 'Cases per Outbreak Category and Week as Line Plot',
+                     'value': 'cases-per-outbreak-line-plot'},
+                    {'label': 'Cases in Percent per Outbreak Category and Week as Line Plot',
                      'value': 'cases-in-percent-per-outbreak-line-plot'},
                 ],
                 value='cases-per-outbreak-stacked-bar')
