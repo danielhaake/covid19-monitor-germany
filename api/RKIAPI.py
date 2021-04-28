@@ -497,9 +497,13 @@ class RKIAPI:
                                           "7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
                                           "min 7 day R value (Nowcast RKI)",
+                                      "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R-Wertes":
+                                          "min 7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktions-intervalls des 7-Tage-R Wertes":
                                           "min 7 day R value (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
+                                          "max 7 day R value (Nowcast RKI)",
+                                      "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R-Wertes":
                                           "max 7 day R value (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktions-intervalls des 7-Tage-R Wertes":
                                           "max 7 day R value (Nowcast RKI)"
@@ -651,7 +655,7 @@ class RKIAPI:
             url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/' \
                   'Ausbruchsdaten.xlsx?__blob=publicationFile'
             file_object = self._get_bytesio_from_request(url)
-            return pd.read_excel(file_object, sheet_name="Ausbrüche_Meldewoche")
+            return pd.read_excel(file_object, sheet_name=0)
 
         def delete_unneeded_columns(df: pd.DataFrame) -> pd.DataFrame:
             return df.drop(columns=['sett_f'])
