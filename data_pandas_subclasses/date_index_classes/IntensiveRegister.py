@@ -1,24 +1,17 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
-import boto3
 import logging
-import os
 from dotenv import load_dotenv
 
-from io import BytesIO, StringIO
-from typing import TypeVar, List
+from typing import TypeVar
 
 import pandas as pd
 import numpy as np
-import datetime as dt
 
-from tabula import read_pdf
-from pdftotext import PDF
-import urllib
 from datetime import datetime
 
 from api.IntensiveRegisterAPI import IntensiveRegisterAPI
-from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+from data_pandas_subclasses.date_index_classes.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

@@ -20,12 +20,17 @@ class RKIAPI:
         datetime_of_first_request = None
         datetime_of_last_request = None
 
-        while ((datetime_of_first_request != datetime_of_last_request) |
-               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+        retries = 0
+        max_retries = 5
+
+        while (retries < max_retries) & \
+                ((datetime_of_first_request != datetime_of_last_request) |
+                 (datetime_of_first_request is None) | (datetime_of_last_request is None)):
             new_reported_cases, datetime_of_first_request = self.new_reported_cases()
             cases_cumulative, _ = self.total_number_of_reported_cases()
             deaths_cumulative, _ = self.total_number_of_reported_deaths()
             new_reported_deaths, datetime_of_last_request = self.new_reported_deaths()
+            retries += 1
 
         return {"reporting date": datetime_of_last_request,
                 "new reported cases": new_reported_cases,
@@ -48,8 +53,12 @@ class RKIAPI:
         datetime_of_first_request = None
         datetime_of_last_request = None
 
-        while ((datetime_of_first_request != datetime_of_last_request) |
-               (datetime_of_first_request is None) | (datetime_of_last_request is None)):
+        retries = 0
+        max_retries = 5
+
+        while (retries < max_retries) & \
+                ((datetime_of_first_request != datetime_of_last_request) |
+                 (datetime_of_first_request is None) | (datetime_of_last_request is None)):
             overall_cases_by_reference_date, datetime_of_first_request = self.total_number_of_cases_by_reference_date()
             overall_cases_by_reporting_date, _ = self.total_number_of_cases_by_reporting_date()
             new_reported_cases_by_reference_date, _ = self.new_reported_cases_by_reference_date()
@@ -77,6 +86,8 @@ class RKIAPI:
                 self.total_number_of_deaths_by_reference_date_with_known_start_of_illness()
             overall_deaths_with_unknown_start_of_illness, datetime_of_last_request = \
                 self.total_number_of_deaths_by_reference_date_with_unknown_start_of_illness()
+
+            retries += 1
 
         rki_reporting_date = datetime_of_first_request
 
@@ -438,50 +449,66 @@ class RKIAPI:
 
     def nowcast(self) -> pd.DataFrame:
         def load_nowcast_from_excel() -> pd.DataFrame:
-            url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
-                  'Nowcasting_Zahlen.xlsx?__blob=publicationFile'
-            file_object = self._get_bytesio_from_request(url)
+            def read_excel(date_column_name: str) -> pd.DataFrame:
+                url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
+                      'Nowcasting_Zahlen.xlsx?__blob=publicationFile'
+                file_object = self._get_bytesio_from_request(url)
+                dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
 
-            dateparse = lambda x: datetime.strptime(x, '%d.%m.%Y')
-            return pd.read_excel(file_object,
-                                 sheet_name=1,
-                                 header=0,
-                                 thousands=".",
-                                 parse_dates=['Datum des Erkrankungsbeginns'],
-                                 date_parser=dateparse) \
-                .replace(",", ".", regex=True)
+                return pd.read_excel(file_object,
+                                     sheet_name=1,
+                                     header=0,
+                                     thousands=".",
+                                     parse_dates=[date_column_name],
+                                     date_parser=dateparse
+                                     ) \
+                    .replace(",", ".", regex=True)
 
-        def subset_of_df_with_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
-            df = df.loc[:, ["Datum des Erkrankungsbeginns",
-                            "Punktschätzer der Anzahl Neuerkrankungen",
-                            "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
-                            "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen",
-                            "Punktschätzer des 7-Tage-R Wertes",
-                            "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes",
-                            "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes"]]
-            df.loc[:, "Datum des Erkrankungsbeginns"] = pd.to_datetime(df.loc[:, "Datum des Erkrankungsbeginns"])
-            return df
+            try:
+                return read_excel('Datum des Erkrankungsbeginns')
+            except:
+                return read_excel('Datum des Erkrankungs-beginns')
 
-        def rename_columns_from_german_to_english_and_set_index(df: pd.DataFrame) -> pd.DataFrame:
+        def subset_of_df_with_datetime_columns_and_set_index(df: pd.DataFrame) -> pd.DataFrame:
+            df = df.loc[:, ["date",
+                            "cases (Nowcast RKI)",
+                            "min cases (Nowcast RKI)",
+                            "max cases (Nowcast RKI)",
+                            "7 day R value (Nowcast RKI)",
+                            "min 7 day R value (Nowcast RKI)",
+                            "max 7 day R value (Nowcast RKI)"]]
+            df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
+            return df.set_index("date")
+
+        def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
             return df.rename(columns={"Datum des Erkrankungsbeginns": "date",
+                                      "Datum des Erkrankungs-beginns": "date",
                                       "Punktschätzer der Anzahl Neuerkrankungen":
                                           "cases (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
                                           "min cases (Nowcast RKI)",
+                                      "Untere Grenze des 95%-Prädiktions-intervalls der Anzahl Neuerkrankungen":
+                                          "min cases (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktionsintervalls der Anzahl Neuerkrankungen":
+                                          "max cases (Nowcast RKI)",
+                                      "Obere Grenze des 95%-Prädiktions-intervalls der Anzahl Neuerkrankungen":
                                           "max cases (Nowcast RKI)",
                                       "Punktschätzer des 7-Tage-R Wertes":
                                           "7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
                                           "min 7 day R value (Nowcast RKI)",
+                                      "Untere Grenze des 95%-Prädiktions-intervalls des 7-Tage-R Wertes":
+                                          "min 7 day R value (Nowcast RKI)",
                                       "Obere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
+                                          "max 7 day R value (Nowcast RKI)",
+                                      "Obere Grenze des 95%-Prädiktions-intervalls des 7-Tage-R Wertes":
                                           "max 7 day R value (Nowcast RKI)"
                                       }
-                             ).set_index("date")
+                             )
 
         nowcast_rki = load_nowcast_from_excel()
-        nowcast_rki = subset_of_df_with_datetime_columns(nowcast_rki)
-        nowcast_rki = rename_columns_from_german_to_english_and_set_index(nowcast_rki)
+        nowcast_rki = rename_columns_from_german_to_english(nowcast_rki)
+        nowcast_rki = subset_of_df_with_datetime_columns_and_set_index(nowcast_rki)
         return nowcast_rki
 
     def clinical_aspects(self) -> pd.DataFrame:
@@ -492,13 +519,11 @@ class RKIAPI:
             file_object = self._get_bytesio_from_request(url)
 
             try:
-                clinical_aspects = pd.read_excel(file_object, sheet_name="Daten", header=1) \
+                return pd.read_excel(file_object, sheet_name="Klinische_Aspekte", header=1) \
                     .dropna(how="all", axis=1)
             except:
-                clinical_aspects = pd.read_excel(file_object, sheet_name=0, header=1) \
+                return pd.read_excel(file_object, sheet_name=0, header=1) \
                     .dropna(how="all", axis=1)
-
-            return clinical_aspects
 
         def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
             return df.rename(columns={'Meldejahr': 'reporting year',
@@ -518,7 +543,9 @@ class RKIAPI:
                                       })
 
         def create_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
-            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + df.loc[:, 'reporting week'].astype(str)
+            reporting_week = ['0' + week if len(week) == 1 else week for week in
+                              df.loc[:, 'reporting week'].astype(str)]
+            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + reporting_week
             df.loc[:, 'calendar week'] = calendar_week
             df = df.set_index('calendar week')
             return df
@@ -540,6 +567,48 @@ class RKIAPI:
         df = create_calendar_week_and_set_as_index(df)
         df = append_proportional_columns_in_percent(df)
         return df
+
+    def hospitalized_per_age_group(self) -> pd.DataFrame:
+        def load_data_from_excel() -> pd.DataFrame:
+            url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/" \
+                  "Klinische_Aspekte.xlsx?__blob=publicationFile"
+            file_object = self._get_bytesio_from_request(url)
+
+            try:
+                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=1) \
+                         .dropna(how="all", axis=1)
+            except:
+                return pd.read_excel(file_object, sheet_name=1, header=1) \
+                         .dropna(how="all", axis=1)
+
+        def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Meldejahr': 'reporting year',
+                                      'Meldewoche': 'reporting week',
+                                      'A00..04': 'cases hospitalized age group 00 - 04',
+                                      'A05..14': 'cases hospitalized age group 05 - 14',
+                                      'A15..34': 'cases hospitalized age group 15 - 34',
+                                      'A35..59': 'cases hospitalized age group 35 - 59',
+                                      'A60..79': 'cases hospitalized age group 60 - 79',
+                                      'A80+': 'cases hospitalized age group 80+',
+                                      'Unnamed: 8': 'calendar week'
+                                      })
+
+        def correct_strings_of_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
+            df.loc[:, 'calendar week'] = df.loc[:, 'calendar week'].str.replace('-KW', ' - ')
+            return df.set_index('calendar week')
+
+        def selection_of_columns(df: pd.DataFrame) -> pd.DataFrame:
+            return df.loc[:, ['cases hospitalized age group 00 - 04',
+                              'cases hospitalized age group 05 - 14',
+                              'cases hospitalized age group 15 - 34',
+                              'cases hospitalized age group 35 - 59',
+                              'cases hospitalized age group 60 - 79',
+                              'cases hospitalized age group 80+']]
+
+        df = load_data_from_excel()
+        df = rename_columns_from_german_to_english(df)
+        df = correct_strings_of_calendar_week_and_set_as_index(df)
+        return selection_of_columns(df)
 
     def number_pcr_tests(self) -> pd.DataFrame:
         def load_number_pcr_tests_from_excel() -> pd.DataFrame:
@@ -576,6 +645,68 @@ class RKIAPI:
         number_pcr_tests = rename_columns_german_to_english(number_pcr_tests)
         number_pcr_tests = cleaning_because_of_calendar_week_column_and_set_as_index(number_pcr_tests)
         return number_pcr_tests
+
+    def cases_attributed_to_an_outbreak_per_week(self) -> pd.DataFrame:
+        def load_cases_attributed_to_an_outbreak_per_week_from_excel() -> pd.DataFrame:
+            url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/' \
+                  'Ausbruchsdaten.xlsx?__blob=publicationFile'
+            file_object = self._get_bytesio_from_request(url)
+            return pd.read_excel(file_object, sheet_name="Ausbrüche_Meldewoche")
+
+        def delete_unneeded_columns(df: pd.DataFrame) -> pd.DataFrame:
+            return df.drop(columns=['sett_f'])
+
+        def rename_columns_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Meldejahr': 'reporting year',
+                                      'Meldewoche': 'reporting week',
+                                      'sett_engl': 'outbreak category',
+                                      'n': 'cases'
+                                      })
+
+        def create_calendar_week(df: pd.DataFrame) -> pd.DataFrame:
+            reporting_week = ['0' + week if len(week) == 1 else week for week in
+                              df.loc[:, 'reporting week'].astype(str)]
+            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + reporting_week
+            df.loc[:, 'calendar week'] = calendar_week
+            return df
+
+        def create_df_with_outbreak_categories_as_columns(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
+            calendar_weeks = df.loc[:, 'calendar week'].unique()
+            categories = df.loc[:, 'outbreak category'].unique()
+
+            df_with_outbreak_types_as_columns = pd.DataFrame(index=calendar_weeks)
+            df_with_outbreak_types_as_columns.index = df_with_outbreak_types_as_columns.index.rename('calendar week')
+
+            for category in categories:
+                df_with_outbreak_types_as_columns = df_with_outbreak_types_as_columns \
+                    .merge(df.loc[df.loc[:, 'outbreak category'] == category, :]
+                           .set_index('calendar week')
+                           .rename(columns={'cases': category})
+                           .loc[:, category],
+                           how='outer',
+                           left_index=True,
+                           right_index=True)
+            return df_with_outbreak_types_as_columns.sort_index(), categories
+
+        def append_column_sum_cases_per_week(df: pd.DataFrame) -> pd.DataFrame:
+            df.loc[:, "sum of cases"] = df.sum(axis=1).astype(int)
+            return df
+
+        def append_columns_percentage_of_categories(df: pd.DataFrame, categories: List[str]) -> pd.DataFrame:
+            for category in categories:
+                new_column_name = category + " (%)"
+                cases_in_percent_per_week = df.loc[:, category] / df.loc[:, "sum of cases"] * 100
+                df.loc[:, new_column_name] = cases_in_percent_per_week
+            return df
+
+        df = load_cases_attributed_to_an_outbreak_per_week_from_excel()
+        df = delete_unneeded_columns(df)
+        df = rename_columns_german_to_english(df)
+        df = create_calendar_week(df)
+        df, categories = create_df_with_outbreak_categories_as_columns(df)
+        df = append_column_sum_cases_per_week(df)
+        df = append_columns_percentage_of_categories(df, categories)
+        return df
 
     def _get_bytesio_from_request(self, excel_file_url: str) -> BytesIO:
         response = requests.get(excel_file_url)

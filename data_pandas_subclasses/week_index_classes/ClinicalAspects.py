@@ -1,17 +1,13 @@
 # subclassing of Pandas
 # see: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#override-constructor-properties
-import boto3
 import logging
-import os
+from typing import List
 
+import numpy as np
 from dotenv import load_dotenv
-from io import BytesIO, StringIO
-
-import pandas as pd
-import requests
 
 from api.RKIAPI import RKIAPI
-from data_pandas_subclasses.CoronaBaseWeekIndex import CoronaBaseWeekIndexDataFrame, CoronaBaseWeekIndexSeries
+from data_pandas_subclasses.week_index_classes.CoronaBaseWeekIndex import CoronaBaseWeekIndexDataFrame, CoronaBaseWeekIndexSeries
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -63,8 +59,37 @@ class ClinicalAspectsDataFrame(CoronaBaseWeekIndexDataFrame):
         logging.info("start downloading file from RKI")
 
         clinical_aspects = ClinicalAspectsDataFrame(ClinicalAspectsDataFrame.api.clinical_aspects())
+        hospitalized_per_age_group = ClinicalAspectsDataFrame(ClinicalAspectsDataFrame.api.hospitalized_per_age_group())
+        clinical_aspects = clinical_aspects.merge(hospitalized_per_age_group,
+                                                  how='outer',
+                                                  left_index=True,
+                                                  right_index=True)
+        clinical_aspects._add_statistical_columns()
         if to_csv:
             clinical_aspects.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
 
         logging.info("FINISHED UPDATE PROCESS FOR CLINICAL ASPECTS")
         return clinical_aspects
+
+    def _add_statistical_columns(self) -> 'ClinicalAspectsDataFrame':
+        self.loc[:, 'cases not hospitalized'] = self._calculate_cases_not_hospitalized()
+        self.loc[:, 'cases not known if hospitalized'] = self._calculate_cases_not_known_if_hospitalized()
+        self.loc[:, 'cases hospitalized unknown age group'] = self._calculate_cases_hospitalized_unknown_age_group()
+
+    def _calculate_cases_not_hospitalized(self) -> ClinicalAspectsSeries:
+        return self.loc[:, 'number with hospitalization data'] - self.loc[:, 'number hospitalized']
+
+    def _calculate_cases_not_known_if_hospitalized(self) -> ClinicalAspectsSeries:
+        return self.loc[:, 'reported cases'] - self.loc[:, 'number with hospitalization data']
+
+    def _calculate_cases_hospitalized_unknown_age_group(self) -> List[float]:
+        columns = ['cases hospitalized age group 00 - 04',
+                   'cases hospitalized age group 05 - 14',
+                   'cases hospitalized age group 15 - 34',
+                   'cases hospitalized age group 35 - 59',
+                   'cases hospitalized age group 60 - 79',
+                   'cases hospitalized age group 80+']
+        return [self.loc[i, 'number hospitalized']
+                if self.loc[i, columns].isnull().all()
+                else np.nan
+                for i in self.index]

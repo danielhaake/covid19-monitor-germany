@@ -2,7 +2,7 @@
 import time
 
 import logging
-from typing import List, TypeVar, TypedDict
+from typing import List, TypeVar
 
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
@@ -18,12 +18,14 @@ from plotly.graph_objects import Figure
 import pandas as pd
 import numpy as np
 
-from data_pandas_subclasses.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame, CoronaCasesAndDeathsSeries
-from data_pandas_subclasses.NowcastRKI import NowcastRKIDataFrame
+from data_pandas_subclasses.date_index_classes.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame, CoronaCasesAndDeathsSeries
+from data_pandas_subclasses.date_index_classes.NowcastRKI import NowcastRKIDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
-from data_pandas_subclasses.ClinicalAspects import ClinicalAspectsDataFrame
-from data_pandas_subclasses.IntensiveRegister import IntensiveRegisterDataFrame
-from data_pandas_subclasses.NumberPCRTests import NumberPCRTestsDataFrame
+from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAspectsDataFrame
+from data_pandas_subclasses.week_index_classes.CasesPerOutbreak import CasesPerOutbreakDataFrame
+from data_pandas_subclasses.date_index_classes.IntensiveRegister import IntensiveRegisterDataFrame
+from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
+from layout.DailyFiguresDict import DailyFiguresDict
 
 logging.basicConfig(level=logging.INFO)
 THtml = TypeVar('THtml', html.H1, html.H2, html.H3, html.H4, html.H5, html.H6, html.Br, html.A, html.Hr, str)
@@ -31,28 +33,6 @@ TNum = TypeVar('TNum', int, float)
 
 
 class Layout:
-
-    class DailyFiguresDict(TypedDict):
-        cases_cumulative: int
-        last_cases_reported_by_rki: int
-        last_mean_cases: int
-        last_mean_cases_change_since_day_before: int
-        cases_last_7_days: int
-        cases_last_7_days_change_since_day_before: int
-        cases_last_7_days_by_reporting_date: int
-        cases_last_7_days_by_reporting_date_change_since_day_before: int
-        deaths_cumulative: int
-        last_deaths_reported_by_rki: int
-        last_mean_deaths: int
-        last_mean_deaths_change_since_day_before: int
-        deaths_last_7_days: int
-        deaths_last_7_days_change_since_day_before: int
-        last_r_value: float
-        last_r_value_change_since_day_before: float
-        last_r_value_by_nowcast_rki: float
-        last_r_value_by_nowcast_rki_change_since_day_before: float
-        last_r_value_by_new_admissions_to_intensive_care: float
-        last_r_value_by_new_admissions_to_intensive_care_change_since_day_before: float
 
     def __init__(self):
         self.config = configparser.ConfigParser(interpolation=None)
@@ -139,6 +119,7 @@ class Layout:
         intensive_register = IntensiveRegisterDataFrame.from_csv()
         clinical_aspects = ClinicalAspectsDataFrame.from_csv()
         age_distribution = AgeDistributionDataFrame.from_csv()
+        cases_per_outbreak = CasesPerOutbreakDataFrame.from_csv()
         end_time = time.time()
         logging.info(f"FINISHED LOADING OF DATAFRAMES IN {end_time - start_time} SECONDS")
 
@@ -166,7 +147,8 @@ class Layout:
                                                         nowcast_rki,
                                                         number_pcr_tests,
                                                         clinical_aspects,
-                                                        age_distribution)
+                                                        age_distribution,
+                                                        cases_per_outbreak)
                         ),
 
                 dbc.Tab(label='Intensive care',
@@ -230,7 +212,8 @@ class Layout:
                           nowcast_rki: NowcastRKIDataFrame,
                           number_pcr_tests: NumberPCRTestsDataFrame,
                           clinical_aspects: ClinicalAspectsDataFrame,
-                          age_distribution: AgeDistributionDataFrame) -> List[dcc.Graph]:
+                          age_distribution: AgeDistributionDataFrame,
+                          cases_per_outbreak: CasesPerOutbreakDataFrame) -> List[dcc.Graph]:
         return [
             dcc.Graph(
                 id='graph-cases-mean-3',
@@ -256,12 +239,32 @@ class Layout:
             dcc.Graph(
                 id='graph-fig-clinical-aspects',
                 figure=self._figure_clinical_aspects(clinical_aspects)),
+            self._dropdown_for_hospitalizations_per_age_group(),
+            dcc.Graph(
+                id='graph-fig-hospitalizations-per-age-group-bar-plot',
+                figure=self._figure_hospitalizations_per_age_group(clinical_aspects, type='bar')),
+            dcc.Graph(
+                id='graph-fig-hospitalizations-per-age-group-line-plot',
+                figure=self._figure_hospitalizations_per_age_group(clinical_aspects, type='line')),
             dcc.Graph(
                 id='graph-fig-distribution-of-inhabitants-and-deaths',
                 figure=self._figure_distribution_of_inhabitants_and_deaths(age_distribution)),
             dcc.Graph(
                 id='graph-fig-distribution-of-cases-and-deaths-per-n-inhabitants',
-                figure=self._figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution))
+                figure=self._figure_distribution_of_cases_and_deaths_per_n_inhabitants(age_distribution)),
+            self._dropdown_for_cases_per_outbreak(),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-bar-plot',
+                figure=self._figure_cases_per_outbreak(cases_per_outbreak, type='bar')),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-in-percent-bar-plot',
+                figure=self._figure_cases_per_outbreak_in_percent(cases_per_outbreak, type='bar')),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-line-plot',
+                figure=self._figure_cases_per_outbreak(cases_per_outbreak, type='line')),
+            dcc.Graph(
+                id='graph-fig-cases-per-outbreak-in-percent-line-plot',
+                figure=self._figure_cases_per_outbreak_in_percent(cases_per_outbreak, type='line'))
         ]
 
     def _tab_corona_intensive_care(self, intensive_register: IntensiveRegisterDataFrame) -> List[dcc.Graph]:
@@ -296,9 +299,9 @@ class Layout:
     def _block_daily_overview_cases(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_cases_change = self._get_prefix(daily_figures["last_mean_cases_change_since_day_before"])
 
-        return [html.H2(children=["cases"]),
+        return [html.H2("cases"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["last_mean_cases"]:,}']),
+                html.H3(f'{daily_figures["last_mean_cases"]:,}'),
                 'calculated mean cases',
                 html.Br(),
                 html.Br(),
@@ -307,9 +310,9 @@ class Layout:
                 'mean cases since day before',
                 html.Br(),
                 html.Br(),
-                f'{daily_figures["cases_cumulative"]:,}',
+                f'{daily_figures["cases_last_365_days"]:,}',
                 html.Br(),
-                'total number of cases',
+                'cases last 365 days',
                 html.Br(),
                 html.Br(),
                 f'{daily_figures["last_cases_reported_by_rki"]:,}',
@@ -320,9 +323,9 @@ class Layout:
     def _block_daily_overview_deaths(self, daily_figures: DailyFiguresDict) -> List[THtml]:
         prefix_mean_deaths_change = self._get_prefix(daily_figures["last_mean_deaths_change_since_day_before"])
 
-        return [html.H2(children=["deaths"]),
+        return [html.H2("deaths"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["last_mean_deaths"]:,}']),
+                html.H3(f'{daily_figures["last_mean_deaths"]:,}'),
                 'calculated mean deaths',
                 html.Br(),
                 html.Br(),
@@ -331,9 +334,9 @@ class Layout:
                 'mean deaths since day before',
                 html.Br(),
                 html.Br(),
-                f'{daily_figures["deaths_cumulative"]:,}',
+                f'{daily_figures["deaths_last_365_days"]:,}',
                 html.Br(),
-                'total number of deaths',
+                'deaths last 365 days',
                 html.Br(),
                 html.Br(),
                 f'{daily_figures["last_deaths_reported_by_rki"]:,}',
@@ -377,9 +380,9 @@ class Layout:
             self._get_prefix(daily_figures["cases_last_7_days_by_reporting_date_change_since_day_before"])
         prefix_deaths_7_days_change = self._get_prefix(daily_figures["deaths_last_7_days_change_since_day_before"])
 
-        return [html.H2(children=["last 7 days"]),
+        return [html.H2("last 7 days"),
                 html.Br(),
-                html.H3(children=[f'{daily_figures["cases_last_7_days"]:,}']),
+                html.H3(f'{daily_figures["cases_last_7_days"]:,}'),
                 'cases per 100,000 inhabitants',
                 html.Br(),
                 html.Br(),
@@ -417,6 +420,7 @@ class Layout:
                            intensive_register: IntensiveRegisterDataFrame) -> DailyFiguresDict:
 
         cases_cumulative = int(corona_cases_and_deaths.last_cases_cumulative())
+        cases_last_365_days = int(corona_cases_and_deaths.cases_last_365_days())
         last_rki_reported_cases = int(corona_cases_and_deaths.last_reported_cases())
         last_mean_cases = int(np.round(corona_cases_and_deaths.last_mean_cases()))
 
@@ -440,6 +444,7 @@ class Layout:
         incidence_cases_change_by_reporting_date = int(np.round(incidence_cases_change_by_reporting_date))
 
         deaths_cumulative = int(corona_cases_and_deaths.last_deaths_cumulative())
+        deaths_last_365_days = int(corona_cases_and_deaths.deaths_last_365_days())
         last_rki_reported_deaths = int(corona_cases_and_deaths.last_reported_deaths())
         last_mean_deaths = int(np.round(corona_cases_and_deaths.last_mean_deaths()))
 
@@ -463,8 +468,9 @@ class Layout:
         r_value_intensive_register_change = np.round(
             intensive_register.change_from_second_last_to_last_date_for_r_value_by_mean_cases(), 2)
 
-        daily_figures: Layout.DailyFiguresDict = \
+        daily_figures: DailyFiguresDict = \
             {"cases_cumulative": cases_cumulative,
+             "cases_last_365_days": cases_last_365_days,
              "last_cases_reported_by_rki": last_rki_reported_cases,
              "last_mean_cases": last_mean_cases,
              "last_mean_cases_change_since_day_before": last_mean_cases_change_day_before,
@@ -473,6 +479,7 @@ class Layout:
              "cases_last_7_days_by_reporting_date": incidence_cases_by_reporting_date,
              "cases_last_7_days_by_reporting_date_change_since_day_before": incidence_cases_change_by_reporting_date,
              "deaths_cumulative": deaths_cumulative,
+             "deaths_last_365_days": deaths_last_365_days,
              "last_deaths_reported_by_rki": last_rki_reported_deaths,
              "last_mean_deaths": last_mean_deaths,
              "last_mean_deaths_change_since_day_before": last_mean_deaths_change_day_before,
@@ -580,10 +587,10 @@ class Layout:
         return fig
 
     def _format_hover_data_column(self,
-                                  corona_cases_and_deaths_with_nowcast: CoronaCasesAndDeathsDataFrame,
-                                  config_section: str) -> CoronaCasesAndDeathsSeries:
+                                  df: pd.DataFrame,
+                                  config_section: str) -> pd.Series:
         str_format = "{:" + self.config[config_section]["hover_data_format"] + "}"
-        return corona_cases_and_deaths_with_nowcast.loc[:, self.config[config_section]["hover_data_format_column"]] \
+        return df.loc[:, self.config[config_section]["hover_data_format_column"]] \
                 .map(str_format.format)
 
     def _format_column_strftime(self,
@@ -944,9 +951,9 @@ class Layout:
 
     def _figure_clinical_aspects(self, clinical_aspects: ClinicalAspectsDataFrame) -> Figure:
 
-        clinical_aspects = clinical_aspects.reset_index()
+        df = clinical_aspects.reset_index()
 
-        fig = px.line(clinical_aspects,
+        fig = px.line(df,
                       x=self.config["FIG_CLINICAL_ASPECTS"]["x"],
                       y=json.loads(self.config["FIG_CLINICAL_ASPECTS"]["y"]),
                       color_discrete_map=json.loads(self.config["FIG_CLINICAL_ASPECTS"]["color_discrete_map"]),
@@ -965,13 +972,131 @@ class Layout:
 
         return fig
 
+    def _dropdown_for_cases_per_outbreak(self) -> dcc.Dropdown:
+        return dcc.Dropdown(
+                id='radio-items-for-cases-per-outbreak',
+                className='radio-items',
+                options=[
+                    {'label': 'Cases per Outbreak Category and Week as Bar Plot',
+                     'value': 'cases-per-outbreak-stacked-bar'},
+                    {'label': 'Cases in Percent per Outbreak Category and Week as Bar Plot',
+                     'value': 'cases-in-percent-per-outbreak-stacked-bar'},
+                    {'label': 'Cases per Outbreak Category and Week as Line Plot',
+                     'value': 'cases-per-outbreak-line-plot'},
+                    {'label': 'Cases in Percent per Outbreak Category and Week as Line Plot',
+                     'value': 'cases-in-percent-per-outbreak-line-plot'},
+                ],
+                value='cases-per-outbreak-stacked-bar')
+
+    def _figure_cases_per_outbreak(self, cases_per_outbreak: CasesPerOutbreakDataFrame, type: str) -> Figure:
+
+        cases_per_outbreak = cases_per_outbreak.reset_index()
+
+        fig = px.line(cases_per_outbreak,
+                      x=self.config["FIG_CASES_PER_OUTBREAK"]["x"],
+                      y=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["y"]),
+                      color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["color_discrete_map"]))
+
+        if type == 'bar':
+            fig = px.bar(cases_per_outbreak,
+                         x=self.config["FIG_CASES_PER_OUTBREAK"]["x"],
+                         y=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_CASES_PER_OUTBREAK"]["color_discrete_map"]))
+
+        fig.update_layout(title=self.config["FIG_CASES_PER_OUTBREAK"]["title"],
+                          xaxis_title=self.config["FIG_CASES_PER_OUTBREAK"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_CASES_PER_OUTBREAK"]["yaxis_title"],
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_CASES_PER_OUTBREAK"]["yaxis_tickformat"])
+
+        if type == 'bar':
+            fig.update_layout(barmode=self.config["FIG_CASES_PER_OUTBREAK"]["barmode"])
+
+        return fig
+
+    def _figure_cases_per_outbreak_in_percent(self, cases_per_outbreak: CasesPerOutbreakDataFrame, type: str) \
+            -> Figure:
+
+        cases_per_outbreak = cases_per_outbreak.reset_index()
+
+        fig = px.line(cases_per_outbreak,
+                      x=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["x"],
+                      y=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["y"]),
+                      color_discrete_map=json.loads(
+                          self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["color_discrete_map"]))
+
+        if type == 'bar':
+            fig = px.bar(cases_per_outbreak,
+                         x=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["x"],
+                         y=json.loads(self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["y"]),
+                         color_discrete_map=json.loads(
+                             self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["color_discrete_map"]))
+
+        fig.update_layout(title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["title"],
+                          xaxis_title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["yaxis_title"],
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["yaxis_tickformat"])
+
+        if type == 'bar':
+            fig.update_layout(barmode=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["barmode"])
+
+        return fig
+
+    def _dropdown_for_hospitalizations_per_age_group(self) -> dcc.Dropdown:
+        return dcc.Dropdown(
+                id='radio-items-for-hospitalizations-per-age-group',
+                className='radio-items',
+                options=[
+                    {'label': 'Hospitalizations per Age Group as Bar Plot',
+                     'value': 'hospitalizations-per-age-group-stacked-bar'},
+                    {'label': 'Hospitalizations per Age Group as Line Plot',
+                     'value': 'hospitalizations-per-age-group-line-plot'}
+                ],
+                value='hospitalizations-per-age-group-stacked-bar')
+
+    def _figure_hospitalizations_per_age_group(self, clinical_aspects: ClinicalAspectsDataFrame, type: str) -> Figure:
+
+        clinical_aspects = clinical_aspects.reset_index()
+
+        fig = px.line(clinical_aspects,
+                      x=self.config["FIG_HOSPITALIZATIONS"]["x"],
+                      y=json.loads(self.config["FIG_HOSPITALIZATIONS"]["y"]),
+                      color_discrete_map=json.loads(self.config["FIG_HOSPITALIZATIONS"]["color_discrete_map"]))
+
+        if type == 'bar':
+            fig = px.bar(clinical_aspects,
+                         x=self.config["FIG_HOSPITALIZATIONS"]["x"],
+                         y=json.loads(self.config["FIG_HOSPITALIZATIONS"]["y"]),
+                         color_discrete_map=json.loads(self.config["FIG_HOSPITALIZATIONS"]["color_discrete_map"]))
+
+        fig.update_layout(title=self.config["FIG_HOSPITALIZATIONS"]["title"],
+                          xaxis_title=self.config["FIG_HOSPITALIZATIONS"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_HOSPITALIZATIONS"]["yaxis_title"],
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_HOSPITALIZATIONS"]["yaxis_tickformat"])
+
+        if type == 'bar':
+            fig.update_layout(barmode=self.config["FIG_HOSPITALIZATIONS"]["barmode"])
+
+        return fig
+
     def _figure_new_deaths_by_refdate(self,
                                       corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
                                       nowcast_rki: NowcastRKIDataFrame) -> Figure:
 
         y = json.loads(self.config["FIG_NEW_DEATHS_PER_REFDATE"]["y"])
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
-        corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.loc[:, y].dropna(how='all', axis=0)
+        corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast, y)
         corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.reset_index()
 
         fig = px.bar(corona_cases_and_deaths_with_nowcast,
@@ -991,6 +1116,11 @@ class Layout:
                           yaxis_tickformat=self.config["FIG_NEW_DEATHS_PER_REFDATE"]["yaxis_tickformat"])
 
         return fig
+
+    def _delete_rows_without_data_of(self, df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+        if len(df.loc[:, column_name].dropna(how='all', axis=0)) > 0:
+            return df.loc[:, column_name].dropna(how='all', axis=0)
+        return df
 
     def _figure_total_cases_by_refdate(self,
                                        corona_cases_and_deaths: CoronaCasesAndDeathsDataFrame,
@@ -1023,7 +1153,7 @@ class Layout:
         y = json.loads(self.config["FIG_NEW_CASES_BY_REPORTING_DATE"]["y"])
 
         corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
-        corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.loc[:, y].dropna(how='all', axis=0)
+        corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast, y)
         corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.reset_index()
 
         fig = px.bar(corona_cases_and_deaths_with_nowcast,

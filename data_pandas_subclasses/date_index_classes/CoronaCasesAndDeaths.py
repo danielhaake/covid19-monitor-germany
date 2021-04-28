@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 from api.RKIAPI import RKIAPI
-from data_pandas_subclasses.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
+from data_pandas_subclasses.date_index_classes.CoronaBaseDateIndex import CoronaBaseDateIndexSeries, CoronaBaseDateIndexDataFrame
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -79,12 +79,18 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         logging.info("start update with new data from RKI API")
         datetime_of_first_request = None
         datetime_of_last_request = None
-        while ((datetime_of_first_request != datetime_of_last_request) |
+
+        retries = 0
+        max_retries = 5
+
+        while (retries < max_retries) & \
+              ((datetime_of_first_request != datetime_of_last_request) |
                (datetime_of_first_request is None) | (datetime_of_last_request is None)):
             daily_figures = self.api.figures_of_last_day()
             datetime_of_first_request = daily_figures["reporting date"]
             cases_and_deaths_by_reference_and_reporting_date, datetime_of_last_request = \
                 self.api.cases_and_deaths_by_reference_and_reporting_date()
+            retries += 1
 
         self = update_self_with_new_data(self, cases_and_deaths_by_reference_and_reporting_date)
         logging.info("new and total cases and deaths by reporting and reference date were added")
@@ -166,6 +172,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         self._calculate_r_value_and_daily_increase_columns()
         self._calculate_last_7_day_columns()
         self._calculate_7_day_incidence_and_deaths_columns()
+        self._calculate_last_365_day_columns()
 
     def _calculate_7d_moving_mean_columns(self) -> None:
         self.loc[:, "cases (mean of ±3 days)"] = self.calculate_7d_moving_mean_for_column("cases")
@@ -188,8 +195,12 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             calculate_daily_proportionate_increase_for("cases (mean of ±3 days)")
 
     def _calculate_last_7_day_columns(self) -> None:
-        self.loc[:, "cases last 7 days"] = self.calculate_sum_last_7_days_for_column("cases")
-        self.loc[:, "deaths last 7 days"] = self.calculate_sum_last_7_days_for_column("deaths")
+        self.loc[:, "cases last 7 days"] = self.calculate_sum_last_7_days_for("cases")
+        self.loc[:, "deaths last 7 days"] = self.calculate_sum_last_7_days_for("deaths")
+
+    def _calculate_last_365_day_columns(self) -> None:
+        self.loc[:, "cases last 365 days"] = self.calculate_sum_last_365_days_for("cases")
+        self.loc[:, "deaths last 365 days"] = self.calculate_sum_last_365_days_for("deaths")
 
     def _calculate_7_day_incidence_and_deaths_columns(self) -> None:
         self.loc[:, "7 day incidence per 100,000 inhabitants"] = self.calculate_7_day_incidence_for_column("cases")
@@ -227,7 +238,7 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         per_n_inhabitants = 100_000
         if "deaths" in column_name:
             per_n_inhabitants = 1_000_000
-        return list(np.array(self.calculate_sum_last_7_days_for_column(column_name)) / inhabitants * per_n_inhabitants)
+        return list(np.array(self.calculate_sum_last_7_days_for(column_name)) / inhabitants * per_n_inhabitants)
 
     def last_rki_reporting_date(self) -> dt.datetime:
         return self.loc[:, "RKI reporting date"].max()
@@ -369,3 +380,25 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             -> float:
         return self.last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants() - \
                self.second_last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
+
+    def cases_last_365_days(self) -> int:
+        last_date = self.last_date()
+        return self.loc[last_date, "cases last 365 days"]
+
+    def cases_last_365_days_of_second_last_date(self) -> int:
+        second_last_date = self.second_last_date()
+        return self.loc[second_last_date, "cases last 365 days"]
+
+    def change_from_second_last_to_last_date_for_cases_last_365_days(self) -> int:
+        return self.cases_last_365_days() - self.cases_last_365_days_of_second_last_date()
+
+    def deaths_last_365_days(self) -> int:
+        last_date = self.last_date()
+        return self.loc[last_date, "deaths last 365 days"]
+
+    def deaths_last_365_days_of_second_last_date(self) -> int:
+        second_last_date = self.second_last_date()
+        return self.loc[second_last_date, "deaths last 365 days"]
+
+    def change_from_second_last_to_last_date_for_deaths_last_365_days(self) -> int:
+        return self.deaths_last_365_days() - self.deaths_last_365_days_of_second_last_date()

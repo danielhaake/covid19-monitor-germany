@@ -2,6 +2,7 @@
 #########################
 update_data.sh
 update_data.log
+load_data_from_s3_and_store_local.py
 
 # Secret files #
 ################
