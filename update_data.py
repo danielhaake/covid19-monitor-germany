@@ -7,6 +7,7 @@ from data_pandas_subclasses.date_index_classes.CoronaCasesAndDeaths import Coron
 from data_pandas_subclasses.date_index_classes.NowcastRKI import NowcastRKIDataFrame
 from data_pandas_subclasses.date_index_classes.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.week_index_classes.CasesPerOutbreak import CasesPerOutbreakDataFrame
+from data_pandas_subclasses.week_index_classes.DeathsByWeekOfDeathAndAgeGroup import DeathsByWeekOfDeathAndAgeGroupDataFrame
 from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
 from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAspectsDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
@@ -63,6 +64,13 @@ def update_CasesPerOutbreakDataFrame():
         traceback.print_exc()
 
 
+def update_DeathsByWeekOfDeathAndAgeGroupDataFrame():
+    try:
+        DeathsByWeekOfDeathAndAgeGroupDataFrame.update_csv_with_new_data_from_rki()
+    except Exception:
+        traceback.print_exc()
+
+
 def update_dataframes():
     update_CoronaCasesAndDeathsDataFrame()
     update_NowcastRKIDataFrame()
@@ -71,6 +79,7 @@ def update_dataframes():
     update_AgeDistributionDataFrame()
     update_NumberPCRTestsDataFrame()
     update_CasesPerOutbreakDataFrame()
+    update_DeathsByWeekOfDeathAndAgeGroupDataFrame()
 
 
 if __name__ == '__main__':

@@ -495,6 +495,8 @@ class RKIAPI:
                                           "max cases (Nowcast RKI)",
                                       "Punktschätzer des 7-Tage-R Wertes":
                                           "7 day R value (Nowcast RKI)",
+                                      "Punktschätzer des 7-Tage-R-Wertes":
+                                          "7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R Wertes":
                                           "min 7 day R value (Nowcast RKI)",
                                       "Untere Grenze des 95%-Prädiktionsintervalls des 7-Tage-R-Wertes":
@@ -710,6 +712,62 @@ class RKIAPI:
         df, categories = create_df_with_outbreak_categories_as_columns(df)
         df = append_column_sum_cases_per_week(df)
         df = append_columns_percentage_of_categories(df, categories)
+        return df
+
+    def deaths_by_week_of_death_and_age_group(self) -> pd.DataFrame:
+        def load_deaths_by_week_of_death_and_age_group_from_excel() -> pd.DataFrame:
+            url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
+                  'COVID-19_Todesfaelle.xlsx?__blob=publicationFile'
+            file_object = self._get_bytesio_from_request(url)
+            return pd.read_excel(file_object, sheet_name='COVID_Todesfälle_KW_AG10')
+
+        def rename_columns_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Sterbejahr': 'year of death',
+                                      'Sterbewoche': 'week of death',
+                                      'AG 0-9 Jahre': 'age group 00 - 09',
+                                      'AG 10-19 Jahre': 'age group 10 - 19',
+                                      'AG 20-29 Jahre': 'age group 20 - 29',
+                                      'AG 30-39 Jahre': 'age group 30 - 39',
+                                      'AG 40-49 Jahre': 'age group 40 - 49',
+                                      'AG 50-59 Jahre': 'age group 50 - 59',
+                                      'AG 60-69 Jahre': 'age group 60 - 69',
+                                      'AG 70-79 Jahre': 'age group 70 - 79',
+                                      'AG 80-89 Jahre': 'age group 80 - 89',
+                                      'AG 90+ Jahre': 'age group 90+'
+                                      })
+
+        def create_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
+            reporting_week = ['0' + week if len(week) == 1 else week for week in
+                              df.loc[:, 'week of death'].astype(str)]
+            calendar_week = df.loc[:, 'year of death'].astype(str) + ' - ' + reporting_week
+            df.loc[:, 'calendar week'] = calendar_week
+            return df.set_index('calendar week')
+
+        def set_int_datatype_for_columns(df: pd.DataFrame) -> pd.DataFrame:
+            for column in df.columns:
+                df.loc[:, column] = df.loc[:, column].astype(int)
+            return df
+
+        def append_column_sum_cases_per_week(df: pd.DataFrame) -> pd.DataFrame:
+            columns = df.columns.drop(['year of death', 'week of death'])
+            df.loc[:, "sum of cases"] = df.loc[:, columns].sum(axis=1).astype(int)
+            return df
+
+        def append_columns_percentage_of_categories(df: pd.DataFrame) -> pd.DataFrame:
+            columns = df.columns.drop(['year of death', 'week of death', 'sum of cases'])
+            for column in columns:
+                new_column_name = column + " (%)"
+                cases_in_percent_per_week = df.loc[:, column] / df.loc[:, "sum of cases"] * 100
+                df.loc[:, new_column_name] = cases_in_percent_per_week
+            return df
+
+        df = load_deaths_by_week_of_death_and_age_group_from_excel()
+        df = df.replace('<4', '2')
+        df = rename_columns_german_to_english(df)
+        df = create_calendar_week_and_set_as_index(df)
+        df = set_int_datatype_for_columns(df)
+        df = append_column_sum_cases_per_week(df)
+        df = append_columns_percentage_of_categories(df)
         return df
 
     def _get_bytesio_from_request(self, excel_file_url: str) -> BytesIO:
