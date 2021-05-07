@@ -79,6 +79,7 @@ def build_graph(value):
     else:
         return {'display': 'none'}
 
+
 @app.callback(
     dash.dependencies.Output('graph-fig-cases-per-outbreak-line-plot', 'style'),
     [dash.dependencies.Input(component_id='radio-items-for-cases-per-outbreak', component_property='value')])
@@ -97,6 +98,47 @@ def build_graph(value):
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-deaths-by-week-and-age-group-bar-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-deaths-by-week-of-death-and-age-group', component_property='value')])
+def build_graph(value):
+    if value == 'deaths-by-week-of-death-and-age-group-stacked-bar':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-deaths-by-week-and-age-group-line-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-deaths-by-week-of-death-and-age-group', component_property='value')])
+def build_graph(value):
+    if value == 'deaths-by-week-of-death-and-age-group-line-plot':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-deaths-in-percent-by-week-and-age-group-bar-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-deaths-by-week-of-death-and-age-group', component_property='value')])
+def build_graph(value):
+    if value == 'deaths-in-percent-by-week-of-death-and-age-group-stacked-bar':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-deaths-in-percent-by-week-and-age-group-line-plot', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-deaths-by-week-of-death-and-age-group', component_property='value')])
+def build_graph(value):
+    if value == 'deaths-in-percent-by-week-of-death-and-age-group-line-plot':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 # Path for health check
 @app.server.route("/ping")
