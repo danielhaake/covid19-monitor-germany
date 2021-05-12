@@ -7,17 +7,17 @@ class DailyFiguresDict(TypedDict):
     last_cases_reported_by_rki: int
     last_mean_cases: int
     last_mean_cases_change_since_day_before: int
-    cases_last_7_days: int
-    cases_last_7_days_change_since_day_before: int
-    cases_last_7_days_by_reporting_date: int
-    cases_last_7_days_by_reporting_date_change_since_day_before: int
+    cases_last_7_days: float
+    cases_last_7_days_change_since_day_before: float
+    cases_last_7_days_by_reporting_date: float
+    cases_last_7_days_by_reporting_date_change_since_day_before: float
     deaths_cumulative: int
     deaths_last_365_days: int
     last_deaths_reported_by_rki: int
     last_mean_deaths: int
     last_mean_deaths_change_since_day_before: int
-    deaths_last_7_days: int
-    deaths_last_7_days_change_since_day_before: int
+    deaths_last_7_days: float
+    deaths_last_7_days_change_since_day_before: float
     last_r_value: float
     last_r_value_change_since_day_before: float
     last_r_value_by_nowcast_rki: float

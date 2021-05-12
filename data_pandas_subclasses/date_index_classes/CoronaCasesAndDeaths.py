@@ -336,8 +336,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
 
     def change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants_by_reporting_date(self) \
             -> float:
-        return self.last_7_day_incidence_per_100_000_inhabitants() - \
-               self.second_last_7_day_incidence_per_100_000_inhabitants()
+        return self.last_7_day_incidence_per_100_000_inhabitants_by_reporting_date() - \
+               self.second_last_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
 
     def last_7_day_deaths_per_1_000_000_inhabitants(self) -> float:
         last_date = self.last_date()

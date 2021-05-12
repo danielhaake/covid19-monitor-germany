@@ -451,20 +451,20 @@ class Layout:
             corona_cases_and_deaths.change_from_second_last_to_last_date_for_mean_cases()
         last_mean_cases_change_day_before = int(np.round(last_mean_cases_change_day_before))
 
-        incidence_cases = int(np.round(corona_cases_and_deaths.last_7_day_incidence_per_100_000_inhabitants()))
+        incidence_cases = np.round(corona_cases_and_deaths.last_7_day_incidence_per_100_000_inhabitants(), 2)
 
         incidence_cases_change = \
             corona_cases_and_deaths.change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants()
-        incidence_cases_change = int(np.round(incidence_cases_change))
+        incidence_cases_change = np.round(incidence_cases_change, 2)
 
         incidence_cases_by_reporting_date = \
             corona_cases_and_deaths.last_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
-        incidence_cases_by_reporting_date = int(np.round(incidence_cases_by_reporting_date))
+        incidence_cases_by_reporting_date = np.round(incidence_cases_by_reporting_date, 2)
 
         incidence_cases_change_by_reporting_date = \
             corona_cases_and_deaths. \
                 change_from_second_last_to_last_date_for_7_day_incidence_per_100_000_inhabitants_by_reporting_date()
-        incidence_cases_change_by_reporting_date = int(np.round(incidence_cases_change_by_reporting_date))
+        incidence_cases_change_by_reporting_date = np.round(incidence_cases_change_by_reporting_date, 2)
 
         deaths_cumulative = int(corona_cases_and_deaths.last_deaths_cumulative())
         deaths_last_365_days = int(corona_cases_and_deaths.deaths_last_365_days())
@@ -476,12 +476,12 @@ class Layout:
         last_mean_deaths_change_day_before = int(np.round(last_mean_deaths_change_day_before))
 
         incidence_deaths = corona_cases_and_deaths.last_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
-        incidence_deaths = int(np.round(incidence_deaths))
+        incidence_deaths = np.round(incidence_deaths, 2)
 
         incidence_deaths_change = \
             corona_cases_and_deaths. \
                 change_from_second_last_to_last_date_for_7_day_deaths_by_mean_cases_per_1_000_000_inhabitants()
-        incidence_deaths_change = int(np.round(incidence_deaths_change))
+        incidence_deaths_change = np.round(incidence_deaths_change, 2)
 
         last_r_value = np.round(corona_cases_and_deaths.last_r_value_by_mean_cases(), 2)
         r_value_change = np.round(
