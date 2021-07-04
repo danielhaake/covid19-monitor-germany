@@ -65,8 +65,14 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
         nowcast_rki.loc[:, "cases (mean of ±3 days of Nowcast RKI)"] = \
             nowcast_rki.calculate_7d_moving_mean_for_column("cases (Nowcast RKI)")
 
+        nowcast_rki.loc[:, "R value calculated with cases (mean of ±3 days of Nowcast RKI)"] = \
+            nowcast_rki.calculate_r_value_by("cases (mean of ±3 days of Nowcast RKI)")
+
         nowcast_rki_infections = nowcast_rki.calculate_df_with_shifted_date_because_of_incubation_period()
         nowcast_rki = nowcast_rki.merge(nowcast_rki_infections, how='outer', left_index=True, right_index=True)
+
+        nowcast_rki_shifted_r_values = nowcast_rki.calculate_df_with_shifted_r_values()
+        nowcast_rki = nowcast_rki.merge(nowcast_rki_shifted_r_values, how='outer', left_index=True, right_index=True)
 
         if to_csv:
             nowcast_rki.save_as_csv(s3_bucket=s3_bucket, folder_path=folder_path)
@@ -95,7 +101,24 @@ class NowcastRKIDataFrame(CoronaBaseDateIndexDataFrame):
             "min 7 day R value (Nowcast RKI)":
                 "min 7 day R value (Nowcast RKI, -5 days incubation period)",
             "max 7 day R value (Nowcast RKI)":
-                "max 7 day R value (Nowcast RKI, -5 days incubation period)"
+                "max 7 day R value (Nowcast RKI, -5 days incubation period)",
+            "R value calculated with cases (mean of ±3 days of Nowcast RKI)":
+                "R value by Infections (mean of ±3 days based on 7 day nowcast of RKI - 5 days regarding incubation period)"
+        })
+
+    def calculate_df_with_shifted_r_values(self) -> 'NowcastRKIDataFrame':
+        logging.info("calculate DF with shifted date for r values")
+        r_value_columns = ["R value calculated with cases (mean of ±3 days of Nowcast RKI)",
+                           "R value by Infections (mean of ±3 days based on 7 day nowcast of RKI - 5 days regarding incubation period)"]
+
+        self_copy = self.copy(deep=True)
+        self_copy = self_copy.loc[:, r_value_columns]
+        self_copy = self_copy.set_index(self_copy.index - pd.DateOffset(4))
+        return self_copy.rename(columns={
+            "R value calculated with cases (mean of ±3 days of Nowcast RKI)":
+                "R value calculated with cases (mean of ±3 days of Nowcast RKI) -> minus 4 days",
+            "R value by Infections (mean of ±3 days based on 7 day nowcast of RKI - 5 days regarding incubation period)":
+                "R value by Infections minus 4 days"
         })
 
 

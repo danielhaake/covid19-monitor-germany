@@ -180,6 +180,8 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         self.loc[:, "cases (mean of ±3 days) by reference date (start of illness, alternatively reporting date)"] = \
             self.calculate_7d_moving_mean_for_column(
                 "cases by reference date (start of illness, alternatively reporting date)")
+        self.loc[:, "cases with reported start of illness (mean of ±3 days)"] = \
+            self.calculate_7d_moving_mean_for_column("cases with reported start of illness")
         self.loc[:,
         "deaths (mean of ±3 days) by reference date (start of illness, alternatively reporting date)"] = \
             self.calculate_7d_moving_mean_for_column(
@@ -190,7 +192,9 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
             self.calculate_7d_moving_mean_for_column("deaths by reporting date")
 
     def _calculate_r_value_and_daily_increase_columns(self) -> None:
-        self.loc[:, "R value by cases (mean of ±3 days)"] = self.calculate_r_value_by_moving_mean_cases()
+        self.loc[:, "R value by cases (mean of ±3 days)"] = self.calculate_r_value_by("cases (mean of ±3 days)")
+        self.loc[:, "R value by cases with reported start of illness (mean of ±3 days)"] = \
+            self.calculate_r_value_by("cases with reported start of illness (mean of ±3 days)")
         self.loc[:, "daily proportionate increase of cases (mean of ±3 days)"] = self. \
             calculate_daily_proportionate_increase_for("cases (mean of ±3 days)")
 
@@ -214,17 +218,6 @@ class CoronaCasesAndDeathsDataFrame(CoronaBaseDateIndexDataFrame):
         self.loc[:, "7 day deaths per 1,000,000 inhabitants"] = self.calculate_7_day_incidence_for_column("deaths")
         self.loc[:, "7 day deaths (by cases (mean of ±3 days)) per 1,000,000 inhabitants"] = \
             self.calculate_7_day_incidence_for_column("deaths (mean of ±3 days)")
-
-    def calculate_r_value_by_moving_mean_cases(self) -> List[float]:
-        moving_mean_cases_column_name = "cases (mean of ±3 days)"
-
-        cases_sum_7d_to_4d_before = self.calculate_sum_7d_to_4d_before_for(moving_mean_cases_column_name)
-        cases_sum_3d_to_0d_before = self.calculate_sum_3d_to_0d_before_for(moving_mean_cases_column_name)
-
-        return [cases_sum_3d_to_0d_before[i] / cases_sum_7d_to_4d_before[i]
-                if cases_sum_7d_to_4d_before[i] != 0
-                else np.nan
-                for i in range(len(cases_sum_3d_to_0d_before))]
 
     def calculate_daily_proportionate_increase_for(self, column_name: str) -> List[float]:
         return [(self.loc[date, column_name]) / (self.loc[date - pd.DateOffset(1), column_name])

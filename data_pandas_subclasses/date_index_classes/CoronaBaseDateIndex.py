@@ -108,6 +108,15 @@ class CoronaBaseDateIndexDataFrame(CoronaBaseDataFrame):
                 for date
                 in self.index]
 
+    def calculate_r_value_by(self, column_name: str) -> List[float]:
+        cases_sum_7d_to_4d_before = self.calculate_sum_7d_to_4d_before_for(column_name)
+        cases_sum_3d_to_0d_before = self.calculate_sum_3d_to_0d_before_for(column_name)
+
+        return [cases_sum_3d_to_0d_before[i] / cases_sum_7d_to_4d_before[i]
+                if cases_sum_7d_to_4d_before[i] != 0
+                else np.nan
+                for i in range(len(cases_sum_3d_to_0d_before))]
+
     def last_date(self) -> dt.datetime:
         return self.index.max()
 
