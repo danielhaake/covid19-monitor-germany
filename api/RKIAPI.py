@@ -544,6 +544,8 @@ class RKIAPI:
                                       'Anzahl mit Angaben zur Hospitalisierung': 'number with hospitalization data',
                                       'Anzahl hospitalisiert': 'number hospitalized',
                                       'Anteil hospitalisiert': 'proportion hospitalized',
+                                      'Anteil der Hospitalisierten bei Fällen mit Angabe zur Hospitalisation':
+                                          'proportion hospitalized',
                                       'Anzahl Verstorben': 'number deceased',
                                       'Anteil Verstorben': 'proportion deceased'
                                       })
@@ -581,10 +583,10 @@ class RKIAPI:
             file_object = self._get_bytesio_from_request(url)
 
             try:
-                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=1) \
+                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=6) \
                          .dropna(how="all", axis=1)
             except:
-                return pd.read_excel(file_object, sheet_name=1, header=1) \
+                return pd.read_excel(file_object, sheet_name=1, header=6) \
                          .dropna(how="all", axis=1)
 
         def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
@@ -598,6 +600,14 @@ class RKIAPI:
                                       'A80+': 'cases hospitalized age group 80+',
                                       'Unnamed: 8': 'calendar week'
                                       })
+
+        def create_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
+            reporting_week = ['0' + week if len(week) == 1 else week
+                              for week in df.loc[:, 'reporting week'].astype(str)]
+            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + reporting_week
+            df.loc[:, 'calendar week'] = calendar_week
+            df = df.set_index('calendar week')
+            return df
 
         def correct_strings_of_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
             df.loc[:, 'calendar week'] = df.loc[:, 'calendar week'].str.replace('-KW', ' - ')
@@ -613,7 +623,7 @@ class RKIAPI:
 
         df = load_data_from_excel()
         df = rename_columns_from_german_to_english(df)
-        df = correct_strings_of_calendar_week_and_set_as_index(df)
+        df = create_calendar_week_and_set_as_index(df)
         return selection_of_columns(df)
 
     def number_pcr_tests(self) -> pd.DataFrame:
