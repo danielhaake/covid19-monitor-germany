@@ -448,7 +448,7 @@ class RKIAPI:
         return rki_cases_and_deaths
 
     def nowcast(self) -> pd.DataFrame:
-        def load_nowcast_from_excel() -> pd.DataFrame:
+        def load_nowcast_from_excel() -> pd.DataFrame:  # until June 2021
             def read_excel(date_column_name: str) -> pd.DataFrame:
                 url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/' \
                       'Nowcasting_Zahlen.xlsx?__blob=publicationFile'
@@ -469,6 +469,10 @@ class RKIAPI:
             except:
                 return read_excel('Datum des Erkrankungs-beginns')
 
+        def load_nowcast_from_csv() -> pd.DataFrame:  # since July 2021
+            url = 'https://raw.githubusercontent.com/robert-koch-institut/SARS-CoV-2-Nowcasting_und_-R-Schaetzung/main/Nowcast_R_aktuell.csv'
+            return pd.read_csv(url)
+
         def subset_of_df_with_datetime_columns_and_set_index(df: pd.DataFrame) -> pd.DataFrame:
             df = df.loc[:, ["date",
                             "cases (Nowcast RKI)",
@@ -480,7 +484,7 @@ class RKIAPI:
             df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
             return df.set_index("date")
 
-        def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+        def rename_columns_of_excel_file_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
             return df.rename(columns={"Datum des Erkrankungsbeginns": "date",
                                       "Datum des Erkrankungs-beginns": "date",
                                       "Punktschätzer der Anzahl Neuerkrankungen":
@@ -512,8 +516,19 @@ class RKIAPI:
                                       }
                              )
 
-        nowcast_rki = load_nowcast_from_excel()
-        nowcast_rki = rename_columns_from_german_to_english(nowcast_rki)
+        def rename_columns_of_csv_file_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={"Datum": "date",
+                                      "PS_COVID_Faelle_ma4": "cases (Nowcast RKI)",
+                                      "UG_PI_COVID_Faelle_ma4": "min cases (Nowcast RKI)",
+                                      "OG_PI_COVID_Faelle_ma4": "max cases (Nowcast RKI)",
+                                      "PS_7_Tage_R_Wert": "7 day R value (Nowcast RKI)",
+                                      "UG_PI_7_Tage_R_Wert": "min 7 day R value (Nowcast RKI)",
+                                      "OG_PI_7_Tage_R_Wert": "max 7 day R value (Nowcast RKI)"
+                                      }
+                             )
+
+        nowcast_rki = load_nowcast_from_csv()
+        nowcast_rki = rename_columns_of_csv_file_from_german_to_english(nowcast_rki)
         nowcast_rki = subset_of_df_with_datetime_columns_and_set_index(nowcast_rki)
         return nowcast_rki
 
@@ -583,10 +598,10 @@ class RKIAPI:
             file_object = self._get_bytesio_from_request(url)
 
             try:
-                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=6) \
+                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=7) \
                          .dropna(how="all", axis=1)
             except:
-                return pd.read_excel(file_object, sheet_name=1, header=6) \
+                return pd.read_excel(file_object, sheet_name=1, header=7) \
                          .dropna(how="all", axis=1)
 
         def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
