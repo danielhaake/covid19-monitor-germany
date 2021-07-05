@@ -1205,10 +1205,8 @@ class Layout:
                                       nowcast_rki: NowcastRKIDataFrame) -> Figure:
 
         y = json.loads(self.config["FIG_NEW_DEATHS_PER_REFDATE"]["y"])
-        corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
-        corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast,
-                                                                                 y)
-        corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.reset_index()
+        corona_cases_and_deaths_with_nowcast = self._concat_corona_cases_and_deaths_with_nowcast_only_rows_with_data(
+            corona_cases_and_deaths, nowcast_rki, y)
 
         fig = px.bar(corona_cases_and_deaths_with_nowcast,
                      x=self.config["FIG_NEW_DEATHS_PER_REFDATE"]["x"],
@@ -1227,6 +1225,14 @@ class Layout:
                           yaxis_tickformat=self.config["FIG_NEW_DEATHS_PER_REFDATE"]["yaxis_tickformat"])
 
         return fig
+
+    def _concat_corona_cases_and_deaths_with_nowcast_only_rows_with_data(self, corona_cases_and_deaths, nowcast_rki, y):
+        corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
+
+        if len(self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast, y)) > 0:
+            corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(
+                corona_cases_and_deaths_with_nowcast, y)
+        return corona_cases_and_deaths_with_nowcast.reset_index()
 
     def _delete_rows_without_data_of(self, df: pd.DataFrame, column_name: str) -> pd.DataFrame:
         if len(df.loc[:, column_name].dropna(how='all', axis=0)) > 0:
@@ -1263,10 +1269,8 @@ class Layout:
 
         y = json.loads(self.config["FIG_NEW_CASES_BY_REPORTING_DATE"]["y"])
 
-        corona_cases_and_deaths_with_nowcast = pd.concat([corona_cases_and_deaths, nowcast_rki], axis=1)
-        corona_cases_and_deaths_with_nowcast = self._delete_rows_without_data_of(corona_cases_and_deaths_with_nowcast,
-                                                                                 y)
-        corona_cases_and_deaths_with_nowcast = corona_cases_and_deaths_with_nowcast.reset_index()
+        corona_cases_and_deaths_with_nowcast = self._concat_corona_cases_and_deaths_with_nowcast_only_rows_with_data(
+            corona_cases_and_deaths, nowcast_rki, y)
 
         fig = px.bar(corona_cases_and_deaths_with_nowcast,
                      x=self.config["FIG_NEW_CASES_BY_REPORTING_DATE"]["x"],
