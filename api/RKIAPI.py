@@ -598,10 +598,10 @@ class RKIAPI:
             file_object = self._get_bytesio_from_request(url)
 
             try:
-                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=7) \
+                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=6) \
                          .dropna(how="all", axis=1)
             except:
-                return pd.read_excel(file_object, sheet_name=1, header=7) \
+                return pd.read_excel(file_object, sheet_name=1, header=6) \
                          .dropna(how="all", axis=1)
 
         def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
