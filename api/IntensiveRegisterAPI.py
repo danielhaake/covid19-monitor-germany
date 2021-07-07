@@ -27,22 +27,19 @@ class IntensiveRegisterAPI:
             intensive_care_patients_with_positive_covid19_test = \
                 cases_df.loc[cases_df.loc[:, "Art"] == "in intensivmedizinischer Behandlung", "Anzahl"].values[0]
 
-            if isinstance(intensive_care_patients_with_positive_covid19_test, str):
-                intensive_care_patients_with_positive_covid19_test = \
-                    intensive_care_patients_with_positive_covid19_test.replace(".", "")
+            intensive_care_patients_with_positive_covid19_test = \
+                data_cleaning_of(intensive_care_patients_with_positive_covid19_test)
             return int(intensive_care_patients_with_positive_covid19_test)
 
         def invasively_ventilated(cases_df: pd.DataFrame) -> int:
             invasively_ventilated = cases_df.loc[cases_df.loc[:, "Art"] == "davon invasiv beatmet", "Anzahl"].values[0]
-            if isinstance(invasively_ventilated, str):
-                invasively_ventilated = invasively_ventilated.replace(".", "")
+            invasively_ventilated = data_cleaning_of(invasively_ventilated)
             return int(invasively_ventilated)
 
         def new_admissions_to_intensive_care_last_day(cases_df: pd.DataFrame) -> int:
             new_admissions_to_intensive_care = \
                 cases_df.loc[cases_df.loc[:, "Art"] == "Neuaufnahmen (inkl. Verlegungen*)", "Veränderung zum Vortag"].values[0]
-            if isinstance(new_admissions_to_intensive_care, str):
-                new_admissions_to_intensive_care = new_admissions_to_intensive_care.replace(".", "").replace("+", "")
+            new_admissions_to_intensive_care = data_cleaning_of(new_admissions_to_intensive_care)
             return int(new_admissions_to_intensive_care)
 
         def with_treatment_completed(cases_df: pd.DataFrame) -> float:
@@ -56,9 +53,18 @@ class IntensiveRegisterAPI:
         def thereof_deceased_last_day(cases_df: pd.DataFrame) -> int:
             thereof_deceased = \
                 cases_df.loc[cases_df.loc[:, "Art"] == "Verstorben auf ITS", "Veränderung zum Vortag"].values[0]
-            if isinstance(thereof_deceased, str):
-                thereof_deceased = thereof_deceased.replace(".", "").replace("+", "")
+            thereof_deceased = data_cleaning_of(thereof_deceased)
             return int(thereof_deceased)
+
+        def data_cleaning_of(value):
+            if isinstance(value, str):
+                value = value \
+                    .replace(".", "") \
+                    .replace("+", "")
+                if len(value) == 1:
+                    value = value\
+                        .replace("-", "0")
+            return value
 
         cases_dict = dict()
         pdf_bytesio = self._get_bytesio_of_pdf_from_url(url_pdf)
