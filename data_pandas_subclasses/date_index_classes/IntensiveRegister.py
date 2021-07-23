@@ -130,7 +130,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         logging.info("delete outliers")
 
         outlier_dates = [pd.to_datetime("2021-01-15"),
-                         pd.to_datetime("2021-01-20")]
+                         pd.to_datetime("2021-01-20"),
+                         pd.to_datetime("2021-06-23")]
 
         outlier_columns = ['newly admitted intensive care patients with a positive COVID-19 test',
                            'with treatment completed']
