@@ -597,12 +597,15 @@ class RKIAPI:
                   "Klinische_Aspekte.xlsx?__blob=publicationFile"
             file_object = self._get_bytesio_from_request(url)
 
-            try:
-                return pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=6) \
-                         .dropna(how="all", axis=1)
-            except:
-                return pd.read_excel(file_object, sheet_name=1, header=6) \
-                         .dropna(how="all", axis=1)
+            for header_row in range(0, 10):
+                try:
+                    df = pd.read_excel(file_object, sheet_name="Fälle_Hospitalisierung_Alter", header=header_row) \
+                        .dropna(how="all", axis=1)
+                except:
+                    df = pd.read_excel(file_object, sheet_name=1, header=header_row) \
+                        .dropna(how="all", axis=1)
+                if "Meldewoche" in df.columns:
+                    return df
 
         def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
             return df.rename(columns={'Meldejahr': 'reporting year',
