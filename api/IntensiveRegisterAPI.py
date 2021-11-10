@@ -101,17 +101,23 @@ class IntensiveRegisterAPI:
         def get_last_csv_from_intensive_register_and_date(url_csv: str = None):
             if url_csv is None:
                 url_csv = self._url_csv
-
             csv = pd.read_csv(url_csv)
+            csv.daten_stand = pd.to_datetime(csv.daten_stand)
+            csv.daten_stand = csv.daten_stand.dt.strftime('%Y-%m-%d')
+            csv.daten_stand = pd.to_datetime(csv.daten_stand)
+            date = csv.iloc[0]["daten_stand"]
+            csv = csv.groupby("daten_stand").sum()
+            return csv, date
+
+        def get_old_csv_from_intensive_register_and_date(url_csv: str):
+            csv = pd.read_csv(url_csv)
+            print(csv.columns)
             csv.date = pd.to_datetime(csv.date)
             csv.date = csv.date.dt.strftime('%Y-%m-%d')
             csv.date = pd.to_datetime(csv.date)
 
-            if url_csv is None:
-                date = csv.iloc[0]["date"]
-            else:
-                url_splitted = url_csv.split("/")
-                date = pd.to_datetime(url_splitted[-1][22:32])
+            url_splitted = url_csv.split("/")
+            date = pd.to_datetime(url_splitted[-1][22:32])
 
             csv = csv.loc[csv.loc[:, "date"] == date, :]
             csv = csv.groupby("date").sum()
