@@ -41,6 +41,26 @@ def update_tabs_with_graphs(n):
 
 
 @app.callback(
+    dash.dependencies.Output('graph-fig-median_ages', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-median-and-mean-ages', component_property='value')])
+def build_graph(value):
+    if value == 'median-ages':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    dash.dependencies.Output('graph-fig-mean_ages', 'style'),
+    [dash.dependencies.Input(component_id='radio-items-for-median-and-mean-ages', component_property='value')])
+def build_graph(value):
+    if value == 'mean-ages':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
     dash.dependencies.Output('graph-fig-hospitalizations-per-age-group-bar-plot', 'style'),
     [dash.dependencies.Input(component_id='radio-items-for-hospitalizations-per-age-group', component_property='value')])
 def build_graph(value):

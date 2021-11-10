@@ -28,6 +28,7 @@ from data_pandas_subclasses.week_index_classes.DeathsByWeekOfDeathAndAgeGroup im
     DeathsByWeekOfDeathAndAgeGroupDataFrame
 from data_pandas_subclasses.date_index_classes.IntensiveRegister import IntensiveRegisterDataFrame
 from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
+from data_pandas_subclasses.week_index_classes.MedianAndMeanAges import MedianAndMeanAgesDataFrame
 from layout.DailyFiguresDict import DailyFiguresDict
 
 logging.basicConfig(level=logging.INFO)
@@ -119,6 +120,7 @@ class Layout:
         number_pcr_tests = NumberPCRTestsDataFrame.from_csv()
         intensive_register = IntensiveRegisterDataFrame.from_csv()
         clinical_aspects = ClinicalAspectsDataFrame.from_csv()
+        median_and_mean_ages = MedianAndMeanAgesDataFrame.from_csv()
         age_distribution = AgeDistributionDataFrame.from_csv()
         cases_per_outbreak = CasesPerOutbreakDataFrame.from_csv()
         deaths_by_week_of_death_and_age_group = DeathsByWeekOfDeathAndAgeGroupDataFrame.from_csv()
@@ -149,6 +151,7 @@ class Layout:
                                                         nowcast_rki,
                                                         number_pcr_tests,
                                                         clinical_aspects,
+                                                        median_and_mean_ages,
                                                         age_distribution,
                                                         cases_per_outbreak,
                                                         deaths_by_week_of_death_and_age_group)
@@ -215,6 +218,7 @@ class Layout:
                           nowcast_rki: NowcastRKIDataFrame,
                           number_pcr_tests: NumberPCRTestsDataFrame,
                           clinical_aspects: ClinicalAspectsDataFrame,
+                          median_and_mean_ages: MedianAndMeanAgesDataFrame,
                           age_distribution: AgeDistributionDataFrame,
                           cases_per_outbreak: CasesPerOutbreakDataFrame,
                           deaths_by_week_of_death_and_age_group: DeathsByWeekOfDeathAndAgeGroupDataFrame) \
@@ -244,6 +248,13 @@ class Layout:
             dcc.Graph(
                 id='graph-fig-clinical-aspects',
                 figure=self._figure_clinical_aspects(clinical_aspects)),
+            self._dropdown_for_median_and_mean_ages(),
+            dcc.Graph(
+                id='graph-fig-median_ages',
+                figure=self._figure_median_or_mean_ages(median_and_mean_ages)),
+            dcc.Graph(
+                id='graph-fig-mean_ages',
+                figure=self._figure_median_or_mean_ages(median_and_mean_ages, median=False)),
             self._dropdown_for_hospitalizations_per_age_group(),
             dcc.Graph(
                 id='graph-fig-hospitalizations-per-age-group-bar-plot',
@@ -1072,6 +1083,46 @@ class Layout:
 
         if type == 'bar':
             fig.update_layout(barmode=self.config["FIG_CASES_PER_OUTBREAK_IN_PERCENT"]["barmode"])
+
+        return fig
+
+    def _dropdown_for_median_and_mean_ages(self) -> dcc.Dropdown:
+        return dcc.Dropdown(
+            id='radio-items-for-median-and-mean-ages',
+            className='radio-items',
+            options=[
+                {'label': 'Median Ages',
+                 'value': 'median-ages'},
+                {'label': 'Mean Ages',
+                 'value': 'mean-ages'}
+            ],
+            value='median-ages')
+
+    def _figure_median_or_mean_ages(self, median_and_mean_ages: MedianAndMeanAgesDataFrame, median:bool = True) -> Figure:
+
+        if median:
+            config_part = "FIG_MEDIAN_AGES"
+        else:
+            config_part = "FIG_MEAN_AGES"
+
+        df = median_and_mean_ages.reset_index()
+
+        fig = px.line(df,
+                      x=self.config[config_part]["x"],
+                      y=json.loads(self.config[config_part]["y"]),
+                      color_discrete_map=json.loads(self.config[config_part]["color_discrete_map"]),
+                      render_mode=self.config["ALL_FIGS"]["render_mode"])
+
+        fig.update_layout(title=self.config[config_part]["title"],
+                          xaxis_title=self.config[config_part]["xaxis_title"],
+                          yaxis_title=self.config[config_part]["yaxis_title"],
+                          # yaxis=yaxis,
+                          legend=json.loads(self.config["ALL_FIGS"]["legend"]),
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config[config_part]["yaxis_tickformat"])
 
         return fig
 

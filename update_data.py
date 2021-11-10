@@ -10,6 +10,7 @@ from data_pandas_subclasses.week_index_classes.CasesPerOutbreak import CasesPerO
 from data_pandas_subclasses.week_index_classes.DeathsByWeekOfDeathAndAgeGroup import DeathsByWeekOfDeathAndAgeGroupDataFrame
 from data_pandas_subclasses.week_index_classes.NumberPCRTests import NumberPCRTestsDataFrame
 from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAspectsDataFrame
+from data_pandas_subclasses.week_index_classes.MedianAndMeanAges import MedianAndMeanAgesDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
 
 logging.basicConfig(level=logging.INFO)
@@ -70,6 +71,12 @@ def update_DeathsByWeekOfDeathAndAgeGroupDataFrame():
     except Exception:
         traceback.print_exc()
 
+def update_MedianAndMeanAgesDataFrame():
+    try:
+        MedianAndMeanAgesDataFrame.update_csv_with_new_data_from_rki()
+    except Exception:
+        traceback.print_exc()
+
 
 def update_dataframes():
     update_CoronaCasesAndDeathsDataFrame()
@@ -80,6 +87,7 @@ def update_dataframes():
     update_NumberPCRTestsDataFrame()
     update_CasesPerOutbreakDataFrame()
     update_DeathsByWeekOfDeathAndAgeGroupDataFrame()
+    update_MedianAndMeanAgesDataFrame()
 
 
 if __name__ == '__main__':
