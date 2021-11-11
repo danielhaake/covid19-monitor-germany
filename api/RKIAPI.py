@@ -542,10 +542,10 @@ class RKIAPI:
 
             for header_row in range(0, 10):
                 try:
-                    return pd.read_excel(file_object, sheet_name="Klinische_Aspekte", header=3) \
+                    df = pd.read_excel(file_object, sheet_name="Klinische_Aspekte", header=header_row) \
                         .dropna(how="all", axis=1)
                 except:
-                    return pd.read_excel(file_object, sheet_name=0, header=3)\
+                    df = pd.read_excel(file_object, sheet_name=0, header=header_row)\
                         .dropna(how="all", axis=1)
                 if "Meldejahr" in df.columns:
                     return df
