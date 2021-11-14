@@ -104,18 +104,18 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
                                         days_from_symptoms_to_intensiv_care: int = 9,
                                         to_csv: bool = True) -> None:
 
-        logging.info("start update with new data from RKI API")
+        logging.info("start update with new data from IntensiveRegister API")
 
         self._get_cases_and_capacities_from_intensive_register_report(url_pdf, url_csv)
         self._calculate_changes_from_previous_day()
         self._calculate_number_of_used_and_unused_intensive_care_beds()
         self._delete_outliers()
+        # self._calculate_possible_infection_date(days_from_symptoms_to_intensiv_care, days_incubation_period)
         self._calculate_7_day_moving_means()
         self._calculate_r_value_by_moving_mean_newly_admitted_covid_19_intensive_care_patients()
-        self._calculate_possible_infection_date(days_from_symptoms_to_intensiv_care, days_incubation_period)
         self._calculate_proportional_columns()
 
-        logging.info("finished update with new data from RKI API")
+        logging.info("finished update with new data from IntensiveRegister API")
 
         self = self.dropna(how="all", axis=0)
 
@@ -131,9 +131,12 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         outlier_dates = [pd.to_datetime("2021-01-15"),
                          pd.to_datetime("2021-01-20"),
-                         pd.to_datetime("2021-06-23")]
+                         pd.to_datetime("2021-06-23"),
+                         pd.to_datetime("2021-08-12"),
+                         pd.to_datetime("2021-08-13"),
+                         ]
 
-        outlier_columns = ['newly admitted intensive care patients with a positive COVID-19 test',
+        outlier_columns = ['newly admitted intensive care patients with a positive COVID-19 test inclusive transfers',
                            'with treatment completed']
 
         for outlier_date in outlier_dates:
@@ -264,6 +267,10 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
             self.calculate_7d_moving_mean_for_column(
                 'newly admitted intensive care patients with a positive COVID-19 test')
 
+        self.loc[:, 'newly admitted intensive care patients with a positive COVID-19 test inclusive transfers (mean ±3 days)'] = \
+            self.calculate_7d_moving_mean_for_column(
+                'newly admitted intensive care patients with a positive COVID-19 test inclusive transfers')
+
         self.loc[:, 'intensive care patients with positive COVID-19 test (mean ±3 days)'] = \
             self.calculate_7d_moving_mean_for_column('intensive care patients with positive COVID-19 test')
 
@@ -311,10 +318,10 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
                     for date
                     in self.index]
 
-        def calculate_newly_admitted_covid19_intensive_care_patients():
-            return [self.iloc[i]['in intensive care treatment (change from previous day)'] +
-                    self.iloc[i]['with treatment completed (change from previous day)']
-                    for i in range(len(self))]
+        def calculate_newly_admitted_covid19_intensive_care_patients_incl_transfers():
+            return self.iloc[len(self)-1]['in intensive care treatment (change from previous day)'] + \
+                   self.iloc[len(self)-1]['with treatment completed (change from previous day)']
+                    #for i in range(len(self))]
 
         self.loc[:, 'intensive care patients with positive COVID-19 test (change from previous day)'] = \
             calculate_change_from_previous_day_for('COVID-19 cases')
@@ -327,8 +334,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         self.loc[:, 'thereof deceased (change from previous day)'] = \
             calculate_change_from_previous_day_for('thereof deceased')
 
-        # self.loc[:, 'newly admitted intensive care patients with a positive COVID-19 test'] = \
-        #     calculate_newly_admitted_covid19_intensive_care_patients()
+        self.iloc[len(self) - 1]['newly admitted intensive care patients with a positive COVID-19 test inclusive transfers'] = \
+            calculate_newly_admitted_covid19_intensive_care_patients_incl_transfers()
 
         logging.info("calculated changes from previous day has been added")
 
@@ -353,7 +360,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
         columns = ['intensive care patients with positive COVID-19 test',
                    'invasively ventilated',
                    'newly admitted intensive care patients with a positive COVID-19 test',
-                   'thereof deceased (change from previous day)'
+                   'thereof deceased (change from previous day)',
+                   'with treatment completed'
                    ]
         for column in columns:
             self.loc[date, column] = \

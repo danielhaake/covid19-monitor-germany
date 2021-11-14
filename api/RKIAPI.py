@@ -2,6 +2,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Tuple, List, Dict, Union
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -539,12 +540,16 @@ class RKIAPI:
                   "Klinische_Aspekte.xlsx?__blob=publicationFile"
             file_object = self._get_bytesio_from_request(url)
 
-            try:
-                return pd.read_excel(file_object, sheet_name="Klinische_Aspekte", header=1) \
-                    .dropna(how="all", axis=1)
-            except:
-                return pd.read_excel(file_object, sheet_name=0, header=1) \
-                    .dropna(how="all", axis=1)
+            for header_row in range(0, 10):
+                try:
+                    df = pd.read_excel(file_object, sheet_name="Klinische_Aspekte", header=header_row) \
+                        .dropna(how="all", axis=1)
+                except:
+                    df = pd.read_excel(file_object, sheet_name=0, header=header_row)\
+                        .dropna(how="all", axis=1)
+                if "Meldejahr" in df.columns:
+                    return df
+
 
         def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
             return df.rename(columns={'Meldejahr': 'reporting year',
@@ -580,6 +585,9 @@ class RKIAPI:
             df.loc[:, 'deceased in %'] = convert_to_percent_for(df.loc[:, "proportion deceased"])
             return df
 
+        def delete_empty_rows(df: pd.DataFrame):
+            return df.loc[df.loc[:, "reporting week"] != 0, :]
+
         def convert_to_percent_for(series: pd.Series) -> pd.Series:
             if series.dtype == "float64":
                 return series * 100
@@ -589,6 +597,7 @@ class RKIAPI:
         df = rename_columns_from_german_to_english(df)
         df = create_calendar_week_and_set_as_index(df)
         df = append_proportional_columns_in_percent(df)
+        df = delete_empty_rows(df)
         return df
 
     def hospitalized_per_age_group(self) -> pd.DataFrame:
@@ -616,6 +625,12 @@ class RKIAPI:
                                       'A35..59': 'cases hospitalized age group 35 - 59',
                                       'A60..79': 'cases hospitalized age group 60 - 79',
                                       'A80+': 'cases hospitalized age group 80+',
+                                      'Fälle A00..04': 'cases hospitalized age group 00 - 04',
+                                      'Fälle A05..14': 'cases hospitalized age group 05 - 14',
+                                      'Fälle A15..34': 'cases hospitalized age group 15 - 34',
+                                      'Fälle A35..59': 'cases hospitalized age group 35 - 59',
+                                      'Fälle A60..79': 'cases hospitalized age group 60 - 79',
+                                      'Fälle A80+': 'cases hospitalized age group 80+',
                                       'Unnamed: 8': 'calendar week'
                                       })
 
@@ -643,6 +658,63 @@ class RKIAPI:
         df = rename_columns_from_german_to_english(df)
         df = create_calendar_week_and_set_as_index(df)
         return selection_of_columns(df)
+
+    def median_and_mean_age_for_cases_hospitalization_its_and_death(self) -> pd.DataFrame:
+
+        def load_data_from_excel() -> pd.DataFrame:
+            url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Klinische_Aspekte.xlsx?__blob=publicationFile"
+            file_object = self._get_bytesio_from_request(url)
+
+            for header_row in range(0, 10):
+                try:
+                    df = pd.read_excel(file_object, sheet_name="Alter_Median_Mittelwert", header=header_row) \
+                        .dropna(how="all", axis=1)
+                except:
+                    df = pd.read_excel(file_object, sheet_name=1, header=header_row) \
+                        .dropna(how="all", axis=1)
+                if "Meldejahr" in df.columns:
+                    return df
+
+        def rename_columns_from_german_to_english(df: pd.DataFrame) -> pd.DataFrame:
+            return df.rename(columns={'Meldejahr': 'reporting year',
+                                      'Meldewoche': 'reporting week',
+                                      'Alle_Altersmedian': 'median age reported cases',
+                                      'Hosp_Altersmedian': 'median age hospitalizations',
+                                      'ITS_Altersmedian': 'median age intensive care',
+                                      'Verstorben_Altersmedian': 'median age reported deaths',
+                                      'Alle_MW_Alter': 'mean age reported cases',
+                                      'Hosp_MW_Alter': 'mean age hospitalizations',
+                                      'ITS_MW_Alter': 'mean age intensive care',
+                                      'Verst_MW_Alter': 'mean age reported deaths'
+                                      })
+
+        def create_calendar_week_and_set_as_index(df: pd.DataFrame) -> pd.DataFrame:
+            reporting_week = ['0' + week if len(week) == 1 else week
+                              for week in df.loc[:, 'reporting week'].astype(str)]
+            calendar_week = df.loc[:, 'reporting year'].astype(str) + ' - ' + reporting_week
+            df.loc[:, 'calendar week'] = calendar_week
+            df = df.set_index('calendar week')
+            return df
+
+        def selection_of_columns(df: pd.DataFrame) -> pd.DataFrame:
+            return df.loc[:, ['median age reported cases',
+                              'median age hospitalizations',
+                              'median age intensive care',
+                              'median age reported deaths',
+                              'mean age reported cases',
+                              'mean age hospitalizations',
+                              'mean age intensive care',
+                              'mean age reported deaths']]
+
+        def selection_of_rows(df: pd.DataFrame) -> pd.DataFrame:
+            return df.dropna()
+
+        df = load_data_from_excel()
+        df = rename_columns_from_german_to_english(df)
+        df = create_calendar_week_and_set_as_index(df)
+        df = selection_of_columns(df)
+        df = selection_of_rows(df)
+        return df
 
     def number_pcr_tests(self) -> pd.DataFrame:
         def load_number_pcr_tests_from_excel() -> pd.DataFrame:
