@@ -309,6 +309,9 @@ class Layout:
                 id='graph-fig-intensive-new',
                 figure=self._figure_intensive_new(intensive_register)),
             dcc.Graph(
+                id='graph-fig-intensive-r-value',
+                figure=self._figure_intensive_r_value(intensive_register)),
+            dcc.Graph(
                 id='graph-fig-intensive-daily-change',
                 figure=self._figure_intensive_daily_change(intensive_register)),
             dcc.Graph(
@@ -837,6 +840,38 @@ class Layout:
                           yaxis_tickformat=self.config["FIG_INTENSIVE_NEW"]["yaxis_tickformat"])
 
         return fig
+
+    def _figure_intensive_r_value(self, intensive_register: IntensiveRegisterDataFrame) -> Figure:
+
+        intensive_register = intensive_register.reset_index()
+
+        fig = px.line(intensive_register,
+                      x=self.config["FIG_INTENSIVE_R_VALUE"]["x"],
+                      y=json.loads(self.config["FIG_INTENSIVE_R_VALUE"]["y"]),
+                      color_discrete_map=json.loads(self.config["FIG_INTENSIVE_R_VALUE"]["color_discrete_map"]),
+                      render_mode=self.config["ALL_FIGS"]["render_mode"])
+
+        min_date = intensive_register.date.min()
+        max_date = intensive_register.date.max()
+        shapes = [{"type": 'line',
+                   "y0": 1,
+                   "y1": 1,
+                   "x0": min_date,
+                   "x1": max_date}]
+
+        fig.update_layout(title=self.config["FIG_INTENSIVE_R_VALUE"]["title"],
+                          xaxis_title=self.config["FIG_INTENSIVE_R_VALUE"]["xaxis_title"],
+                          yaxis_title=self.config["FIG_INTENSIVE_R_VALUE"]["yaxis_title"],
+                          shapes=shapes,
+                          yaxis=json.loads(self.config["FIG_INTENSIVE_R_VALUE"]["yaxis"]),
+                          legend=json.loads(self.config["ALL_FIGS"]["legend"]),
+                          font_family=self.config["ALL_FIGS"]["font_family"],
+                          font_color=self.config["ALL_FIGS"]["font_color"],
+                          plot_bgcolor=self.config["ALL_FIGS"]["plot_bgcolor"],
+                          paper_bgcolor=self.config["ALL_FIGS"]["paper_bgcolor"],
+                          yaxis_tickformat=self.config["FIG_INTENSIVE_R_VALUE"]["yaxis_tickformat"])
+        return fig
+
 
     def _figure_intensive_daily_change(self, intensive_register: IntensiveRegisterDataFrame) -> Figure:
 
