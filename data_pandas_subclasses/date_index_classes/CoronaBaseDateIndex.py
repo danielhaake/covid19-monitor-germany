@@ -49,6 +49,15 @@ class CoronaBaseDateIndexDataFrame(CoronaBaseDataFrame):
                 df.loc[:, column] = pd.to_datetime(df.loc[:, column])
         return df
 
+    def calculate_moving_mean(self, column_name: str, period_in_days: int, days_backwards: int) -> List[TNum]:
+        return [self._calculate_sum_or_mean_for(column_name,
+                                                date,
+                                                days_backwards,
+                                                period_in_days,
+                                                type="mean")
+                for date
+                in self.index]
+
     def calculate_7d_moving_mean_for_column(self, column_name: str) -> List[TNum]:
         return [self._calculate_sum_or_mean_for(column_name,
                                                 date,

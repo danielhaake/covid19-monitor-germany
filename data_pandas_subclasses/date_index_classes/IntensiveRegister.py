@@ -260,6 +260,18 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
             self.calculate_7d_moving_mean_for_column(
                 'intensive care patients with positive COVID-19 test (change from previous day)')
 
+        self.loc[:, 'intensive care patients with positive COVID-19 test (change from previous day, mean ±6 days)'] = \
+            self.calculate_moving_mean(
+                'intensive care patients with positive COVID-19 test (change from previous day)',
+                period_in_days=13,
+                days_backwards=6)
+
+        self.loc[:, 'intensive care patients with positive COVID-19 test (change from previous day, mean ±7 days)'] = \
+            self.calculate_moving_mean(
+                'intensive care patients with positive COVID-19 test (change from previous day)',
+                period_in_days=15,
+                days_backwards=7)
+
         self.loc[:, 'number of occupied intensive care beds (mean ±3 days)'] = \
             self.calculate_7d_moving_mean_for_column('occupied intensive care beds')
 
@@ -279,6 +291,23 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
 
         self.loc[:, 'with treatment completed (change from previous day, mean ±3 days)'] = \
             self.calculate_7d_moving_mean_for_column('with treatment completed (change from previous day)')
+
+        self.loc[:, 'mean ±3 days of R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
+            self.calculate_7d_moving_mean_for_column('R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)')
+
+        self.loc[:,
+        'mean ±6 days of R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
+            self.calculate_moving_mean(
+                'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
+                period_in_days=13,
+                days_backwards=6)
+
+        self.loc[:,
+        'mean ±7 days of R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)'] = \
+            self.calculate_moving_mean(
+                'R value calculated by newly admitted intensive care patients with a positive COVID-19 test (mean ±3 days)',
+                period_in_days=15,
+                days_backwards=7)
 
         logging.info("calculated 7 day moving means has been added")
 
