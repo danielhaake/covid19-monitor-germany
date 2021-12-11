@@ -134,6 +134,8 @@ class IntensiveRegisterDataFrame(CoronaBaseDateIndexDataFrame):
                          pd.to_datetime("2021-06-23"),
                          pd.to_datetime("2021-08-12"),
                          pd.to_datetime("2021-08-13"),
+                         pd.to_datetime("2021-12-06"),
+                         pd.to_datetime("2021-12-07"),
                          ]
 
         outlier_columns = ['newly admitted intensive care patients with a positive COVID-19 test inclusive transfers',
