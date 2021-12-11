@@ -22,6 +22,7 @@ gevent = "*"
 python-dotenv = "*"
 boto3 = "*"
 flask-caching = "*"
+pdftotext = "*"
 
 [requires]
 python_version = "3.8"
