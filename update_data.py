@@ -1,7 +1,9 @@
+import os
 import time
 
 import logging
 import traceback
+import time
 
 from data_pandas_subclasses.date_index_classes.CoronaCasesAndDeaths import CoronaCasesAndDeathsDataFrame
 from data_pandas_subclasses.date_index_classes.NowcastRKI import NowcastRKIDataFrame
@@ -13,7 +15,10 @@ from data_pandas_subclasses.week_index_classes.ClinicalAspects import ClinicalAs
 from data_pandas_subclasses.week_index_classes.MedianAndMeanAges import MedianAndMeanAgesDataFrame
 from data_pandas_subclasses.AgeDistribution import AgeDistributionDataFrame
 
+from dotenv import load_dotenv
+
 logging.basicConfig(level=logging.INFO)
+load_dotenv()
 
 
 def update_CoronaCasesAndDeathsDataFrame():
@@ -90,12 +95,21 @@ def update_dataframes():
     update_MedianAndMeanAgesDataFrame()
 
 
+def pause_update_process():
+    update_intervall_in_seconds = 600
+    if os.environ.get('UPDATE_INTERVALL_IN_SECONDS') is not None:
+        update_intervall_in_seconds = os.environ.get('UPDATE_INTERVALL_IN_SECONDS')
+    time.sleep(update_intervall_in_seconds)
+
+
 if __name__ == '__main__':
 
-    logging.info("START COMPLETE UPDATE PROCESS")
-    start_time = time.time()
+    while True:
+        logging.info("START COMPLETE UPDATE PROCESS")
+        start_time = time.time()
 
-    update_dataframes()
+        update_dataframes()
 
-    end_time = time.time()
-    logging.info(f"FINISHED COMPLETE UPDATE PROCESS IN {end_time - start_time} SECONDS")
+        end_time = time.time()
+        logging.info(f"FINISHED COMPLETE UPDATE PROCESS IN {end_time - start_time} SECONDS")
+        pause_update_process()
