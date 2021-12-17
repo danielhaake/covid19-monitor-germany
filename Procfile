@@ -1,1 +1,1 @@
-web: gunicorn app:server
+web: python update_data.py
