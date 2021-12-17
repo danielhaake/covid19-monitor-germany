@@ -98,7 +98,7 @@ def update_dataframes():
 def pause_update_process():
     update_intervall_in_seconds = 600
     if os.environ.get('UPDATE_INTERVALL_IN_SECONDS') is not None:
-        update_intervall_in_seconds = os.environ.get('UPDATE_INTERVALL_IN_SECONDS')
+        update_intervall_in_seconds = int(os.environ.get('UPDATE_INTERVALL_IN_SECONDS'))
     time.sleep(update_intervall_in_seconds)
 
 
