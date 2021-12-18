@@ -1,1 +1,1 @@
-web: python update_data.py
+app: python update_data.py
