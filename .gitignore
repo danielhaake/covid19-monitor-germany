@@ -50,14 +50,4 @@ Thumbs.db
 # Folders #
 ###########
 __pycache__/
-assets/
-data/
-docker/
-img/
-layout/
-
-app.py
-data_sources_description.md
-LICENCE
-load_data_from_s3_and_store_local.py
 
