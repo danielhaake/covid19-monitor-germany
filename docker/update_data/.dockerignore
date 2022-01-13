@@ -16,7 +16,7 @@ Readme.md
 
 # Secret files #
 ################
-.env
+./.env
 
 # Compiled source #
 ###################
