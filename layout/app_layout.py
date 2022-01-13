@@ -74,10 +74,6 @@ class Layout:
 
     def _headline(self) -> List[THtml]:
         return [
-            html.A(
-                html.Img(id='logo', src='../assets/logo_um.png'),
-                href='https://www.unbelievable-machine.com/',
-                target='_blank'),
             html.H3(id='app-title',
                     children='COVID-19 MONITOR GERMANY'),
             html.Hr()
@@ -91,15 +87,15 @@ class Layout:
                 "Daniel Haake",
                 href='https://www.linkedin.com/in/daniel-haake/',
                 target='_blank'),
-            " & ",
+            " with support from ",
             html.A(
                 "Christian Kirifidis",
                 href='https://www.linkedin.com/in/christian-kirifidis/',
                 target='_blank'),
             html.Br(),
-            html.A(
-                "Impressum",
-                href='https://www.unbelievable-machine.com/impressum/')
+#            html.A(
+#                "Impressum",
+#                href='https://www.unbelievable-machine.com/impressum/')
         ]
 
     def _warning_message(self) -> List[THtml]:
